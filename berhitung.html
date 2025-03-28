@@ -3,492 +3,368 @@
 <head>
     <title>Belajar Berhitung Bertingkat</title>
     <style>
-        .header, .tier-progress-container, .streak-counter {
-            position: fixed;
-            width: 100%;
-            z-index: 1000;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 20px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            background-color: #f8f9fa;
-            font-weight: bold;
-        }
-
-        .header {
-            top: 0;
-            border-bottom: 1px solid #ccc;
-        }
-
-        .header div {
-            flex: 1;
-            text-align: center;
-        }
-
-        .header div:first-child {
-            text-align: left;
-        }
-        
-        .header div:last-child {
-            text-align: right;
-        }
-
         body {
             font-family: Arial, sans-serif;
             margin: 0;
-            padding-top: 80px;
-            background: linear-gradient(to right, #fff8dc, #fef9e7);
+            padding: 80px 0 0;
+            background: #f5f5f5;
         }
-
-        #question-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin: 20px auto;
-            max-width: 600px;
-        }
-
-        .question-row {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+        
+        .header {
+            position: fixed;
+            top: 0;
             width: 100%;
-            background-color: white;
-            padding: 30px;
-            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background: white;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            position: relative;
+            z-index: 100;
         }
-
-        .question-timer, .question-text {
-            margin-bottom: 30px;
-            font-size: 24px;
-            font-weight: bold;
-            text-align: center;
-        }
-
-        .options {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
+        
+        .progress-container {
+            position: fixed;
+            top: 50px;
             width: 100%;
-        }
-
-        .option-button {
-            flex: 1 1 calc(50% - 15px);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: #3498db;
-            color: white;
-            font-size: 20px;
-            font-weight: bold;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.3s ease;
-            height: 60px;
-        }
-
-        .option-button:hover:not(.correct):not(.wrong):not(.correct-answer) {
-            background-color: #2874a6;
-            transform: translateY(-2px);
-        }
-
-        .option-button.correct {
-            background-color: #a8e6cf;
-            color: #333;
-        }
-
-        .option-button.wrong {
-            background-color: #ff6b6b;
-        }
-
-        .option-button.correct-answer::after, .option-button.wrong::after {
-            content: attr(data-symbol);
-            position: absolute;
-            right: 15px;
-            font-size: 24px;
-            font-weight: bold;
-        }
-
-        .option-button.correct-answer::after {
-            color: #1e8449;
-        }
-
-        .option-button.wrong::after {
-            color: #c0392b;
-        }
-
-        .buttons {
+            padding: 10px;
+            background: #e0e0e0;
             text-align: center;
-            margin: 30px 0;
+            z-index: 100;
         }
-
-        .action-button {
-            padding: 12px 25px;
-            font-size: 16px;
-            font-weight: bold;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin: 0 10px;
-            transition: background-color 0.3s ease;
+        
+        .progress-bar {
+            height: 5px;
+            background: #3498db;
+            width: 0%;
+            transition: width 0.3s;
         }
-
-        #finish-button {
-            background-color: #e74c3c;
-            color: white;
-        }
-
-        #finish-button:hover {
-            background-color: #c0392b;
-        }
-
-        .streak-counter {
-            top: 80px;
-            right: 20px;
-            background-color: #f39c12;
+        
+        .streak {
+            position: fixed;
+            top: 90px;
+            right: 10px;
+            background: #f39c12;
             color: white;
             padding: 5px 10px;
             border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
             display: none;
         }
-
-        .tier-progress-container {
-            top: 60px;
-            padding: 3px;
-            background-color: #ecf0f1;
+        
+        .quiz-container {
+            max-width: 600px;
+            margin: 30px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .question {
+            font-size: 24px;
             text-align: center;
+            margin: 20px 0;
         }
-
-        .tier-progress-bar {
-            height: 5px;
-            background-color: #3498db;
-            width: 0;
-            transition: width 0.5s ease;
+        
+        .options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 20px 0;
         }
-
-        .level-up-notification {
+        
+        .option {
+            padding: 15px;
+            font-size: 18px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .option:hover {
+            background: #2980b9;
+        }
+        
+        .option.correct {
+            background: #2ecc71;
+        }
+        
+        .option.wrong {
+            background: #e74c3c;
+        }
+        
+        .controls {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .level-up {
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background-color: #2ecc71;
+            background: #2ecc71;
             color: white;
-            padding: 20px 40px;
+            padding: 20px;
             border-radius: 10px;
-            font-size: 24px;
-            font-weight: bold;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            z-index: 2000;
-            animation: fadeInOut 3s ease-in-out;
+            font-size: 20px;
+            z-index: 200;
+            animation: fade 2s;
+            display: none;
         }
-
-        @keyframes fadeInOut {
+        
+        @keyframes fade {
             0%, 100% { opacity: 0; }
-            20%, 80% { opacity: 1; }
+            50% { opacity: 1; }
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <div>Soal: <span id="question-number-display">1</span></div>
-        <div>Tingkat: <span id="level-display">1</span></div>
-        <div><span id="score-display">0</span> benar | Waktu: <span id="time-display">0</span>s</div>
+        <div>Soal: <span id="question-num">1</span></div>
+        <div>Tingkat: <span id="level">1</span></div>
+        <div><span id="score">0</span> benar | Waktu: <span id="time">0</span>s</div>
     </div>
-
-    <div class="tier-progress-container">
-        <div>Progress Tingkat: <span id="tier-streak-display">0</span>/20</div>
-        <div class="tier-progress-bar" id="tier-progress-bar"></div>
+    
+    <div class="progress-container">
+        <div>Progress: <span id="progress">0</span>/20</div>
+        <div class="progress-bar" id="progress-bar"></div>
     </div>
-
-    <div id="streak-display" class="streak-counter">Beruntun: 0</div>
-
-    <div id="question-container"></div>
-    <div class="buttons">
-        <button id="finish-button" class="action-button">Selesai</button>
+    
+    <div class="streak" id="streak">Beruntun: 0</div>
+    
+    <div class="quiz-container" id="quiz">
+        <div class="question" id="question"></div>
+        <div class="options" id="options"></div>
+        <div class="controls">
+            <button class="btn" id="finish">Selesai</button>
+        </div>
     </div>
-
+    
+    <div class="level-up" id="level-up">Level Up!</div>
+    
     <script>
-        const levelDisplay = document.getElementById("level-display");
-        const questionNumberDisplay = document.getElementById("question-number-display");
-        const scoreDisplay = document.getElementById("score-display");
-        const timeDisplay = document.getElementById("time-display");
-        const questionContainer = document.getElementById("question-container");
-        const finishButton = document.getElementById("finish-button");
-        const streakDisplay = document.getElementById("streak-display");
-        const tierProgressBar = document.getElementById("tier-progress-bar");
-        const tierStreakDisplay = document.getElementById("tier-streak-display");
-
-        const STREAK_TO_ADVANCE = 20;
-        const LEVEL_CONFIG = [
-            { operations: ['addition'], addition: { min: 1, max: 10 } },
-            { operations: ['addition', 'subtraction'], addition: { min: 10, max: 25 }, subtraction: { minResult: 1 } },
-            { operations: ['addition', 'subtraction'], addition: { min: 25, max: 100 }, subtraction: { minResult: 25 } },
-            { operations: ['addition', 'subtraction', 'multiplication'], addition: { min: 100, max: 500 }, subtraction: { minResult: 100 }, multiplication: { max: 25 } },
-            { operations: ['addition', 'subtraction', 'multiplication'], addition: { min: 500, max: 1000 }, subtraction: { minResult: 500 }, multiplication: { max: 100 } },
-            { operations: ['addition', 'subtraction', 'multiplication', 'division'], addition: { min: 1000, max: 100000 }, subtraction: { minResult: 1000 }, multiplication: { max: 500 }, division: { minResult: 1 } }
+        // Game configuration
+        const config = [
+            { ops: ['+'], min: 1, max: 10 },
+            { ops: ['+', '-'], min: 10, max: 25 },
+            { ops: ['+', '-'], min: 25, max: 100 },
+            { ops: ['+', '-', '×'], min: 100, max: 500, maxMul: 25 },
+            { ops: ['+', '-', '×'], min: 500, max: 1000, maxMul: 100 },
+            { ops: ['+', '-', '×', '÷'], min: 1000, max: 100000, maxMul: 500 }
         ];
-
-        let currentTier = 0;
-        let currentTierStreak = 0;
-        let currentQuestionNumber = 1;
-        let totalScore = 0;
-        let currentStreak = 0;
-        let maxStreak = 0;
-        let questionStartTime = Date.now();
-        let totalTime = 0;
-        let questionTimes = [];
-        let currentQuestion = null;
-        let sessionStartTime = new Date();
-        let correctAnswers = 0;
-        let wrongAnswers = 0;
-
+        
+        // Game state
+        let state = {
+            level: 0,
+            questionNum: 1,
+            score: 0,
+            streak: 0,
+            progress: 0,
+            time: 0,
+            startTime: 0,
+            correct: 0,
+            maxStreak: 0,
+            questionTimes: []
+        };
+        
+        // DOM elements
+        const elements = {
+            question: document.getElementById('question'),
+            options: document.getElementById('options'),
+            questionNum: document.getElementById('question-num'),
+            level: document.getElementById('level'),
+            score: document.getElementById('score'),
+            time: document.getElementById('time'),
+            streak: document.getElementById('streak'),
+            progress: document.getElementById('progress'),
+            progressBar: document.getElementById('progress-bar'),
+            finish: document.getElementById('finish'),
+            levelUp: document.getElementById('level-up')
+        };
+        
+        // Initialize game
         function init() {
-            generateQuestion();
-            setupEventListeners();
-        }
-
-        function setupEventListeners() {
-            finishButton.addEventListener("click", () => {
-                if (confirm("Apakah Anda yakin ingin menyelesaikan sesi ini?")) {
-                    finishSession();
-                }
+            updateUI();
+            newQuestion();
+            
+            elements.finish.addEventListener('click', () => {
+                if (confirm('Selesai bermain?')) finishGame();
             });
         }
-
-        function updateProgressBars() {
-            const tierProgressPercentage = (currentTierStreak / STREAK_TO_ADVANCE) * 100;
-            tierProgressBar.style.width = `${tierProgressPercentage}%`;
-            tierStreakDisplay.textContent = `${currentTierStreak}`;
-        }
-
-        function generateQuestion() {
-            questionContainer.innerHTML = "";
-            const config = LEVEL_CONFIG[currentTier];
-            const operation = config.operations[Math.floor(Math.random() * config.operations.length)];
-            let questionText, correctAnswer;
-
-            switch (operation) {
-                case 'addition':
-                    const add1 = generateRandomNumber(config.addition.min, config.addition.max);
-                    const add2 = generateRandomNumber(config.addition.min, config.addition.max - add1);
-                    correctAnswer = add1 + add2;
-                    questionText = `${add1} + ${add2}`;
+        
+        // Generate new question
+        function newQuestion() {
+            const levelConfig = config[state.level];
+            const op = levelConfig.ops[Math.floor(Math.random() * levelConfig.ops.length)];
+            let a, b, answer, question;
+            
+            switch(op) {
+                case '+':
+                    a = rand(levelConfig.min, levelConfig.max);
+                    b = rand(levelConfig.min, levelConfig.max - a);
+                    answer = a + b;
+                    question = `${a} + ${b}`;
                     break;
-                case 'subtraction':
-                    const subResult = generateRandomNumber(config.subtraction.minResult, 1000);
-                    const sub2 = generateRandomNumber(1, subResult - 1);
-                    const sub1 = subResult + sub2;
-                    correctAnswer = sub1 - sub2;
-                    questionText = `${sub1} - ${sub2}`;
+                case '-':
+                    answer = rand(levelConfig.min, levelConfig.max);
+                    b = rand(1, answer);
+                    a = answer + b;
+                    question = `${a} - ${b}`;
                     break;
-                case 'multiplication':
-                    const mul1 = generateRandomNumber(1, config.multiplication.max);
-                    const mul2 = generateRandomNumber(1, Math.floor(config.multiplication.max / mul1));
-                    correctAnswer = mul1 * mul2;
-                    questionText = `${mul1} × ${mul2}`;
+                case '×':
+                    a = rand(1, levelConfig.maxMul);
+                    b = rand(1, Math.floor(levelConfig.maxMul / a));
+                    answer = a * b;
+                    question = `${a} × ${b}`;
                     break;
-                case 'division':
-                    const divResult = generateRandomNumber(config.division.minResult, 50);
-                    const div2 = generateRandomNumber(1, 20);
-                    const div1 = divResult * div2;
-                    correctAnswer = div1 / div2;
-                    questionText = `${div1} ÷ ${div2}`;
+                case '÷':
+                    answer = rand(1, 50);
+                    b = rand(1, 20);
+                    a = answer * b;
+                    question = `${a} ÷ ${b}`;
                     break;
             }
-
-            const questionRow = document.createElement("div");
-            questionRow.className = "question-row";
-
-            const questionTimer = document.createElement("div");
-            questionTimer.className = "question-timer";
-            questionTimer.textContent = "Waktu: 0s";
-            questionRow.appendChild(questionTimer);
-
-            const questionElement = document.createElement("div");
-            questionElement.className = "question-text";
-            questionElement.textContent = questionText;
-            questionRow.appendChild(questionElement);
-
-            const options = document.createElement("div");
-            options.className = "options";
-
-            const answers = generateAnswerOptions(correctAnswer, operation, currentTier);
-
-            answers.forEach(answer => {
-                const button = document.createElement("button");
-                button.className = "option-button";
-                button.textContent = answer;
-                button.onclick = () => checkAnswer(button, correctAnswer, answer);
-                options.appendChild(button);
-            });
-
-            questionRow.appendChild(options);
-            questionContainer.appendChild(questionRow);
-
-            questionStartTime = Date.now();
-            currentQuestion = { row: questionRow, timer: questionTimer, correctAnswer: correctAnswer };
-            startTimer(questionTimer);
-
-            questionNumberDisplay.textContent = currentQuestionNumber;
-            levelDisplay.textContent = currentTier + 1;
+            
+            elements.question.textContent = question;
+            generateOptions(answer);
+            state.startTime = Date.now();
         }
-
-        function startTimer(timerElement) {
-            const timerInterval = setInterval(() => {
-                const seconds = Math.floor((Date.now() - questionStartTime) / 1000);
-                timerElement.textContent = `Waktu: ${seconds}s`;
-            }, 1000);
-            currentQuestion.timerInterval = timerInterval;
-        }
-
-        function generateRandomNumber(min, max) {
-            return Math.floor(Math.random() * (max - min + 1)) + min;
-        }
-
-        function generateAnswerOptions(correctAnswer, operation, tier) {
-            const answers = [correctAnswer];
-            const maxDeviation = Math.max(1, Math.floor(correctAnswer * 0.2));
-
-            while (answers.length < 5) {
-                let wrongAnswer;
-                const deviation = generateRandomNumber(1, maxDeviation);
-
-                if (Math.random() > 0.5) {
-                    wrongAnswer = correctAnswer + deviation;
-                } else {
-                    wrongAnswer = Math.max(1, correctAnswer - deviation);
-                }
-
-                if (wrongAnswer !== correctAnswer && !answers.includes(wrongAnswer)) {
-                    answers.push(wrongAnswer);
-                }
+        
+        // Generate answer options
+        function generateOptions(correct) {
+            elements.options.innerHTML = '';
+            const options = [correct];
+            
+            while (options.length < 4) {
+                const deviation = rand(1, Math.max(2, Math.floor(correct * 0.2)));
+                const option = Math.max(1, correct + (Math.random() > 0.5 ? deviation : -deviation));
+                if (!options.includes(option)) options.push(option);
             }
-
-            return answers.sort(() => Math.random() - 0.5);
-        }
-
-        function checkAnswer(button, correctAnswer, selectedAnswer) {
-            clearInterval(currentQuestion.timerInterval);
-
-            const endTime = Date.now();
-            const timeSpent = Math.floor((endTime - questionStartTime) / 1000);
-            questionTimes.push(timeSpent);
-            totalTime += timeSpent;
-            timeDisplay.textContent = totalTime;
-
-            const options = currentQuestion.row.querySelectorAll('.option-button');
-            options.forEach(option => {
-                option.disabled = true;
-                const optionValue = parseFloat(option.textContent);
-
-                if (optionValue === correctAnswer) {
-                    option.classList.add("correct-answer");
-                    option.setAttribute("data-symbol", "✓");
-                } else if (option === button && selectedAnswer !== correctAnswer) {
-                    option.classList.add("wrong");
-                    option.setAttribute("data-symbol", "✗");
-                }
+            
+            options.sort(() => Math.random() - 0.5).forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'option';
+                btn.textContent = opt;
+                btn.onclick = () => checkAnswer(btn, opt, correct);
+                elements.options.appendChild(btn);
             });
-
-            if (selectedAnswer === correctAnswer) {
-                handleCorrectAnswer();
+        }
+        
+        // Check selected answer
+        function checkAnswer(btn, selected, correct) {
+            const timeSpent = Math.floor((Date.now() - state.startTime) / 1000);
+            state.time += timeSpent;
+            state.questionTimes.push(timeSpent);
+            
+            // Disable all buttons
+            Array.from(elements.options.children).forEach(b => {
+                b.disabled = true;
+                if (parseInt(b.textContent) === correct) b.classList.add('correct');
+            });
+            
+            if (selected === correct) {
+                btn.classList.add('correct');
+                handleCorrect();
             } else {
-                handleWrongAnswer();
+                btn.classList.add('wrong');
+                handleWrong();
             }
-
-            updateProgressBars();
-
+            
+            updateUI();
             setTimeout(() => {
-                currentQuestionNumber++;
-                generateQuestion();
-            }, 20);
+                state.questionNum++;
+                newQuestion();
+            }, 1000);
         }
-
-        function handleCorrectAnswer() {
-            totalScore++;
-            correctAnswers++;
-            currentStreak++;
-            currentTierStreak++;
-
-            if (currentTierStreak >= STREAK_TO_ADVANCE && currentTier < LEVEL_CONFIG.length - 1) {
-                showLevelUpNotification();
-                currentTier++;
-                currentTierStreak = 0;
+        
+        // Handle correct answer
+        function handleCorrect() {
+            state.score++;
+            state.correct++;
+            state.streak++;
+            state.progress++;
+            
+            if (state.progress >= 20 && state.level < config.length - 1) {
+                state.level++;
+                state.progress = 0;
+                showLevelUp();
             }
-
-            if (currentStreak > maxStreak) {
-                maxStreak = currentStreak;
+            
+            if (state.streak > state.maxStreak) state.maxStreak = state.streak;
+        }
+        
+        // Handle wrong answer
+        function handleWrong() {
+            state.streak = 0;
+            state.progress = Math.max(0, state.progress - 1);
+        }
+        
+        // Show level up notification
+        function showLevelUp() {
+            elements.levelUp.textContent = `Naik ke Tingkat ${state.level + 1}!`;
+            elements.levelUp.style.display = 'block';
+            setTimeout(() => elements.levelUp.style.display = 'none', 2000);
+        }
+        
+        // Update UI elements
+        function updateUI() {
+            elements.questionNum.textContent = state.questionNum;
+            elements.level.textContent = state.level + 1;
+            elements.score.textContent = state.score;
+            elements.time.textContent = state.time;
+            elements.progress.textContent = state.progress;
+            elements.progressBar.style.width = `${(state.progress / 20) * 100}%`;
+            
+            if (state.streak > 0) {
+                elements.streak.textContent = `Beruntun: ${state.streak}`;
+                elements.streak.style.display = 'block';
+                elements.streak.style.background = state.streak >= 5 ? '#2ecc71' : '#f39c12';
+            } else {
+                elements.streak.style.display = 'none';
             }
-
-            scoreDisplay.textContent = totalScore;
-            streakDisplay.textContent = `Beruntun: ${currentStreak}`;
-            streakDisplay.style.display = "block";
-            streakDisplay.style.backgroundColor = "#2ecc71";
         }
-
-        function showLevelUpNotification() {
-            const notification = document.createElement("div");
-            notification.className = "level-up-notification";
-            notification.textContent = `Selamat! Naik ke Tingkat ${currentTier + 2}`;
-            document.body.appendChild(notification);
-
-            setTimeout(() => {
-                notification.remove();
-            }, 3000);
-        }
-
-        function handleWrongAnswer() {
-            wrongAnswers++;
-            currentStreak = 0;
-            currentTierStreak = Math.max(0, currentTierStreak - 1);
-            streakDisplay.textContent = `Beruntun: 0`;
-            streakDisplay.style.display = "block";
-            streakDisplay.style.backgroundColor = "#e74c3c";
-        }
-
-        function finishSession() {
-            const avgTime = questionTimes.length > 0 
-                ? Math.round(questionTimes.reduce((a, b) => a + b, 0) / questionTimes.length) 
+        
+        // Finish game and show results
+        function finishGame() {
+            const avgTime = state.questionTimes.length > 0 
+                ? Math.round(state.questionTimes.reduce((a, b) => a + b) / state.questionTimes.length)
                 : 0;
-
-            const sessionData = {
-                date: new Date().toLocaleString("id-ID"),
-                totalQuestions: currentQuestionNumber - 1,
-                correctAnswers: correctAnswers,
-                accuracy: Math.round((correctAnswers / (currentQuestionNumber - 1)) * 100),
-                maxStreak: maxStreak,
-                finalTier: currentTier + 1,
-                totalTime: totalTime,
-                averageTime: avgTime
-            };
-
-            try {
-                const previousResults = JSON.parse(localStorage.getItem("mathQuizResults")) || [];
-                previousResults.push(sessionData);
-                localStorage.setItem("mathQuizResults", JSON.stringify(previousResults));
-            } catch (e) {
-                console.error("Gagal menyimpan hasil:", e);
-            }
-
-            const resultMessage = `Hasil Sesi:\n
-Tingkat akhir: ${currentTier + 1}
-Total soal: ${currentQuestionNumber - 1}
-Jawaban benar: ${correctAnswers}
-Akurasi: ${sessionData.accuracy}%
-Runtutan terpanjang: ${maxStreak}
-Total waktu: ${totalTime} detik
-Rata-rata waktu: ${avgTime} detik/soal`;
-
-            if (confirm(`${resultMessage}\n\nKembali ke menu utama?`)) {
+            
+            const accuracy = Math.round((state.correct / (state.questionNum - 1)) * 100);
+            
+            const result = `
+                Hasil Sesi:
+                Tingkat akhir: ${state.level + 1}
+                Total soal: ${state.questionNum - 1}
+                Jawaban benar: ${state.correct}
+                Akurasi: ${accuracy}%
+                Runtutan terpanjang: ${state.maxStreak}
+                Total waktu: ${state.time} detik
+                Rata-rata waktu: ${avgTime} detik/soal
+            `;
+            
+            if (confirm(result + '\n\nKembali ke menu utama?')) {
                 window.location.href = "index.html";
             }
         }
-
+        
+        // Helper function for random numbers
+        function rand(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+        
+        // Start the game
         init();
     </script>
 </body>
