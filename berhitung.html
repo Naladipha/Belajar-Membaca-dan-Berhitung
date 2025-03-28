@@ -3,33 +3,61 @@
 <head>
     <title>Belajar Berhitung</title>
     <style>
+        /* Gaya untuk bagian freeze di atas */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: #fff8dc; /* Warna kuning lembut */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .header-left {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .header-right {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        /* Gaya untuk konten utama */
         body {
             font-family: Arial, sans-serif;
-            text-align: center;
             margin: 0;
-            padding: 20px;
+            padding-top: 60px; /* Menyisakan ruang untuk bagian atas */
             background: linear-gradient(to right, #fff8dc, #fef9e7, #fff8dc); /* Gradasi kuning lembut */
             background-size: 400% 400%;
             animation: gradientBG 30s ease infinite;
         }
+
         @keyframes gradientBG {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
-        h1 {
-            color: #2c3e50;
-        }
+
         #question-container {
             margin-top: 20px;
             text-align: left;
             max-width: 600px;
             margin: 20px auto;
         }
+
         .question {
             margin-bottom: 20px;
         }
-        button, input[type="text"] {
+
+        button {
             margin: 10px;
             padding: 10px 20px;
             font-size: 16px;
@@ -39,46 +67,63 @@
             border: none;
             border-radius: 5px;
         }
-        input[type="text"] {
-            background-color: #fff;
-            color: #000;
-            border: 1px solid #ccc;
-            text-align: center;
+
+        button:hover {
+            background-color: #2980b9;
         }
+
         .feedback {
             margin-left: 15px;
             font-size: 32px; /* Ukuran feedback lebih besar */
             display: inline-block;
             vertical-align: middle;
         }
+
         .feedback.correct {
             color: limegreen;
             font-weight: bold;
         }
+
         .feedback.wrong {
             color: crimson;
             font-weight: bold;
         }
+
         .time-display {
             font-size: 14px;
             color: gray;
             margin-left: 15px;
         }
-        #score, #time-statistics {
+
+        .buttons {
+            text-align: center;
             margin-top: 20px;
-            font-size: 18px;
+        }
+
+        button[disabled] {
+            background-color: #ccc;
+            cursor: not-allowed;
         }
     </style>
 </head>
 <body>
-    <h1>Belajar Berhitung</h1>
+    <div class="header">
+        <div class="header-left">Tingkat: <span id="level-display">1</span></div>
+        <div class="header-right">
+            Total Waktu: <span id="time-display">0</span> detik |
+            Skor: <span id="score-display">0</span>
+        </div>
+    </div>
+
     <div id="question-container"></div>
-    <div id="score">Skor: <span id="score-display">0</span></div>
-    <div id="time-statistics">Waktu Total: <span id="time-display">0</span> detik</div>
-    <button id="next-button" style="display:none;" onclick="goToNextPage()">Lanjut</button>
-    <button id="finish-button" style="display:none;" onclick="finishSession()">Selesai</button>
+    <div class="buttons">
+        <button id="next-button" onclick="goToNextPage()" disabled>Lanjut</button>
+        <button id="finish-button" onclick="finishSession()" disabled>Selesai</button>
+    </div>
+
     <script>
         const container = document.getElementById("question-container");
+        const levelDisplay = document.getElementById("level-display");
         const scoreDisplay = document.getElementById("score-display");
         const timeDisplay = document.getElementById("time-display");
         const nextButton = document.getElementById("next-button");
@@ -104,7 +149,9 @@
         }
 
         function calculateTime() {
-            const timeSpent = Math.floor((Date.now() - questionStartTime) / 1000);
+            const now = Date.now();
+            const timeSpent = Math.floor((now - questionStartTime) / 1000);
+            questionStartTime = now; // Reset timer ke waktu saat ini
             totalTime += timeSpent;
             timeDisplay.textContent = totalTime;
             return timeSpent;
@@ -112,6 +159,7 @@
 
         function generateQuestions() {
             container.innerHTML = "";
+            answeredQuestions = 0;
 
             for (let i = 1; i <= maxQuestions; i++) {
                 const num1 = generateRandomNumber(level);
@@ -126,51 +174,33 @@
                 timeSpan.className = "time-display";
                 timeSpan.id = `time-${i}`;
 
-                if (i <= 5) {
-                    // Pilihan ganda
-                    const answers = [correctAnswer];
-                    while (answers.length < 4) {
-                        const wrongAnswer = generateRandomNumber(level) + generateRandomNumber(level);
-                        if (!answers.includes(wrongAnswer)) {
-                            answers.push(wrongAnswer);
-                        }
+                const answers = [correctAnswer];
+                while (answers.length < 5) { // Pilihan ganda 5 opsi
+                    const wrongAnswer = generateRandomNumber(level) + generateRandomNumber(level);
+                    if (!answers.includes(wrongAnswer)) {
+                        answers.push(wrongAnswer);
                     }
-
-                    answers.sort(() => Math.random() - 0.5);
-
-                    answers.forEach(answer => {
-                        const button = document.createElement("button");
-                        button.textContent = answer;
-                        button.onclick = () => checkAnswer(button, answer, correctAnswer, i, timeSpan);
-                        questionDiv.appendChild(button);
-                    });
-                } else {
-                    // Soal isian
-                    const input = document.createElement("input");
-                    input.type = "text";
-                    input.id = `answer-input-${i}`;
-                    input.placeholder = "Jawab di sini";
-
-                    input.oninput = () => {
-                        setTimeout(() => {
-                            const userAnswer = parseInt(input.value, 10);
-                            checkAnswer(input, userAnswer, correctAnswer, i, timeSpan);
-                        }, 5000);
-                    };
-
-                    questionDiv.appendChild(input);
                 }
+
+                answers.sort(() => Math.random() - 0.5);
+
+                answers.forEach(answer => {
+                    const button = document.createElement("button");
+                    button.textContent = answer;
+                    button.onclick = () => checkAnswer(button, answer, correctAnswer, timeSpan);
+                    questionDiv.appendChild(button);
+                });
 
                 questionDiv.appendChild(timeSpan);
                 container.appendChild(questionDiv);
             }
 
-            nextButton.style.display = "inline-block";
-            finishButton.style.display = "inline-block";
             startTimer();
         }
 
-        function checkAnswer(element, selected, correct, index, timeSpan) {
+        function checkAnswer(element, selected, correct, timeSpan) {
+            if (element.disabled) return; // Hindari tanda feedback ganda
+
             const timeSpent = calculateTime();
             timeSpan.textContent = `(${timeSpent} detik)`;
 
@@ -185,6 +215,7 @@
                 if (correctStreak >= 20) {
                     level++;
                     correctStreak = 0;
+                    levelDisplay.textContent = level;
                     alert("Selamat! Anda naik ke tingkat " + level);
                 }
             } else {
@@ -194,21 +225,27 @@
             }
 
             element.parentElement.appendChild(feedback);
-            element.disabled = true;
+            element.disabled = true; // Matikan tombol setelah dijawab
             scoreDisplay.textContent = score;
+            answeredQuestions++;
+
+            // Aktifkan tombol jika semua soal dijawab
+            if (answeredQuestions === maxQuestions) {
+                nextButton.disabled = false;
+                finishButton.disabled = false;
+            }
         }
 
         function goToNextPage() {
             alert("Berikutnya!");
+            nextButton.disabled = true;
+            finishButton.disabled = true;
             generateQuestions();
         }
 
         function finishSession() {
-            alert(`Rekap:
-Jawaban Benar: ${score}
-Waktu Total: ${totalTime} detik
-Skor Akhir: ${score}`);
-            location.reload();
+            alert(`Sesi selesai. Waktu total: ${totalTime} detik. Skor akhir: ${score}`);
+            location.reload(); // Kembali ke halaman awal
         }
 
         generateQuestions();
