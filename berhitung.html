@@ -440,6 +440,28 @@ setTimeout(() => {
 }, 2000); // Tunggu 2 detik
         }
 
+        function finishSession() {
+    const sessionEndTime = new Date();
+    const sessionData = {
+        startTime: sessionStartTime.toLocaleString("id-ID"), // Waktu mulai sesi
+        endTime: sessionEndTime.toLocaleString("id-ID"),    // Waktu selesai sesi
+        totalTime: Math.floor((sessionEndTime - sessionStartTime) / 1000), // Total waktu dalam detik
+        correctAnswers: correctAnswers,                     // Jumlah jawaban benar
+        wrongAnswers: wrongAnswers                          // Jumlah jawaban salah
+    };
+
+    // Ambil data sebelumnya dari LocalStorage
+    const previousResults = JSON.parse(localStorage.getItem("sessionResults")) || [];
+    previousResults.push(sessionData); // Tambahkan data sesi baru
+    localStorage.setItem("sessionResults", JSON.stringify(previousResults)); // Simpan kembali
+
+    alert(`Sesi selesai!\nWaktu mulai: ${sessionData.startTime}\nWaktu selesai: ${sessionData.endTime}\n` +
+          `Total waktu: ${sessionData.totalTime} detik\nJawaban benar: ${sessionData.correctAnswers}\nJawaban salah: ${sessionData.wrongAnswers}`);
+
+    // Navigasi ke halaman rekap hasil belajar
+    location.href = "index.html";
+}
+
         // Inisialisasi pertama
         generateQuestion();
     </script>
