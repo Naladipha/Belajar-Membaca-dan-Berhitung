@@ -3,7 +3,7 @@
 <head>
     <title>Belajar Berhitung</title>
     <style>
-        /* Gaya bagian header */
+        /* Header bagian atas */
         .header {
             position: fixed;
             top: 0;
@@ -36,7 +36,7 @@
             font-weight: bold;
         }
 
-        /* Gaya untuk body */
+        /* Gaya utama untuk halaman */
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -45,17 +45,23 @@
         }
 
         #question-container {
-            margin: 20px auto;
             display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            max-width: 800px;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            margin: 20px;
+            gap: 10px;
         }
 
-        .question {
+        .question-box {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background: #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            padding: 10px;
+            width: 48%; /* Dua soal per baris tanpa scroll */
         }
 
         .question-text {
@@ -63,41 +69,45 @@
         }
 
         .options {
+            margin-left: 20px;
             display: flex;
             flex-direction: column;
+            gap: 5px;
+        }
+
+        .feedback {
+            font-size: 24px; /* Feedback lebih besar */
+            font-weight: bold;
+        }
+
+        .feedback.correct {
+            color: limegreen;
+        }
+
+        .feedback.wrong {
+            color: crimson;
+        }
+
+        .time-display {
+            font-size: 14px;
+            color: gray;
+            text-align: right;
+            margin-right: 10px;
         }
 
         button {
-            margin: 5px;
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
+            padding: 5px 10px;
+            font-size: 14px;
             background-color: #3498db;
             color: #fff;
             border: none;
-            border-radius: 5px;
+            border-radius: 3px;
+            cursor: pointer;
         }
 
         button[disabled] {
             background-color: #ccc;
             cursor: not-allowed;
-        }
-
-        .feedback {
-            margin-left: 15px;
-            font-size: 32px; /* Ukuran feedback lebih besar */
-            display: inline-block;
-            vertical-align: middle;
-        }
-
-        .feedback.correct {
-            color: limegreen;
-            font-weight: bold;
-        }
-
-        .feedback.wrong {
-            color: crimson;
-            font-weight: bold;
         }
     </style>
 </head>
@@ -106,7 +116,8 @@
         <div class="header-left">Tingkat: <span id="level-display">1</span></div>
         <div class="header-center">Waktu Berjalan: <span id="runtime-display">00:00</span></div>
         <div class="header-right">
-            Total Waktu: <span id="time-display">0</span> detik | Skor: <span id="score-display">0</span>
+            Total Waktu: <span id="time-display">0</span> detik |
+            Skor: <span id="score-display">0</span>
         </div>
     </div>
 
@@ -133,7 +144,7 @@
         let answeredQuestions = 0;
         const maxQuestions = 10;
 
-        // Timer runtime berjalan
+        // Waktu runtime berjalan
         setInterval(() => {
             runtime++;
             const minutes = String(Math.floor(runtime / 60)).padStart(2, "0");
@@ -154,7 +165,7 @@
         function calculateTime() {
             const now = Date.now();
             const timeSpent = Math.floor((now - questionStartTime) / 1000);
-            questionStartTime = now; // Reset timer untuk soal berikutnya
+            questionStartTime = now;
             totalTime += timeSpent;
             timeDisplay.textContent = totalTime;
             return timeSpent;
@@ -169,12 +180,12 @@
                 const num2 = generateRandomNumber(level);
                 const correctAnswer = num1 + num2;
 
-                const questionDiv = document.createElement("div");
-                questionDiv.className = "question";
+                const questionBox = document.createElement("div");
+                questionBox.className = "question-box";
 
                 const questionText = document.createElement("div");
                 questionText.className = "question-text";
-                questionText.innerHTML = `<h3>${i}. Berapakah ${num1} + ${num2}?</h3>`;
+                questionText.innerHTML = `<h3>${i}. ${num1} + ${num2}</h3>`;
 
                 const options = document.createElement("div");
                 options.className = "options";
@@ -196,9 +207,16 @@
                     options.appendChild(button);
                 });
 
-                questionDiv.appendChild(questionText);
-                questionDiv.appendChild(options);
-                questionContainer.appendChild(questionDiv);
+                const timeSpan = document.createElement("div");
+                timeSpan.className = "time-display";
+                timeSpan.id = `time-${i}`;
+                timeSpan.textContent = "0 detik";
+
+                questionBox.appendChild(questionText);
+                questionBox.appendChild(options);
+                questionBox.appendChild(timeSpan);
+
+                questionContainer.appendChild(questionBox);
             }
 
             startTimer();
@@ -208,6 +226,8 @@
             if (button.disabled) return;
 
             const timeSpent = calculateTime();
+            const timeDisplay = document.getElementById(`time-${index}`);
+            timeDisplay.textContent = `${timeSpent} detik`;
 
             const feedback = document.createElement("span");
             feedback.className = "feedback";
@@ -221,8 +241,8 @@
                 feedback.classList.add("wrong");
             }
 
-            button.parentElement.parentElement.appendChild(feedback);
-            button.disabled = true; // Disable button after answer
+            button.parentElement.appendChild(feedback);
+            button.disabled = true; // Disable button after answering
             scoreDisplay.textContent = score;
 
             answeredQuestions++;
@@ -239,8 +259,8 @@
         }
 
         function finishSession() {
-            alert(`Sesi selesai. Total waktu: ${totalTime} detik. Skor akhir: ${score}`);
-            location.reload(); // Reload halaman
+            alert(`Sesi selesai! Total waktu: ${totalTime} detik. Skor: ${score}`);
+            location.reload(); // Kembali ke awal
         }
 
         generateQuestions();
