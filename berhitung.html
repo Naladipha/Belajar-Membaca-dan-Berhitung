@@ -46,30 +46,33 @@
 
         #question-container {
             display: flex;
-            flex-direction: column; /* Soal tersusun vertikal */
-            align-items: center;
-            gap: 20px; /* Jarak antar soal */
-            margin-top: 20px;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            margin: 20px;
+            gap: 10px;
         }
 
         .question-box {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background: #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: space-between; /* Soal di kiri, pilihan di kanan */
-            border: 2px solid #ccc;
-            border-radius: 8px;
-            background-color: #fff;
-            width: 80%; /* Proporsional untuk tampil di tengah */
-            padding: 15px;
+            padding: 10px;
+            width: 48%; /* Dua soal per baris tanpa scroll */
         }
 
         .question-text {
-            flex: 1; /* Ukuran teks soal */
+            flex: 1;
         }
 
         .options {
-            display: flex; /* Pilihan horizontal */
-            gap: 10px;
+            margin-left: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
         }
 
         .feedback {
@@ -88,17 +91,17 @@
         .time-display {
             font-size: 14px;
             color: gray;
-            margin-left: 15px;
             text-align: right;
+            margin-right: 10px;
         }
 
         button {
-            padding: 10px;
+            padding: 5px 10px;
             font-size: 14px;
             background-color: #3498db;
             color: #fff;
             border: none;
-            border-radius: 5px;
+            border-radius: 3px;
             cursor: pointer;
         }
 
@@ -141,56 +144,12 @@
         let answeredQuestions = 0;
         const maxQuestions = 10;
 
-        // Muat data dari localStorage jika ada
-        function loadState() {
-            const state = JSON.parse(localStorage.getItem("quizState"));
-            if (state) {
-                level = state.level;
-                score = state.score;
-                totalTime = state.totalTime;
-                runtime = state.runtime;
-                answeredQuestions = state.answeredQuestions;
-
-                levelDisplay.textContent = level;
-                scoreDisplay.textContent = score;
-                timeDisplay.textContent = totalTime;
-                runtimeDisplay.textContent = formatTime(runtime);
-
-                // Isi soal jika sudah ada
-                if (state.questions) {
-                    generateQuestions(state.questions);
-                } else {
-                    generateQuestions();
-                }
-            } else {
-                generateQuestions();
-            }
-        }
-
-        function saveState(questions = null) {
-            const state = {
-                level,
-                score,
-                totalTime,
-                runtime,
-                answeredQuestions,
-                questions
-            };
-            localStorage.setItem("quizState", JSON.stringify(state));
-        }
-
-        // Format waktu dalam MM:SS
-        function formatTime(seconds) {
-            const minutes = String(Math.floor(seconds / 60)).padStart(2, "0");
-            const remainingSeconds = String(seconds % 60).padStart(2, "0");
-            return `${minutes}:${remainingSeconds}`;
-        }
-
-        // Timer runtime berjalan
+        // Waktu runtime berjalan
         setInterval(() => {
             runtime++;
-            runtimeDisplay.textContent = formatTime(runtime);
-            saveState(); // Simpan runtime setiap detik
+            const minutes = String(Math.floor(runtime / 60)).padStart(2, "0");
+            const seconds = String(runtime % 60).padStart(2, "0");
+            runtimeDisplay.textContent = `${minutes}:${seconds}`;
         }, 1000);
 
         function generateRandomNumber(level) {
@@ -212,18 +171,13 @@
             return timeSpent;
         }
 
-        function generateQuestions(previousQuestions = null) {
+        function generateQuestions() {
             questionContainer.innerHTML = "";
             answeredQuestions = 0;
 
-            const questions = previousQuestions || [];
             for (let i = 1; i <= maxQuestions; i++) {
-                const num1 = previousQuestions
-                    ? previousQuestions[i - 1].num1
-                    : generateRandomNumber(level);
-                const num2 = previousQuestions
-                    ? previousQuestions[i - 1].num2
-                    : generateRandomNumber(level);
+                const num1 = generateRandomNumber(level);
+                const num2 = generateRandomNumber(level);
                 const correctAnswer = num1 + num2;
 
                 const questionBox = document.createElement("div");
@@ -236,9 +190,7 @@
                 const options = document.createElement("div");
                 options.className = "options";
 
-                const answers = previousQuestions
-                    ? previousQuestions[i - 1].answers
-                    : [correctAnswer];
+                const answers = [correctAnswer];
                 while (answers.length < 5) {
                     const wrongAnswer = generateRandomNumber(level) + generateRandomNumber(level);
                     if (!answers.includes(wrongAnswer)) {
@@ -265,15 +217,8 @@
                 questionBox.appendChild(timeSpan);
 
                 questionContainer.appendChild(questionBox);
-
-                questions.push({
-                    num1,
-                    num2,
-                    answers
-                });
             }
 
-            saveState(questions);
             startTimer();
         }
 
@@ -282,4 +227,43 @@
 
             const timeSpent = calculateTime();
             const timeDisplay = document.getElementById(`time-${index}`);
-            timeDisplay.text
+            timeDisplay.textContent = `${timeSpent} detik`;
+
+            const feedback = document.createElement("span");
+            feedback.className = "feedback";
+
+            if (selected === correct) {
+                score++;
+                feedback.textContent = "✔";
+                feedback.classList.add("correct");
+            } else {
+                feedback.textContent = "✘";
+                feedback.classList.add("wrong");
+            }
+
+            button.parentElement.appendChild(feedback);
+            button.disabled = true; // Disable button after answering
+            scoreDisplay.textContent = score;
+
+            answeredQuestions++;
+            if (answeredQuestions === maxQuestions) {
+                nextButton.disabled = false;
+                finishButton.disabled = false;
+            }
+        }
+
+        function goToNextPage() {
+            nextButton.disabled = true;
+            finishButton.disabled = true;
+            generateQuestions();
+        }
+
+        function finishSession() {
+            alert(`Sesi selesai! Total waktu: ${totalTime} detik. Skor: ${score}`);
+            location.reload(); // Kembali ke awal
+        }
+
+        generateQuestions();
+    </script>
+</body>
+</html>
