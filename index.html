@@ -1,13 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Halaman Belajar Anak</title>
-</head>
-<body>
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Belajar Berhitung</title>
+    <title>Belajar Anak</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -19,109 +13,26 @@
         h1 {
             color: #2c3e50;
         }
-        #question-container {
-            margin-top: 20px;
-        }
         button {
-            margin: 10px;
-            padding: 10px 20px;
-            font-size: 16px;
+            margin: 20px;
+            padding: 15px 30px;
+            font-size: 18px;
             cursor: pointer;
             background-color: #3498db;
             color: #fff;
             border: none;
             border-radius: 5px;
+            text-transform: uppercase;
         }
         button:hover {
             background-color: #2980b9;
         }
-        #score {
-            margin-top: 20px;
-            font-size: 18px;
-        }
     </style>
 </head>
 <body>
-    <h1>Belajar Berhitung</h1>
-    <div id="question-container"></div>
-    <div id="score">Skor: <span id="score-display">0</span></div>
-    <script>
-        const container = document.getElementById("question-container");
-        const scoreDisplay = document.getElementById("score-display");
-
-        let level = 1; // Level mulai dari 1
-        let correctStreak = 0; // Hitungan jawaban benar berturut-turut
-        let score = 0;
-
-        // Fungsi untuk menghasilkan bilangan random berdasarkan level
-        function generateRandomNumber(level) {
-            switch (level) {
-                case 1: return Math.floor(Math.random() * 10) + 1; // Maksimal 10
-                case 2: return Math.floor(Math.random() * 20) + 1; // Maksimal 20
-                case 3: return Math.floor(Math.random() * 50) + 1; // Maksimal 50
-                case 4: return Math.floor(Math.random() * 100) + 1; // Maksimal 100
-                case 5: return Math.floor(Math.random() * 1000) + 1; // Maksimal 1000
-                default: return Math.floor(Math.random() * 10000) + 1; // Tak terbatas
-            }
-        }
-
-        // Fungsi untuk membuat satu soal penjumlahan
-        function generateQuestion() {
-            const num1 = generateRandomNumber(level);
-            const num2 = generateRandomNumber(level);
-            const correctAnswer = num1 + num2;
-
-            // Buat elemen soal dan tombol
-            const question = document.createElement("div");
-            question.innerHTML = `<h3>Berapakah ${num1} + ${num2}?</h3>`;
-
-            // Pilihan jawaban random
-            const answers = [correctAnswer];
-            while (answers.length < 4) {
-                const wrongAnswer = generateRandomNumber(level) + generateRandomNumber(level);
-                if (!answers.includes(wrongAnswer)) {
-                    answers.push(wrongAnswer);
-                }
-            }
-
-            // Acak jawaban
-            answers.sort(() => Math.random() - 0.5);
-
-            // Tambahkan tombol jawaban
-            answers.forEach(answer => {
-                const button = document.createElement("button");
-                button.textContent = answer;
-                button.onclick = () => checkAnswer(answer, correctAnswer);
-                question.appendChild(button);
-            });
-
-            container.innerHTML = ""; // Hapus soal sebelumnya
-            container.appendChild(question);
-        }
-
-        // Fungsi untuk memeriksa jawaban
-        function checkAnswer(selected, correct) {
-            if (selected === correct) {
-                correctStreak++;
-                score++;
-                scoreDisplay.textContent = score;
-                if (correctStreak >= 20) { // Naik level jika benar 20x berturut-turut
-                    level++;
-                    correctStreak = 0;
-                    alert("Selamat! Anda naik ke tingkat " + level);
-                }
-                generateQuestion(); // Buat soal baru
-            } else {
-                correctStreak = 0; // Reset streak jika salah
-                alert("Salah! Jawaban yang benar adalah " + correct);
-                generateQuestion(); // Buat soal baru
-            }
-        }
-
-        // Mulai dengan soal pertama
-        generateQuestion();
-    </script>
-</body>
-</html>
+    <h1>Selamat Datang di Aplikasi Belajar Anak</h1>
+    <p>Pilih salah satu mode pembelajaran:</p>
+    <button onclick="window.location.href='berhitung.html'">Belajar Berhitung</button>
+    <button onclick="window.location.href='membaca.html'">Belajar Membaca</button>
 </body>
 </html>
