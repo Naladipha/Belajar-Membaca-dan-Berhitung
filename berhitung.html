@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Belajar Berhitung</title>
+    <title>Belajar Berhitung Bertingkat</title>
     <style>
         /* Header bagian atas */
         .header {
@@ -23,214 +23,511 @@
             font-size: 20px;
             font-weight: bold;
             color: #2c3e50;
+            flex: 1;
         }
 
         .header-center {
             font-size: 16px;
             font-weight: bold;
             color: #2c3e50;
+            flex: 1;
+            text-align: center;
         }
 
         .header-right {
             font-size: 16px;
             font-weight: bold;
+            flex: 1;
+            text-align: right;
         }
 
         /* Gaya utama untuk halaman */
         body {
             font-family: Arial, sans-serif;
             margin: 0;
-            padding-top: 70px; /* Ruang untuk header */
+            padding-top: 80px;
             background: linear-gradient(to right, #fff8dc, #fef9e7);
         }
 
         #question-container {
             display: flex;
-            flex-direction: column; /* Soal disusun vertikal */
-            align-items: Center;
-            gap: 20px; /* Jarak antar soal */
+            flex-direction: column;
+            align-items: center;
             margin: 20px auto;
-            max-width: 80%; /* Lebar kontainer soal */
+            max-width: 600px;
         }
 
         .question-row {
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: space-between;
             width: 100%;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .question-timer {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 14px;
+            color: #7f8c8d;
         }
 
         .question-text {
-            flex: 0 0 20%; /* Soal memiliki proporsi 20% */
-            font-size: 18px;
+            font-size: 24px;
             font-weight: bold;
             color: #333;
+            margin-bottom: 30px;
+            text-align: center;
         }
 
         .options {
-            flex: 0 0 75%; /* Pilihan memiliki proporsi 75% */
-            display: flex;
-            justify-content: space-evenly; /* Semua pilihan sejajar */
-            gap: 15px; /* Jarak antar kotak */
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            width: 100%;
         }
 
         .option-button {
-            width: 100px; /* Lebar kotak pilihan */
-            height: 50px; /* Tinggi kotak pilihan */
+            width: 100%;
+            height: 60px;
             display: flex;
-            justify-content: center; /* Align horizontally */
-            align-items: center;    /* Align vertically */
-            
-            line-height: 50px;
+            justify-content: center;
+            align-items: center;
             background-color: #3498db;
             color: white;
-            font-size: 16px;
+            font-size: 20px;
             font-weight: bold;
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            transition: background-color 0.3s ease, color 0.3s ease;
+            transition: all 0.3s ease;
+            position: relative;
         }
 
-        .option-button:hover {
+        .option-button:hover:not(.correct):not(.wrong):not(.correct-answer) {
             background-color: #2874a6;
+            transform: translateY(-2px);
         }
 
-        .option-button.selected {
-            background-color: #ffd700; /* Kuning untuk pilihan yang dipilih */
-            color: red; /* Teks merah tebal */
+        .option-button.correct {
+            background-color: #a8e6cf; /* Hijau muda */
+            color: #333;
+        }
+
+        .option-button.wrong {
+            background-color: #ffb6c1; /* Merah muda */
+            color: #c0392b;
+        }
+
+        .option-button.correct-answer {
+            background-color: #a8e6cf; /* Hijau muda */
+            color: #333;
+        }
+
+        .option-button.correct::after {
+            content: "✓";
+            position: absolute;
+            right: 15px;
+            font-size: 24px;
             font-weight: bold;
+            color: #1e8449; /* Hijau tua */
         }
 
-        button {
-            padding: 10px 20px;
+        .option-button.wrong::after {
+            content: "✗";
+            position: absolute;
+            right: 15px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #c0392b; /* Merah terang */
+        }
+
+        .option-button.correct-answer::after {
+            content: "✓";
+            position: absolute;
+            right: 15px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #1e8449; /* Hijau tua */
+        }
+
+        .buttons {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .action-button {
+            padding: 12px 25px;
             font-size: 16px;
+            font-weight: bold;
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            margin: 0 10px;
+            transition: all 0.3s ease;
+        }
+
+        #finish-button {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        #finish-button:hover {
+            background-color: #c0392b;
         }
 
         button:disabled {
-            background-color: #ccc;
+            background-color: #95a5a6 !important;
             cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .streak-counter {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background-color: #f39c12;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .tier-progress-container {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            width: 100%;
+            background-color: #ecf0f1;
+            padding: 3px;
+            z-index: 100;
+            text-align: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .tier-progress-bar {
+            height: 5px;
+            background-color: #3498db;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .level-up-notification {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(46, 204, 113, 0.9);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            z-index: 2000;
+            display: none;
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <div class="header-left">Tingkat: <span id="level-display">1</span></div>
-        <div class="header-center">Waktu Berjalan: <span id="runtime-display">00:00</span></div>
+        <div class="header-left">Soal: <span id="question-number-display">1</span></div>
+        <div class="header-center">Tingkat: <span id="level-display">1</span></div>
         <div class="header-right">
-            Total Waktu: <span id="time-display">0</span> detik | Skor: <span id="score-display">0</span>
+            <span id="score-display">0</span> benar | Waktu: <span id="time-display">0</span>s
         </div>
     </div>
 
+    <div class="tier-progress-container">
+        <div>Progress Tingkat: <span id="tier-streak-display">0</span>/10</div>
+        <div class="tier-progress-bar" id="tier-progress-bar"></div>
+    </div>
+
+    <div id="streak-display" class="streak-counter" style="display: none;">Beruntun: 0</div>
+
+    <div id="level-up-notification" class="level-up-notification">
+        Selamat! Anda naik ke tingkat <span id="new-level-display">2</span>
+    </div>
+
     <div id="question-container"></div>
-    <div class="buttons" style="text-align: center; margin-top: 20px;">
-        <button id="next-button" onclick="goToNextPage()" disabled>Lanjut</button>
-        <button id="finish-button" onclick="finishSession()" disabled>Selesai</button>
+    <div class="buttons">
+        <button id="finish-button" class="action-button" onclick="finishSession()">Selesai</button>
     </div>
 
     <script>
+        // Elemen UI
         const levelDisplay = document.getElementById("level-display");
+        const questionNumberDisplay = document.getElementById("question-number-display");
         const scoreDisplay = document.getElementById("score-display");
         const timeDisplay = document.getElementById("time-display");
-        const runtimeDisplay = document.getElementById("runtime-display");
         const questionContainer = document.getElementById("question-container");
-        const nextButton = document.getElementById("next-button");
         const finishButton = document.getElementById("finish-button");
+        const streakDisplay = document.getElementById("streak-display");
+        const tierProgressBar = document.getElementById("tier-progress-bar");
+        const tierStreakDisplay = document.getElementById("tier-streak-display");
+        const levelUpNotification = document.getElementById("level-up-notification");
+        const newLevelDisplay = document.getElementById("new-level-display");
 
-        let level = 1;
-        let score = 0;
+        // Sistem tingkat
+        const TIER_RULES = [
+            { // Tingkat 1
+                operations: ['+'],
+                range: { min: 1, max: 10 }
+            },
+            { // Tingkat 2
+                operations: ['+', '-'],
+                plusRange: { min: 10, max: 25 },
+                minusRange: { minResult: 1 }
+            },
+            { // Tingkat 3
+                operations: ['+', '-'],
+                plusRange: { min: 25, max: 100 },
+                minusRange: { minResult: 25 }
+            },
+            { // Tingkat 4
+                operations: ['+', '-', '*'],
+                plusRange: { min: 100, max: 500 },
+                minusRange: { minResult: 100 },
+                multiplyRange: { max: 25 }
+            },
+            { // Tingkat 5
+                operations: ['+', '-', '*'],
+                plusRange: { min: 500, max: 1000 },
+                minusRange: { minResult: 500 },
+                multiplyRange: { max: 100 }
+            },
+            { // Tingkat 6
+                operations: ['+', '-', '*', '/'],
+                plusRange: { min: 1000, max: 100000 },
+                minusRange: { minResult: 1000 },
+                multiplyRange: { max: 500 },
+                divideRange: { minResult: 1 }
+            }
+        ];
+        const STREAK_TO_ADVANCE = 10;
+
+        // Variabel state
+        let currentTier = 0;
+        let currentTierStreak = 0;
+        let currentQuestionNumber = 1;
+        let totalScore = 0;
+        let currentStreak = 0;
+        let maxStreak = 0;
+        let questionStartTime = Date.now();
         let totalTime = 0;
-        let runtime = 0;
-        let answeredQuestions = 0;
-        const maxQuestions = 10;
+        let questionTimes = [];
+        let currentQuestion = null;
+        let timerInterval = null;
 
-        // Timer runtime berjalan
-        setInterval(() => {
-            runtime++;
-            const minutes = String(Math.floor(runtime / 60)).padStart(2, "0");
-            const seconds = String(runtime % 60).padStart(2, "0");
-            runtimeDisplay.textContent = `${minutes}:${seconds}`;
-        }, 1000);
-
-        function generateRandomNumber(maxValue) {
-            return Math.floor(Math.random() * maxValue) + 1;
+        // Fungsi pembantu
+        function generateRandomNumber(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
         }
 
-        function generateQuestions() {
+        function generateCloseAnswer(correctAnswer, maxDifferencePercent = 0.2) {
+            const maxDifference = Math.max(1, Math.floor(correctAnswer * maxDifferencePercent));
+            const difference = generateRandomNumber(1, maxDifference);
+            const shouldAdd = Math.random() > 0.5;
+            
+            return shouldAdd ? correctAnswer + difference : Math.max(1, correctAnswer - difference);
+        }
+
+        function generateQuestion() {
             questionContainer.innerHTML = "";
-            answeredQuestions = 0;
+            
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+            
+            const tierRules = TIER_RULES[currentTier];
+            const operation = tierRules.operations[Math.floor(Math.random() * tierRules.operations.length)];
+            
+            let num1, num2, correctAnswer;
+            
+            switch (operation) {
+                case '+':
+                    num1 = generateRandomNumber(tierRules.plusRange.min, tierRules.plusRange.max);
+                    num2 = generateRandomNumber(1, tierRules.plusRange.max - num1);
+                    correctAnswer = num1 + num2;
+                    break;
+                    
+                case '-':
+                    num2 = generateRandomNumber(1, 100);
+                    num1 = generateRandomNumber(num2 + tierRules.minusRange.minResult, num2 + tierRules.minusRange.minResult + 100);
+                    correctAnswer = num1 - num2;
+                    break;
+                    
+                case '*':
+                    num1 = generateRandomNumber(1, tierRules.multiplyRange.max);
+                    num2 = generateRandomNumber(1, Math.floor(tierRules.multiplyRange.max / num1));
+                    correctAnswer = num1 * num2;
+                    break;
+                    
+                case '/':
+                    num2 = generateRandomNumber(1, 20);
+                    correctAnswer = generateRandomNumber(tierRules.divideRange.minResult, 20);
+                    num1 = num2 * correctAnswer;
+                    break;
+            }
+            
+            const questionRow = document.createElement("div");
+            questionRow.className = "question-row";
+            
+            const questionTimer = document.createElement("div");
+            questionTimer.className = "question-timer";
+            questionTimer.textContent = "Waktu: 0s";
+            questionRow.appendChild(questionTimer);
 
-            for (let i = 1; i <= maxQuestions; i++) {
-                const num1 = generateRandomNumber(10);
-                const num2 = generateRandomNumber(10);
-                const correctAnswer = num1 + num2;
+            const questionText = document.createElement("div");
+            questionText.className = "question-text";
+            questionText.innerHTML = `${num1} ${operation} ${num2}`;
+            questionRow.appendChild(questionText);
 
-                const questionRow = document.createElement("div");
-                questionRow.className = "question-row";
+            const options = document.createElement("div");
+            options.className = "options";
 
-                const questionText = document.createElement("div");
-                questionText.className = "question-text";
-                questionText.innerHTML = `[${i}] ${num1} + ${num2}`;
-
-                const options = document.createElement("div");
-                options.className = "options";
-
-                const answers = [correctAnswer];
-                while (answers.length < 5) {
-                    const wrongAnswer = generateRandomNumber(20);
-                    if (!answers.includes(wrongAnswer)) {
-                        answers.push(wrongAnswer);
-                    }
+            const answers = [correctAnswer];
+            while (answers.length < 5) {
+                const wrongAnswer = generateCloseAnswer(correctAnswer, 0.2);
+                if (!answers.includes(wrongAnswer) && wrongAnswer !== correctAnswer) {
+                    answers.push(wrongAnswer);
                 }
-
-                answers.sort(() => Math.random() - 0.5);
-
-                answers.forEach(answer => {
-                    const button = document.createElement("button");
-                    button.className = "option-button";
-                    button.textContent = answer;
-                    button.onclick = () => selectOption(button, i, correctAnswer, answer);
-                    options.appendChild(button);
-                });
-
-                questionRow.appendChild(questionText);
-                questionRow.appendChild(options);
-                questionContainer.appendChild(questionRow);
             }
+
+            // Acak urutan jawaban
+            answers.sort(() => Math.random() - 0.5);
+
+            answers.forEach(answer => {
+                const button = document.createElement("button");
+                button.className = "option-button";
+                button.textContent = answer;
+                button.onclick = () => checkAnswer(button, correctAnswer, answer);
+                options.appendChild(button);
+            });
+
+            questionRow.appendChild(options);
+            questionContainer.appendChild(questionRow);
+            
+            // Mulai timer untuk soal ini
+            questionStartTime = Date.now();
+            let seconds = 0;
+            timerInterval = setInterval(() => {
+                seconds++;
+                questionTimer.textContent = `Waktu: ${seconds}s`;
+            }, 1000);
+            
+            // Update nomor soal
+            questionNumberDisplay.textContent = currentQuestionNumber;
+            levelDisplay.textContent = currentTier + 1;
+            
+            currentQuestion = {
+                row: questionRow,
+                timerElement: questionTimer,
+                correctAnswer: correctAnswer,
+                options: options,
+                timerInterval: timerInterval
+            };
         }
 
-        function selectOption(button, questionIndex, correctAnswer, selectedAnswer) {
-            const options = questionContainer.querySelectorAll(`.question-row:nth-child(${questionIndex}) .option-button`);
-            options.forEach(option => option.classList.remove("selected"));
-            button.classList.add("selected");
+        function showLevelUpNotification(newLevel) {
+            newLevelDisplay.textContent = newLevel + 1;
+            levelUpNotification.style.display = 'block';
+            
+            setTimeout(() => {
+                levelUpNotification.style.display = 'none';
+            }, 3000);
+        }
 
+        function checkAnswer(button, correctAnswer, selectedAnswer) {
+            // Hentikan timer
+            clearInterval(currentQuestion.timerInterval);
+            
+            // Hitung waktu pengerjaan
+            const endTime = Date.now();
+            const timeSpent = Math.floor((endTime - questionStartTime) / 1000);
+            questionTimes.push(timeSpent);
+            totalTime += timeSpent;
+            timeDisplay.textContent = totalTime;
+            
+            // Tandai semua jawaban
+            const options = currentQuestion.row.querySelectorAll('.option-button');
+            options.forEach(option => {
+                option.disabled = true;
+                const optionValue = parseInt(option.textContent);
+                
+                if (optionValue === correctAnswer) {
+                    option.classList.add("correct-answer");
+                } else if (option === button && selectedAnswer !== correctAnswer) {
+                    option.classList.add("wrong");
+                }
+            });
+            
+            // Update skor dan streak
             if (selectedAnswer === correctAnswer) {
-                score++;
-                scoreDisplay.textContent = score;
+                totalScore++;
+                currentStreak++;
+                currentTierStreak++;
+                
+                // Cek apakah naik tingkat
+                if (currentTierStreak >= STREAK_TO_ADVANCE && currentTier < TIER_RULES.length - 1) {
+                    showLevelUpNotification(currentTier + 1);
+                    currentTier++;
+                    currentTierStreak = 0;
+                }
+                
+                if (currentStreak > maxStreak) {
+                    maxStreak = currentStreak;
+                }
+                
+                scoreDisplay.textContent = totalScore;
+                streakDisplay.textContent = `Beruntun: ${currentStreak}`;
+                streakDisplay.style.display = "block";
+                streakDisplay.style.backgroundColor = "#2ecc71";
+            } else {
+                currentStreak = 0;
+                currentTierStreak = 0;
+                streakDisplay.textContent = `Beruntun: 0`;
+                streakDisplay.style.display = "block";
+                streakDisplay.style.backgroundColor = "#e74c3c";
             }
-
-            answeredQuestions = document.querySelectorAll(".option-button.selected").length;
-            if (answeredQuestions === maxQuestions) {
-                nextButton.disabled = false;
-                finishButton.disabled = false;
-            }
+            
+            // Update progress bars
+            updateProgressBars();
+            
+            // Lanjut ke soal berikutnya setelah 1 detik
+            setTimeout(() => {
+                currentQuestionNumber++;
+                generateQuestion();
+            }, 1000);
         }
 
-        function goToNextPage() {
-            nextButton.disabled = true;
-            finishButton.disabled = true;
-            generateQuestions();
+        function updateProgressBars() {
+            // Progress tingkat
+            const tierProgressPercentage = (currentTierStreak / STREAK_TO_ADVANCE) * 100;
+            tierProgressBar.style.width = `${tierProgressPercentage}%`;
+            tierStreakDisplay.textContent = `${currentTierStreak}`;
         }
 
         function finishSession() {
-            alert(`Sesi selesai! Total waktu: ${totalTime} detik. Skor: ${score}`);
-            location.href = "index.html"; // Kembali ke halaman utama
+            clearInterval(timerInterval);
+            const avgTime = questionTimes.length > 0 ? 
+                Math.round(questionTimes.reduce((a, b) => a + b, 0) / questionTimes.length) : 0;
+            
+            alert(`Sesi selesai!\nTingkat akhir: ${currentTier + 1}\nTotal soal: ${currentQuestionNumber}\n` +
+                  `Jawaban benar: ${totalScore}\nRuntutan terpanjang: ${maxStreak}\n` +
+                  `Total waktu: ${totalTime}s\nRata-rata waktu per soal: ${avgTime}s`);
+            // location.href = "index.html"; // Uncomment jika ingin kembali ke halaman utama
         }
 
-        generateQuestions();
+        // Inisialisasi pertama
+        generateQuestion();
     </script>
 </body>
 </html>
