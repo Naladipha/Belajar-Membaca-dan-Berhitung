@@ -4,19 +4,26 @@
     <title>Belajar Anak</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin: 0;
-            padding: 20px;
-            background: linear-gradient(to right, #ff9a9e, #fad0c4, #fbc2eb, #8fd3f4, #84fab0); /* Latar belakang warna-warni */
-            background-size: 400% 400%; /* Untuk animasi gradasi */
-            animation: gradientBG 15s ease infinite;
-        }
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin: 0;
+    padding: 20px;
+    background: linear-gradient(to right, #e0f7fa, #b3e5fc, #81d4fa, #4fc3f7, #0288d1); /* Gradasi warna biru */
+    background-size: 400% 400%; /* Untuk animasi gerakan */
+    animation: gradientBG 30s ease infinite; /* Pergerakan lambat (30 detik) */
+}
 
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+@keyframes gradientBG {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
         }
 
         h1 {
@@ -57,7 +64,7 @@
         Browser Anda tidak mendukung audio.
     </audio>
 
-    <h1>Selamat Datang di Aplikasi Belajar Anak</h1>
+    <h1>Selamat Datang Albarra Waroko</h1>
     <p>Pilih salah satu mode pembelajaran:</p>
     <button onclick="playSoundAndNavigate('berhitung.html')">Belajar Berhitung</button>
     <button onclick="playSoundAndNavigate('membaca.html')">Belajar Membaca</button>
