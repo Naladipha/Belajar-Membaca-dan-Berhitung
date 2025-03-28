@@ -80,6 +80,7 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            transition: background 0.2s;
         }
         
         .option:hover {
@@ -175,7 +176,8 @@
             startTime: 0,
             correct: 0,
             maxStreak: 0,
-            questionTimes: []
+            questionTimes: [],
+            timer: null
         };
         
         // DOM elements
@@ -205,6 +207,8 @@
         
         // Generate new question
         function newQuestion() {
+            clearInterval(state.timer);
+            
             const levelConfig = config[state.level];
             const op = levelConfig.ops[Math.floor(Math.random() * levelConfig.ops.length)];
             let a, b, answer, question;
@@ -239,6 +243,11 @@
             elements.question.textContent = question;
             generateOptions(answer);
             state.startTime = Date.now();
+            
+            // Start question timer
+            state.timer = setInterval(() => {
+                elements.time.textContent = state.time + Math.floor((Date.now() - state.startTime) / 1000);
+            }, 1000);
         }
         
         // Generate answer options
@@ -263,6 +272,8 @@
         
         // Check selected answer
         function checkAnswer(btn, selected, correct) {
+            clearInterval(state.timer);
+            
             const timeSpent = Math.floor((Date.now() - state.startTime) / 1000);
             state.time += timeSpent;
             state.questionTimes.push(timeSpent);
@@ -282,9 +293,12 @@
             }
             
             updateUI();
+            
+            // Move to next question after delay
             setTimeout(() => {
                 state.questionNum++;
                 newQuestion();
+                updateUI();
             }, 1000);
         }
         
