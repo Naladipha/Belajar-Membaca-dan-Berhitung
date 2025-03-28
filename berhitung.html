@@ -120,8 +120,8 @@
         }
 
         .option-button.wrong {
-            background-color: #ffb6c1; /* Merah muda */
-            color: #c0392b;
+            background-color: #ff6b6b; /* Merah tua */
+            color: white;
         }
 
         .option-button.correct-answer {
@@ -172,6 +172,10 @@
             transition: all 0.3s ease;
         }
 
+        #next-button {
+            display: none;
+        }
+
         #finish-button {
             background-color: #e74c3c;
             color: white;
@@ -218,22 +222,6 @@
             width: 0%;
             transition: width 0.5s ease;
         }
-
-        .level-up-notification {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: rgba(46, 204, 113, 0.9);
-            color: white;
-            padding: 20px 40px;
-            border-radius: 10px;
-            font-size: 24px;
-            font-weight: bold;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            z-index: 2000;
-            display: none;
-        }
     </style>
 </head>
 <body>
@@ -246,15 +234,11 @@
     </div>
 
     <div class="tier-progress-container">
-        <div>Progress Tingkat: <span id="tier-streak-display">0</span>/10</div>
+        <div>Progress Tingkat: <span id="tier-streak-display">0</span>/20</div>
         <div class="tier-progress-bar" id="tier-progress-bar"></div>
     </div>
 
     <div id="streak-display" class="streak-counter" style="display: none;">Beruntun: 0</div>
-
-    <div id="level-up-notification" class="level-up-notification">
-        Selamat! Anda naik ke tingkat <span id="new-level-display">2</span>
-    </div>
 
     <div id="question-container"></div>
     <div class="buttons">
@@ -272,46 +256,10 @@
         const streakDisplay = document.getElementById("streak-display");
         const tierProgressBar = document.getElementById("tier-progress-bar");
         const tierStreakDisplay = document.getElementById("tier-streak-display");
-        const levelUpNotification = document.getElementById("level-up-notification");
-        const newLevelDisplay = document.getElementById("new-level-display");
 
         // Sistem tingkat
-        const TIER_RULES = [
-            { // Tingkat 1
-                operations: ['+'],
-                range: { min: 1, max: 10 }
-            },
-            { // Tingkat 2
-                operations: ['+', '-'],
-                plusRange: { min: 10, max: 25 },
-                minusRange: { minResult: 1 }
-            },
-            { // Tingkat 3
-                operations: ['+', '-'],
-                plusRange: { min: 25, max: 100 },
-                minusRange: { minResult: 25 }
-            },
-            { // Tingkat 4
-                operations: ['+', '-', '*'],
-                plusRange: { min: 100, max: 500 },
-                minusRange: { minResult: 100 },
-                multiplyRange: { max: 25 }
-            },
-            { // Tingkat 5
-                operations: ['+', '-', '*'],
-                plusRange: { min: 500, max: 1000 },
-                minusRange: { minResult: 500 },
-                multiplyRange: { max: 100 }
-            },
-            { // Tingkat 6
-                operations: ['+', '-', '*', '/'],
-                plusRange: { min: 1000, max: 100000 },
-                minusRange: { minResult: 1000 },
-                multiplyRange: { max: 500 },
-                divideRange: { minResult: 1 }
-            }
-        ];
-        const STREAK_TO_ADVANCE = 10;
+        const TIER_LIMITS = [10, 20, 50, 100, 1000, Infinity];
+        const STREAK_TO_ADVANCE = 20;
 
         // Variabel state
         let currentTier = 0;
@@ -324,59 +272,34 @@
         let totalTime = 0;
         let questionTimes = [];
         let currentQuestion = null;
-        let timerInterval = null;
 
         // Fungsi pembantu
-        function generateRandomNumber(min, max) {
-            return Math.floor(Math.random() * (max - min + 1)) + min;
+        function getMaxNumberForTier(tier) {
+            return TIER_LIMITS[tier];
         }
 
-        function generateCloseAnswer(correctAnswer, maxDifferencePercent = 0.2) {
-            const maxDifference = Math.max(1, Math.floor(correctAnswer * maxDifferencePercent));
-            const difference = generateRandomNumber(1, maxDifference);
-            const shouldAdd = Math.random() > 0.5;
-            
-            return shouldAdd ? correctAnswer + difference : Math.max(1, correctAnswer - difference);
+        function generateRandomNumber(maxValue) {
+            return Math.floor(Math.random() * maxValue) + 1;
+        }
+
+        function updateProgressBars() {
+            // Progress tingkat
+            const tierProgressPercentage = (currentTierStreak / STREAK_TO_ADVANCE) * 100;
+            tierProgressBar.style.width = `${tierProgressPercentage}%`;
+            tierStreakDisplay.textContent = `${currentTierStreak}`;
         }
 
         function generateQuestion() {
             questionContainer.innerHTML = "";
             
-            if (timerInterval) {
-                clearInterval(timerInterval);
-            }
-            
-            const tierRules = TIER_RULES[currentTier];
-            const operation = tierRules.operations[Math.floor(Math.random() * tierRules.operations.length)];
-            
-            let num1, num2, correctAnswer;
-            
-            switch (operation) {
-                case '+':
-                    num1 = generateRandomNumber(tierRules.plusRange.min, tierRules.plusRange.max);
-                    num2 = generateRandomNumber(1, tierRules.plusRange.max - num1);
-                    correctAnswer = num1 + num2;
-                    break;
-                    
-                case '-':
-                    num2 = generateRandomNumber(1, 100);
-                    num1 = generateRandomNumber(num2 + tierRules.minusRange.minResult, num2 + tierRules.minusRange.minResult + 100);
-                    correctAnswer = num1 - num2;
-                    break;
-                    
-                case '*':
-                    num1 = generateRandomNumber(1, tierRules.multiplyRange.max);
-                    num2 = generateRandomNumber(1, Math.floor(tierRules.multiplyRange.max / num1));
-                    correctAnswer = num1 * num2;
-                    break;
-                    
-                case '/':
-                    num2 = generateRandomNumber(1, 20);
-                    correctAnswer = generateRandomNumber(tierRules.divideRange.minResult, 20);
-                    num1 = num2 * correctAnswer;
-                    break;
-            }
-            
+            const maxNumber = getMaxNumberForTier(currentTier);
+            const num1 = generateRandomNumber(maxNumber / 2);
+            const num2 = generateRandomNumber(maxNumber / 2);
+            const correctAnswer = num1 + num2;
+
+            // Pastikan hasil tidak melebihi batas tingkat
+            const finalAnswer = Math.min(correctAnswer, maxNumber);
+
             const questionRow = document.createElement("div");
             questionRow.className = "question-row";
             
@@ -387,16 +310,16 @@
 
             const questionText = document.createElement("div");
             questionText.className = "question-text";
-            questionText.innerHTML = `${num1} ${operation} ${num2}`;
+            questionText.innerHTML = `${num1} + ${num2} = ?`;
             questionRow.appendChild(questionText);
 
             const options = document.createElement("div");
             options.className = "options";
 
-            const answers = [correctAnswer];
-            while (answers.length < 5) {
-                const wrongAnswer = generateCloseAnswer(correctAnswer, 0.2);
-                if (!answers.includes(wrongAnswer) && wrongAnswer !== correctAnswer) {
+            const answers = [finalAnswer];
+            while (answers.length < 4) {
+                const wrongAnswer = generateRandomNumber(maxNumber);
+                if (!answers.includes(wrongAnswer) && wrongAnswer !== finalAnswer) {
                     answers.push(wrongAnswer);
                 }
             }
@@ -408,7 +331,7 @@
                 const button = document.createElement("button");
                 button.className = "option-button";
                 button.textContent = answer;
-                button.onclick = () => checkAnswer(button, correctAnswer, answer);
+                button.onclick = () => checkAnswer(button, finalAnswer, answer);
                 options.appendChild(button);
             });
 
@@ -417,11 +340,7 @@
             
             // Mulai timer untuk soal ini
             questionStartTime = Date.now();
-            let seconds = 0;
-            timerInterval = setInterval(() => {
-                seconds++;
-                questionTimer.textContent = `Waktu: ${seconds}s`;
-            }, 1000);
+            startQuestionTimer(questionTimer);
             
             // Update nomor soal
             questionNumberDisplay.textContent = currentQuestionNumber;
@@ -429,20 +348,20 @@
             
             currentQuestion = {
                 row: questionRow,
-                timerElement: questionTimer,
-                correctAnswer: correctAnswer,
-                options: options,
-                timerInterval: timerInterval
+                timer: questionTimer,
+                correctAnswer: finalAnswer,
+                options: options
             };
         }
 
-        function showLevelUpNotification(newLevel) {
-            newLevelDisplay.textContent = newLevel + 1;
-            levelUpNotification.style.display = 'block';
+        function startQuestionTimer(timerElement) {
+            let seconds = 0;
+            const timerInterval = setInterval(() => {
+                seconds++;
+                timerElement.textContent = `Waktu: ${seconds}s`;
+            }, 1000);
             
-            setTimeout(() => {
-                levelUpNotification.style.display = 'none';
-            }, 3000);
+            return timerInterval;
         }
 
         function checkAnswer(button, correctAnswer, selectedAnswer) {
@@ -476,10 +395,10 @@
                 currentTierStreak++;
                 
                 // Cek apakah naik tingkat
-                if (currentTierStreak >= STREAK_TO_ADVANCE && currentTier < TIER_RULES.length - 1) {
-                    showLevelUpNotification(currentTier + 1);
+                if (currentTierStreak >= STREAK_TO_ADVANCE && currentTier < TIER_LIMITS.length - 1) {
                     currentTier++;
                     currentTierStreak = 0;
+                    alert(`Selamat! Anda naik ke Tingkat ${currentTier + 1} (Penjumlahan hingga ${TIER_LIMITS[currentTier]}))`);
                 }
                 
                 if (currentStreak > maxStreak) {
@@ -508,15 +427,7 @@
             }, 1000);
         }
 
-        function updateProgressBars() {
-            // Progress tingkat
-            const tierProgressPercentage = (currentTierStreak / STREAK_TO_ADVANCE) * 100;
-            tierProgressBar.style.width = `${tierProgressPercentage}%`;
-            tierStreakDisplay.textContent = `${currentTierStreak}`;
-        }
-
         function finishSession() {
-            clearInterval(timerInterval);
             const avgTime = questionTimes.length > 0 ? 
                 Math.round(questionTimes.reduce((a, b) => a + b, 0) / questionTimes.length) : 0;
             
