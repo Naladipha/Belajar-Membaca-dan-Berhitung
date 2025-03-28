@@ -48,7 +48,7 @@
             display: flex;
             flex-direction: column; /* Soal disusun vertikal */
             align-items: flex-start;
-            gap: 10px; /* Jarak antar soal */
+            gap: 20px; /* Jarak antar soal */
             margin: 20px auto;
             max-width: 80%; /* Lebar kontainer soal */
         }
@@ -77,11 +77,7 @@
         .option-button {
             width: 100px; /* Lebar kotak pilihan */
             height: 50px; /* Tinggi kotak pilihan */
-
-            display: flex;
-            justify-content: center; /* Align horizontally */
-            align-items: center;    /* Align vertically */
-                      
+            text-align: center;
             line-height: 50px;
             background-color: #3498db;
             color: white;
@@ -155,13 +151,17 @@
             runtimeDisplay.textContent = `${minutes}:${seconds}`;
         }, 1000);
 
+        function generateRandomNumber(maxValue) {
+            return Math.floor(Math.random() * maxValue) + 1;
+        }
+
         function generateQuestions() {
             questionContainer.innerHTML = "";
             answeredQuestions = 0;
 
             for (let i = 1; i <= maxQuestions; i++) {
-                const num1 = Math.floor(Math.random() * 10) + 1;
-                const num2 = Math.floor(Math.random() * 10) + 1;
+                const num1 = generateRandomNumber(10);
+                const num2 = generateRandomNumber(10);
                 const correctAnswer = num1 + num2;
 
                 const questionRow = document.createElement("div");
@@ -174,12 +174,21 @@
                 const options = document.createElement("div");
                 options.className = "options";
 
-                const answers = ["A", "B", "C", "D", "E"];
+                const answers = [correctAnswer];
+                while (answers.length < 5) {
+                    const wrongAnswer = generateRandomNumber(20);
+                    if (!answers.includes(wrongAnswer)) {
+                        answers.push(wrongAnswer);
+                    }
+                }
+
+                answers.sort(() => Math.random() - 0.5);
+
                 answers.forEach(answer => {
                     const button = document.createElement("button");
                     button.className = "option-button";
                     button.textContent = answer;
-                    button.onclick = () => selectOption(button, i);
+                    button.onclick = () => selectOption(button, i, correctAnswer, answer);
                     options.appendChild(button);
                 });
 
@@ -189,10 +198,15 @@
             }
         }
 
-        function selectOption(button, questionIndex) {
+        function selectOption(button, questionIndex, correctAnswer, selectedAnswer) {
             const options = questionContainer.querySelectorAll(`.question-row:nth-child(${questionIndex}) .option-button`);
             options.forEach(option => option.classList.remove("selected"));
             button.classList.add("selected");
+
+            if (selectedAnswer === correctAnswer) {
+                score++;
+                scoreDisplay.textContent = score;
+            }
 
             answeredQuestions = document.querySelectorAll(".option-button.selected").length;
             if (answeredQuestions === maxQuestions) {
