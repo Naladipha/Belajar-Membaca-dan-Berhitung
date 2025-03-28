@@ -40,54 +40,70 @@
         body {
             font-family: Arial, sans-serif;
             margin: 0;
-            padding-top: 60px; /* Ruang untuk header */
+            padding-top: 70px; /* Ruang untuk header */
             background: linear-gradient(to right, #fff8dc, #fef9e7);
         }
 
         #question-container {
             display: flex;
             flex-direction: column; /* Soal disusun vertikal */
-            align-items: center;
-            gap: 15px; /* Jarak antar soal */
-            margin-top: 20px;
+            align-items: flex-start;
+            gap: 20px; /* Jarak antar soal */
+            margin: 20px auto;
+            max-width: 80%; /* Lebar kontainer soal */
         }
 
         .question-row {
-            width: 90%; /* Lebar tiap soal */
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 10px 0;
+            width: 100%;
         }
 
         .question-text {
-            flex: 0 0 20%; /* Proporsi soal */
-            text-align: left;
+            flex: 0 0 20%; /* Soal memiliki proporsi 20% */
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
         }
 
         .options {
-            flex: 0 0 75%; /* Proporsi pilihan */
+            flex: 0 0 75%; /* Pilihan memiliki proporsi 75% */
             display: flex;
-            gap: 10px; /* Jarak antar pilihan */
-            justify-content: space-evenly; /* Pilihan sejajar di sumbu X */
+            justify-content: space-evenly; /* Semua pilihan sejajar */
+            gap: 15px; /* Jarak antar kotak */
         }
 
         .option-button {
-            width: 100px; /* Lebar kotak sama */
-            height: 50px; /* Tinggi kotak sama */
-            font-size: 14px;
-            background-color: #3498db;
-            color: #fff;
-            border: 2px solid #ccc;
-            border-radius: 5px;
-            cursor: pointer;
+            width: 100px; /* Lebar kotak pilihan */
+            height: 50px; /* Tinggi kotak pilihan */
             text-align: center;
+            line-height: 50px;
+            background-color: #3498db;
+            color: white;
+            font-size: 14px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .option-button:hover {
+            background-color: #2874a6;
         }
 
         .option-button.selected {
-            background-color: #ffd700; /* Kuning */
-            color: red; /* Font merah tebal */
+            background-color: #ffd700; /* Kuning untuk pilihan yang dipilih */
+            color: red; /* Teks merah tebal */
             font-weight: bold;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
         }
 
         button:disabled {
@@ -124,7 +140,6 @@
         let score = 0;
         let totalTime = 0;
         let runtime = 0;
-        let questionStartTime;
         let answeredQuestions = 0;
         const maxQuestions = 10;
 
@@ -136,32 +151,13 @@
             runtimeDisplay.textContent = `${minutes}:${seconds}`;
         }, 1000);
 
-        function generateRandomNumber(level) {
-            const maxValues = [10, 20, 50, 100, 1000];
-            const maxValue = level <= maxValues.length ? maxValues[level - 1] : maxValues[maxValues.length - 1];
-            return Math.floor(Math.random() * maxValue) + 1;
-        }
-
-        function startTimer() {
-            questionStartTime = Date.now();
-        }
-
-        function calculateTime() {
-            const now = Date.now();
-            const timeSpent = Math.floor((now - questionStartTime) / 1000);
-            questionStartTime = now;
-            totalTime += timeSpent;
-            timeDisplay.textContent = totalTime;
-            return timeSpent;
-        }
-
         function generateQuestions() {
             questionContainer.innerHTML = "";
             answeredQuestions = 0;
 
             for (let i = 1; i <= maxQuestions; i++) {
-                const num1 = generateRandomNumber(level);
-                const num2 = generateRandomNumber(level);
+                const num1 = Math.floor(Math.random() * 10) + 1;
+                const num2 = Math.floor(Math.random() * 10) + 1;
                 const correctAnswer = num1 + num2;
 
                 const questionRow = document.createElement("div");
@@ -169,13 +165,13 @@
 
                 const questionText = document.createElement("div");
                 questionText.className = "question-text";
-                questionText.innerHTML = `<h3>[${i}] ${num1} + ${num2}</h3>`;
+                questionText.innerHTML = `[${i}] ${num1} + ${num2}`;
 
                 const options = document.createElement("div");
                 options.className = "options";
 
-                const answers = ["A", "B", "C", "D", "E"]; // Pilihan tetap A, B, C, D, E
-                answers.forEach((answer, idx) => {
+                const answers = ["A", "B", "C", "D", "E"];
+                answers.forEach(answer => {
                     const button = document.createElement("button");
                     button.className = "option-button";
                     button.textContent = answer;
@@ -185,24 +181,15 @@
 
                 questionRow.appendChild(questionText);
                 questionRow.appendChild(options);
-
                 questionContainer.appendChild(questionRow);
             }
-
-            startTimer();
         }
 
         function selectOption(button, questionIndex) {
-            // Batalkan pilihan sebelumnya
             const options = questionContainer.querySelectorAll(`.question-row:nth-child(${questionIndex}) .option-button`);
-            options.forEach(option => {
-                option.classList.remove("selected");
-            });
-
-            // Tandai pilihan baru
+            options.forEach(option => option.classList.remove("selected"));
             button.classList.add("selected");
 
-            // Perbarui status soal yang dijawab
             answeredQuestions = document.querySelectorAll(".option-button.selected").length;
             if (answeredQuestions === maxQuestions) {
                 nextButton.disabled = false;
