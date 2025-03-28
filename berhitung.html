@@ -3,13 +3,12 @@
 <head>
     <title>Belajar Berhitung</title>
     <style>
-        /* Gaya untuk bagian freeze di atas */
         .header {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
-            background-color: #fff8dc; /* Warna kuning lembut */
+            background-color: #f8f9fa;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             z-index: 1000;
             display: flex;
@@ -18,45 +17,26 @@
             padding: 10px 20px;
             border-bottom: 1px solid #ccc;
         }
-
         .header-left {
             font-size: 20px;
             font-weight: bold;
             color: #2c3e50;
         }
-
         .header-right {
             font-size: 16px;
             font-weight: bold;
         }
-
-        /* Gaya untuk konten utama */
         body {
             font-family: Arial, sans-serif;
             margin: 0;
-            padding-top: 60px; /* Menyisakan ruang untuk bagian atas */
-            background: linear-gradient(to right, #fff8dc, #fef9e7, #fff8dc); /* Gradasi kuning lembut */
-            background-size: 400% 400%;
-            animation: gradientBG 30s ease infinite;
+            padding-top: 60px;
+            background: linear-gradient(to right, #fff8dc, #fef9e7);
         }
-
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
         #question-container {
-            margin-top: 20px;
+            margin: 20px auto;
             text-align: left;
             max-width: 600px;
-            margin: 20px auto;
         }
-
-        .question {
-            margin-bottom: 20px;
-        }
-
         button {
             margin: 10px;
             padding: 10px 20px;
@@ -67,39 +47,6 @@
             border: none;
             border-radius: 5px;
         }
-
-        button:hover {
-            background-color: #2980b9;
-        }
-
-        .feedback {
-            margin-left: 15px;
-            font-size: 32px; /* Ukuran feedback lebih besar */
-            display: inline-block;
-            vertical-align: middle;
-        }
-
-        .feedback.correct {
-            color: limegreen;
-            font-weight: bold;
-        }
-
-        .feedback.wrong {
-            color: crimson;
-            font-weight: bold;
-        }
-
-        .time-display {
-            font-size: 14px;
-            color: gray;
-            margin-left: 15px;
-        }
-
-        .buttons {
-            text-align: center;
-            margin-top: 20px;
-        }
-
         button[disabled] {
             background-color: #ccc;
             cursor: not-allowed;
@@ -116,30 +63,24 @@
     </div>
 
     <div id="question-container"></div>
-    <div class="buttons">
-        <button id="next-button" onclick="goToNextPage()" disabled>Lanjut</button>
-        <button id="finish-button" onclick="finishSession()" disabled>Selesai</button>
-    </div>
+    <button id="finish-button" onclick="finishSession()">Selesai</button>
 
     <script>
-        const container = document.getElementById("question-container");
         const levelDisplay = document.getElementById("level-display");
         const scoreDisplay = document.getElementById("score-display");
         const timeDisplay = document.getElementById("time-display");
-        const nextButton = document.getElementById("next-button");
-        const finishButton = document.getElementById("finish-button");
+        const questionContainer = document.getElementById("question-container");
 
         let level = 1;
-        let correctStreak = 0;
         let score = 0;
         let totalTime = 0;
         let questionStartTime;
-        let answeredQuestions = 0;
-
         const maxQuestions = 10;
+        const results = [];
+        const sessionStartTime = new Date(); // Waktu mulai sesi
 
         function generateRandomNumber(level) {
-            const maxValues = [10, 20, 50, 100, 1000, 10000];
+            const maxValues = [10, 20, 50, 100, 1000];
             const maxValue = level <= maxValues.length ? maxValues[level - 1] : maxValues[maxValues.length - 1];
             return Math.floor(Math.random() * maxValue) + 1;
         }
@@ -151,15 +92,13 @@
         function calculateTime() {
             const now = Date.now();
             const timeSpent = Math.floor((now - questionStartTime) / 1000);
-            questionStartTime = now; // Reset timer ke waktu saat ini
             totalTime += timeSpent;
             timeDisplay.textContent = totalTime;
             return timeSpent;
         }
 
         function generateQuestions() {
-            container.innerHTML = "";
-            answeredQuestions = 0;
+            questionContainer.innerHTML = "";
 
             for (let i = 1; i <= maxQuestions; i++) {
                 const num1 = generateRandomNumber(level);
@@ -167,15 +106,10 @@
                 const correctAnswer = num1 + num2;
 
                 const questionDiv = document.createElement("div");
-                questionDiv.className = "question";
                 questionDiv.innerHTML = `<h3>${i}. Berapakah ${num1} + ${num2}?</h3>`;
 
-                const timeSpan = document.createElement("span");
-                timeSpan.className = "time-display";
-                timeSpan.id = `time-${i}`;
-
                 const answers = [correctAnswer];
-                while (answers.length < 5) { // Pilihan ganda 5 opsi
+                while (answers.length < 5) {
                     const wrongAnswer = generateRandomNumber(level) + generateRandomNumber(level);
                     if (!answers.includes(wrongAnswer)) {
                         answers.push(wrongAnswer);
@@ -187,65 +121,49 @@
                 answers.forEach(answer => {
                     const button = document.createElement("button");
                     button.textContent = answer;
-                    button.onclick = () => checkAnswer(button, answer, correctAnswer, timeSpan);
+                    button.onclick = () => checkAnswer(button, answer, correctAnswer, i);
                     questionDiv.appendChild(button);
                 });
 
-                questionDiv.appendChild(timeSpan);
-                container.appendChild(questionDiv);
+                questionContainer.appendChild(questionDiv);
             }
 
             startTimer();
         }
 
-        function checkAnswer(element, selected, correct, timeSpan) {
-            if (element.disabled) return; // Hindari tanda feedback ganda
-
+        function checkAnswer(button, selected, correct, index) {
+            if (button.disabled) return;
             const timeSpent = calculateTime();
-            timeSpan.textContent = `(${timeSpent} detik)`;
 
             const feedback = document.createElement("span");
-            feedback.className = "feedback";
+            feedback.className = selected === correct ? "correct" : "wrong";
+            feedback.textContent = selected === correct ? " ✔" : " ✘";
+            button.parentElement.appendChild(feedback);
 
-            if (selected === correct) {
-                score++;
-                correctStreak++;
-                feedback.textContent = "✔";
-                feedback.classList.add("correct");
-                if (correctStreak >= 20) {
-                    level++;
-                    correctStreak = 0;
-                    levelDisplay.textContent = level;
-                    alert("Selamat! Anda naik ke tingkat " + level);
-                }
-            } else {
-                feedback.textContent = "✘";
-                feedback.classList.add("wrong");
-                correctStreak = 0;
-            }
-
-            element.parentElement.appendChild(feedback);
-            element.disabled = true; // Matikan tombol setelah dijawab
+            if (selected === correct) score++;
+            results.push({ question: index, correct: selected === correct, timeSpent });
+            button.disabled = true;
             scoreDisplay.textContent = score;
-            answeredQuestions++;
-
-            // Aktifkan tombol jika semua soal dijawab
-            if (answeredQuestions === maxQuestions) {
-                nextButton.disabled = false;
-                finishButton.disabled = false;
-            }
-        }
-
-        function goToNextPage() {
-            alert("Berikutnya!");
-            nextButton.disabled = true;
-            finishButton.disabled = true;
-            generateQuestions();
         }
 
         function finishSession() {
-            alert(`Sesi selesai. Waktu total: ${totalTime} detik. Skor akhir: ${score}`);
-            location.reload(); // Kembali ke halaman awal
+            const sessionEndTime = new Date();
+            const correctAnswers = results.filter(r => r.correct).length;
+            const wrongAnswers = results.length - correctAnswers;
+
+            const sessionData = {
+                startTime: sessionStartTime.toLocaleString("id-ID"),
+                endTime: sessionEndTime.toLocaleString("id-ID"),
+                totalTime,
+                correctAnswers,
+                wrongAnswers
+            };
+
+            const previousResults = JSON.parse(localStorage.getItem("sessionResults")) || [];
+            previousResults.push(sessionData);
+            localStorage.setItem("sessionResults", JSON.stringify(previousResults));
+
+            window.location.href = "index.html"; // Kembali ke halaman awal
         }
 
         generateQuestions();
