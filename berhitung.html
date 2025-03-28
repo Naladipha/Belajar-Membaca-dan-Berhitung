@@ -46,62 +46,53 @@
 
         #question-container {
             display: flex;
-            flex-direction: column; /* Soal tersusun vertikal */
-            align-items: center; /* Semua soal sejajar sumbu X */
+            flex-direction: column; /* Soal disusun vertikal */
+            align-items: center;
             gap: 15px; /* Jarak antar soal */
             margin-top: 20px;
         }
 
         .question-row {
-            width: 80%; /* Lebar setiap soal sama */
+            width: 90%; /* Lebar tiap soal */
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border: 2px solid #ccc;
-            border-radius: 8px;
-            padding: 10px;
-            background-color: #fff;
+            padding: 10px 0;
         }
 
         .question-text {
-            flex: 0 0 30%; /* Proporsi untuk soal */
+            flex: 0 0 20%; /* Proporsi soal */
             text-align: left;
         }
 
         .options {
-            flex: 0 0 60%; /* Proporsi untuk pilihan */
+            flex: 0 0 75%; /* Proporsi pilihan */
             display: flex;
-            gap: 10px; /* Jarak antar tombol pilihan */
-            justify-content: center;
+            gap: 10px; /* Jarak antar pilihan */
+            justify-content: space-evenly; /* Pilihan sejajar di sumbu X */
         }
 
-        button {
-            width: 100px; /* Lebar tombol pilihan sama */
-            height: 40px; /* Tinggi tombol pilihan sama */
+        .option-button {
+            width: 100px; /* Lebar kotak sama */
+            height: 50px; /* Tinggi kotak sama */
             font-size: 14px;
             background-color: #3498db;
             color: #fff;
-            border: none;
+            border: 2px solid #ccc;
             border-radius: 5px;
             cursor: pointer;
+            text-align: center;
         }
 
-        button[disabled] {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
-
-        .feedback {
-            font-size: 18px; /* Ukuran feedback lebih kecil */
+        .option-button.selected {
+            background-color: #ffd700; /* Kuning */
+            color: red; /* Font merah tebal */
             font-weight: bold;
         }
 
-        .feedback.correct {
-            color: limegreen;
-        }
-
-        .feedback.wrong {
-            color: crimson;
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
         }
     </style>
 </head>
@@ -178,25 +169,17 @@
 
                 const questionText = document.createElement("div");
                 questionText.className = "question-text";
-                questionText.innerHTML = `<h3>[${i}] ${num1} + ${num2}</h3>`; // Nomor soal dalam tanda []
+                questionText.innerHTML = `<h3>[${i}] ${num1} + ${num2}</h3>`;
 
                 const options = document.createElement("div");
                 options.className = "options";
 
-                const answers = [correctAnswer];
-                while (answers.length < 5) {
-                    const wrongAnswer = generateRandomNumber(level) + generateRandomNumber(level);
-                    if (!answers.includes(wrongAnswer)) {
-                        answers.push(wrongAnswer);
-                    }
-                }
-
-                answers.sort(() => Math.random() - 0.5);
-
-                answers.forEach(answer => {
+                const answers = ["A", "B", "C", "D", "E"]; // Pilihan tetap A, B, C, D, E
+                answers.forEach((answer, idx) => {
                     const button = document.createElement("button");
+                    button.className = "option-button";
                     button.textContent = answer;
-                    button.onclick = () => checkAnswer(button, answer, correctAnswer, i);
+                    button.onclick = () => selectOption(button, i);
                     options.appendChild(button);
                 });
 
@@ -209,26 +192,18 @@
             startTimer();
         }
 
-        function checkAnswer(button, selected, correct, index) {
-            if (button.disabled) return;
+        function selectOption(button, questionIndex) {
+            // Batalkan pilihan sebelumnya
+            const options = questionContainer.querySelectorAll(`.question-row:nth-child(${questionIndex}) .option-button`);
+            options.forEach(option => {
+                option.classList.remove("selected");
+            });
 
-            const feedback = document.createElement("span");
-            feedback.className = "feedback";
+            // Tandai pilihan baru
+            button.classList.add("selected");
 
-            if (selected === correct) {
-                score++;
-                feedback.textContent = "✔";
-                feedback.classList.add("correct");
-            } else {
-                feedback.textContent = "✘";
-                feedback.classList.add("wrong");
-            }
-
-            button.parentElement.appendChild(feedback);
-            button.disabled = true; // Disable button after answering
-            scoreDisplay.textContent = score;
-
-            answeredQuestions++;
+            // Perbarui status soal yang dijawab
+            answeredQuestions = document.querySelectorAll(".option-button.selected").length;
             if (answeredQuestions === maxQuestions) {
                 nextButton.disabled = false;
                 finishButton.disabled = false;
