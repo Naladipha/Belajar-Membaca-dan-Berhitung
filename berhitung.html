@@ -6,9 +6,10 @@
         body {
             font-family: Arial, sans-serif;
             text-align: center;
-            background-color: #f9f9f9;
             margin: 0;
             padding: 20px;
+            background: url('dinosaur-background.gif') no-repeat center center fixed; /* Animasi hewan purba */
+            background-size: cover;
         }
         h1 {
             color: #2c3e50;
@@ -16,7 +17,7 @@
         #question-container {
             margin-top: 20px;
         }
-        button {
+        button, input[type="text"] {
             margin: 10px;
             padding: 10px 20px;
             font-size: 16px;
@@ -29,7 +30,13 @@
         button:hover {
             background-color: #2980b9;
         }
-        #score {
+        input[type="text"] {
+            background-color: #fff;
+            color: #000;
+            border: 1px solid #ccc;
+            text-align: center;
+        }
+        #score, #time-statistics {
             margin-top: 20px;
             font-size: 18px;
         }
@@ -39,72 +46,126 @@
     <h1>Belajar Berhitung</h1>
     <div id="question-container"></div>
     <div id="score">Skor: <span id="score-display">0</span></div>
+    <div id="time-statistics">Waktu Total: <span id="time-display">0</span> detik</div>
     <script>
         const container = document.getElementById("question-container");
         const scoreDisplay = document.getElementById("score-display");
+        const timeDisplay = document.getElementById("time-display");
 
         let level = 1; // Mulai dari level 1
         let correctStreak = 0; // Jawaban benar berturut-turut
         let score = 0;
+        let totalTime = 0; // Waktu total untuk menjawab semua soal
+        let questionStartTime; // Timestamp awal untuk setiap soal
 
+        let questionNumber = 1; // Pertanyaan ke-berapa (dari 10)
+        const maxQuestions = 10; // Total pertanyaan per halaman
+
+        // Fungsi untuk menghasilkan bilangan random sesuai level
         function generateRandomNumber(level) {
-            switch (level) {
-                case 1: return Math.floor(Math.random() * 10) + 1; // Maksimal 10
-                case 2: return Math.floor(Math.random() * 20) + 1; // Maksimal 20
-                case 3: return Math.floor(Math.random() * 50) + 1; // Maksimal 50
-                case 4: return Math.floor(Math.random() * 100) + 1; // Maksimal 100
-                case 5: return Math.floor(Math.random() * 1000) + 1; // Maksimal 1000
-                default: return Math.floor(Math.random() * 10000) + 1; // Tak terbatas
-            }
+            const maxValues = [10, 20, 50, 100, 1000, 10000];
+            const maxValue = level <= maxValues.length ? maxValues[level - 1] : maxValues[maxValues.length - 1];
+            return Math.floor(Math.random() * maxValue) + 1;
         }
 
+        // Fungsi untuk memulai timer setiap pertanyaan
+        function startTimer() {
+            questionStartTime = Date.now(); // Waktu mulai soal ini
+        }
+
+        // Fungsi untuk menghitung waktu yang dihabiskan untuk menjawab
+        function calculateTime() {
+            const timeSpent = Math.floor((Date.now() - questionStartTime) / 1000); // Waktu dalam detik
+            totalTime += timeSpent;
+            timeDisplay.textContent = totalTime;
+        }
+
+        // Fungsi untuk membuat satu soal
         function generateQuestion() {
-            const num1 = generateRandomNumber(level);
-            const num2 = generateRandomNumber(level);
-            const correctAnswer = num1 + num2;
+            container.innerHTML = ""; // Hapus soal sebelumnya
 
-            const question = document.createElement("div");
-            question.innerHTML = `<h3>Berapakah ${num1} + ${num2}?</h3>`;
-
-            const answers = [correctAnswer];
-            while (answers.length < 4) {
-                const wrongAnswer = generateRandomNumber(level) + generateRandomNumber(level);
-                if (!answers.includes(wrongAnswer)) {
-                    answers.push(wrongAnswer);
-                }
+            if (questionNumber > maxQuestions) {
+                alert("Semua pertanyaan selesai! Total waktu: " + totalTime + " detik. Skor akhir: " + score);
+                return; // Selesai
             }
 
-            answers.sort(() => Math.random() - 0.5);
+            // Tampilkan 5 soal pertama (pilihan ganda)
+            if (questionNumber <= 5) {
+                const num1 = generateRandomNumber(level);
+                const num2 = generateRandomNumber(level);
+                const correctAnswer = num1 + num2;
 
-            answers.forEach(answer => {
-                const button = document.createElement("button");
-                button.textContent = answer;
-                button.onclick = () => checkAnswer(answer, correctAnswer);
-                question.appendChild(button);
-            });
+                const question = document.createElement("div");
+                question.innerHTML = `<h3>${questionNumber}. Berapakah ${num1} + ${num2}?</h3>`;
 
-            container.innerHTML = "";
-            container.appendChild(question);
+                const answers = [correctAnswer];
+                while (answers.length < 4) {
+                    const wrongAnswer = generateRandomNumber(level) + generateRandomNumber(level);
+                    if (!answers.includes(wrongAnswer)) {
+                        answers.push(wrongAnswer);
+                    }
+                }
+
+                answers.sort(() => Math.random() - 0.5);
+
+                answers.forEach(answer => {
+                    const button = document.createElement("button");
+                    button.textContent = answer;
+                    button.onclick = () => checkAnswer(answer, correctAnswer);
+                    question.appendChild(button);
+                });
+
+                container.appendChild(question);
+
+            // Tampilkan 5 soal terakhir (isian teks)
+            } else {
+                const num1 = generateRandomNumber(level);
+                const num2 = generateRandomNumber(level);
+                const correctAnswer = num1 + num2;
+
+                const question = document.createElement("div");
+                question.innerHTML = `<h3>${questionNumber}. Berapakah ${num1} + ${num2}?</h3>`;
+
+                const input = document.createElement("input");
+                input.type = "text";
+                input.id = `answer-input-${questionNumber}`;
+                input.placeholder = "Ketik jawaban di sini";
+
+                question.appendChild(input);
+                container.appendChild(question);
+
+                setTimeout(() => {
+                    const userAnswer = parseInt(document.getElementById(`answer-input-${questionNumber}`).value, 10);
+                    checkAnswer(userAnswer, correctAnswer);
+                }, 5000); // Tunggu 5 detik sebelum memeriksa jawaban
+            }
+
+            startTimer(); // Mulai timer untuk soal ini
         }
 
+        // Fungsi untuk memeriksa jawaban
         function checkAnswer(selected, correct) {
+            calculateTime(); // Hitung waktu menjawab
+
             if (selected === correct) {
                 correctStreak++;
                 score++;
                 scoreDisplay.textContent = score;
-                if (correctStreak >= 20) {
+                if (correctStreak >= 20) { // Naik level jika benar 20x berturut-turut
                     level++;
                     correctStreak = 0;
                     alert("Selamat! Anda naik ke tingkat " + level);
                 }
-                generateQuestion();
             } else {
-                correctStreak = 0;
+                correctStreak = 0; // Reset streak jika salah
                 alert("Salah! Jawaban yang benar adalah " + correct);
-                generateQuestion();
             }
+
+            questionNumber++; // Lanjut ke soal berikutnya
+            generateQuestion(); // Buat soal baru
         }
 
+        // Mulai dengan soal pertama
         generateQuestion();
     </script>
 </body>
