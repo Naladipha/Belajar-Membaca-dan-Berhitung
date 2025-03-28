@@ -435,7 +435,9 @@
 alert(`Sesi selesai!\nTingkat akhir: ${currentTier + 1}\nTotal soal: ${currentQuestionNumber}\n` + 
       `Jawaban benar: ${totalScore}\nRuntutan terpanjang: ${maxStreak}\n` +
       `Total waktu: ${totalTime}s\nRata-rata waktu per soal: ${avgTime}s`);
-location.href = "index.html"; // Secara otomatis kembali ke halaman utama
+setTimeout(() => {
+    location.href = "index.html"; // Kembali ke halaman utama setelah 3 detik
+}, 3000); // Tunggu 3 detik
         }
 
         // Inisialisasi pertama
