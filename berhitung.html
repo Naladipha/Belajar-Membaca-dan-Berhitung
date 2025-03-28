@@ -3,6 +3,7 @@
 <head>
     <title>Belajar Berhitung</title>
     <style>
+        /* Gaya bagian header */
         .header {
             position: fixed;
             top: 0;
@@ -17,28 +18,57 @@
             padding: 10px 20px;
             border-bottom: 1px solid #ccc;
         }
+
         .header-left {
             font-size: 20px;
             font-weight: bold;
             color: #2c3e50;
         }
+
+        .header-center {
+            font-size: 16px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
         .header-right {
             font-size: 16px;
             font-weight: bold;
         }
+
+        /* Gaya untuk body */
         body {
             font-family: Arial, sans-serif;
             margin: 0;
-            padding-top: 60px;
+            padding-top: 60px; /* Ruang untuk header */
             background: linear-gradient(to right, #fff8dc, #fef9e7);
         }
+
         #question-container {
             margin: 20px auto;
-            text-align: left;
-            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            max-width: 800px;
         }
+
+        .question {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .question-text {
+            flex: 1;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+        }
+
         button {
-            margin: 10px;
+            margin: 5px;
             padding: 10px 20px;
             font-size: 16px;
             cursor: pointer;
@@ -47,37 +77,69 @@
             border: none;
             border-radius: 5px;
         }
+
         button[disabled] {
             background-color: #ccc;
             cursor: not-allowed;
+        }
+
+        .feedback {
+            margin-left: 15px;
+            font-size: 32px; /* Ukuran feedback lebih besar */
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .feedback.correct {
+            color: limegreen;
+            font-weight: bold;
+        }
+
+        .feedback.wrong {
+            color: crimson;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
     <div class="header">
         <div class="header-left">Tingkat: <span id="level-display">1</span></div>
+        <div class="header-center">Waktu Berjalan: <span id="runtime-display">00:00</span></div>
         <div class="header-right">
-            Total Waktu: <span id="time-display">0</span> detik |
-            Skor: <span id="score-display">0</span>
+            Total Waktu: <span id="time-display">0</span> detik | Skor: <span id="score-display">0</span>
         </div>
     </div>
 
     <div id="question-container"></div>
-    <button id="finish-button" onclick="finishSession()">Selesai</button>
+    <div class="buttons" style="text-align: center; margin-top: 20px;">
+        <button id="next-button" onclick="goToNextPage()" disabled>Lanjut</button>
+        <button id="finish-button" onclick="finishSession()" disabled>Selesai</button>
+    </div>
 
     <script>
         const levelDisplay = document.getElementById("level-display");
         const scoreDisplay = document.getElementById("score-display");
         const timeDisplay = document.getElementById("time-display");
+        const runtimeDisplay = document.getElementById("runtime-display");
         const questionContainer = document.getElementById("question-container");
+        const nextButton = document.getElementById("next-button");
+        const finishButton = document.getElementById("finish-button");
 
         let level = 1;
         let score = 0;
         let totalTime = 0;
+        let runtime = 0;
         let questionStartTime;
+        let answeredQuestions = 0;
         const maxQuestions = 10;
-        const results = [];
-        const sessionStartTime = new Date(); // Waktu mulai sesi
+
+        // Timer runtime berjalan
+        setInterval(() => {
+            runtime++;
+            const minutes = String(Math.floor(runtime / 60)).padStart(2, "0");
+            const seconds = String(runtime % 60).padStart(2, "0");
+            runtimeDisplay.textContent = `${minutes}:${seconds}`;
+        }, 1000);
 
         function generateRandomNumber(level) {
             const maxValues = [10, 20, 50, 100, 1000];
@@ -92,6 +154,7 @@
         function calculateTime() {
             const now = Date.now();
             const timeSpent = Math.floor((now - questionStartTime) / 1000);
+            questionStartTime = now; // Reset timer untuk soal berikutnya
             totalTime += timeSpent;
             timeDisplay.textContent = totalTime;
             return timeSpent;
@@ -99,6 +162,7 @@
 
         function generateQuestions() {
             questionContainer.innerHTML = "";
+            answeredQuestions = 0;
 
             for (let i = 1; i <= maxQuestions; i++) {
                 const num1 = generateRandomNumber(level);
@@ -106,7 +170,14 @@
                 const correctAnswer = num1 + num2;
 
                 const questionDiv = document.createElement("div");
-                questionDiv.innerHTML = `<h3>${i}. Berapakah ${num1} + ${num2}?</h3>`;
+                questionDiv.className = "question";
+
+                const questionText = document.createElement("div");
+                questionText.className = "question-text";
+                questionText.innerHTML = `<h3>${i}. Berapakah ${num1} + ${num2}?</h3>`;
+
+                const options = document.createElement("div");
+                options.className = "options";
 
                 const answers = [correctAnswer];
                 while (answers.length < 5) {
@@ -122,9 +193,11 @@
                     const button = document.createElement("button");
                     button.textContent = answer;
                     button.onclick = () => checkAnswer(button, answer, correctAnswer, i);
-                    questionDiv.appendChild(button);
+                    options.appendChild(button);
                 });
 
+                questionDiv.appendChild(questionText);
+                questionDiv.appendChild(options);
                 questionContainer.appendChild(questionDiv);
             }
 
@@ -133,37 +206,41 @@
 
         function checkAnswer(button, selected, correct, index) {
             if (button.disabled) return;
+
             const timeSpent = calculateTime();
 
             const feedback = document.createElement("span");
-            feedback.className = selected === correct ? "correct" : "wrong";
-            feedback.textContent = selected === correct ? " ✔" : " ✘";
-            button.parentElement.appendChild(feedback);
+            feedback.className = "feedback";
 
-            if (selected === correct) score++;
-            results.push({ question: index, correct: selected === correct, timeSpent });
-            button.disabled = true;
+            if (selected === correct) {
+                score++;
+                feedback.textContent = "✔";
+                feedback.classList.add("correct");
+            } else {
+                feedback.textContent = "✘";
+                feedback.classList.add("wrong");
+            }
+
+            button.parentElement.parentElement.appendChild(feedback);
+            button.disabled = true; // Disable button after answer
             scoreDisplay.textContent = score;
+
+            answeredQuestions++;
+            if (answeredQuestions === maxQuestions) {
+                nextButton.disabled = false;
+                finishButton.disabled = false;
+            }
+        }
+
+        function goToNextPage() {
+            nextButton.disabled = true;
+            finishButton.disabled = true;
+            generateQuestions();
         }
 
         function finishSession() {
-            const sessionEndTime = new Date();
-            const correctAnswers = results.filter(r => r.correct).length;
-            const wrongAnswers = results.length - correctAnswers;
-
-            const sessionData = {
-                startTime: sessionStartTime.toLocaleString("id-ID"),
-                endTime: sessionEndTime.toLocaleString("id-ID"),
-                totalTime,
-                correctAnswers,
-                wrongAnswers
-            };
-
-            const previousResults = JSON.parse(localStorage.getItem("sessionResults")) || [];
-            previousResults.push(sessionData);
-            localStorage.setItem("sessionResults", JSON.stringify(previousResults));
-
-            window.location.href = "index.html"; // Kembali ke halaman awal
+            alert(`Sesi selesai. Total waktu: ${totalTime} detik. Skor akhir: ${score}`);
+            location.reload(); // Reload halaman
         }
 
         generateQuestions();
