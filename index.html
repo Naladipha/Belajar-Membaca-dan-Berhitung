@@ -6,13 +6,23 @@
         body {
             font-family: Arial, sans-serif;
             text-align: center;
-            background-color: #f9f9f9;
             margin: 0;
             padding: 20px;
+            background: linear-gradient(to right, #ff9a9e, #fad0c4, #fbc2eb, #8fd3f4, #84fab0); /* Latar belakang warna-warni */
+            background-size: 400% 400%; /* Untuk animasi gradasi */
+            animation: gradientBG 15s ease infinite;
         }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
         h1 {
             color: #2c3e50;
         }
+
         button {
             margin: 20px;
             padding: 15px 30px;
@@ -23,16 +33,44 @@
             border: none;
             border-radius: 5px;
             text-transform: uppercase;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
+
         button:hover {
             background-color: #2980b9;
+            transform: scale(1.05);
+        }
+
+        audio {
+            display: none; /* Sembunyikan elemen audio dari layar */
         }
     </style>
 </head>
 <body>
+    <audio id="background-audio" autoplay loop>
+        <source src="background-music.mp3" type="audio/mpeg"> <!-- Ganti file ini dengan suara musik anak-anak -->
+        Browser Anda tidak mendukung audio.
+    </audio>
+
+    <audio id="button-audio">
+        <source src="button-click.mp3" type="audio/mpeg"> <!-- Ganti file ini dengan suara klik -->
+        Browser Anda tidak mendukung audio.
+    </audio>
+
     <h1>Selamat Datang di Aplikasi Belajar Anak</h1>
     <p>Pilih salah satu mode pembelajaran:</p>
-    <button onclick="window.location.href='berhitung.html'">Belajar Berhitung</button>
-    <button onclick="window.location.href='membaca.html'">Belajar Membaca</button>
+    <button onclick="playSoundAndNavigate('berhitung.html')">Belajar Berhitung</button>
+    <button onclick="playSoundAndNavigate('membaca.html')">Belajar Membaca</button>
+
+    <script>
+        // Memutar efek suara tombol saat diklik
+        function playSoundAndNavigate(targetUrl) {
+            const buttonSound = document.getElementById('button-audio');
+            buttonSound.play(); // Putar suara tombol
+            setTimeout(() => {
+                window.location.href = targetUrl; // Navigasi setelah suara diputar
+            }, 300); // Memberikan jeda agar suara selesai sebelum pindah halaman
+        }
+    </script>
 </body>
 </html>
