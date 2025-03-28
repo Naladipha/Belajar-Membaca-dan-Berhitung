@@ -115,27 +115,28 @@
         }
 
         .option-button.correct {
-            background-color: #a8e6cf; /* Hijau muda */
+            background-color: #a8e6cf;
             color: #333;
         }
 
         .option-button.wrong {
-            background-color: #ff6b6b; /* Merah tua */
+            background-color: #ff6b6b;
             color: white;
         }
 
         .option-button.correct-answer {
-            background-color: #a8e6cf; /* Hijau muda */
+            background-color: #a8e6cf;
             color: #333;
         }
 
-        .option-button.correct::after {
+        .option-button.correct::after,
+        .option-button.correct-answer::after {
             content: "✓";
             position: absolute;
             right: 15px;
             font-size: 24px;
             font-weight: bold;
-            color: #1e8449; /* Hijau tua */
+            color: #1e8449;
         }
 
         .option-button.wrong::after {
@@ -144,16 +145,7 @@
             right: 15px;
             font-size: 24px;
             font-weight: bold;
-            color: #c0392b; /* Merah terang */
-        }
-
-        .option-button.correct-answer::after {
-            content: "✓";
-            position: absolute;
-            right: 15px;
-            font-size: 24px;
-            font-weight: bold;
-            color: #1e8449; /* Hijau tua */
+            color: #c0392b;
         }
 
         .buttons {
@@ -170,10 +162,6 @@
             cursor: pointer;
             margin: 0 10px;
             transition: all 0.3s ease;
-        }
-
-        #next-button {
-            display: none;
         }
 
         #finish-button {
@@ -222,6 +210,45 @@
             width: 0%;
             transition: width 0.5s ease;
         }
+
+        .level-up-notification {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #2ecc71;
+            color: white;
+            padding: 20px 40px;
+            border-radius: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 2000;
+            animation: fadeInOut 3s ease-in-out;
+        }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; }
+            20% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        @media (max-width: 600px) {
+            .options {
+                grid-template-columns: 1fr;
+            }
+            
+            .header {
+                flex-direction: column;
+                padding: 5px;
+            }
+            
+            .header-left, .header-center, .header-right {
+                text-align: center;
+                margin: 2px 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -242,7 +269,7 @@
 
     <div id="question-container"></div>
     <div class="buttons">
-        <button id="finish-button" class="action-button" onclick="finishSession()">Selesai</button>
+        <button id="finish-button" class="action-button">Selesai</button>
     </div>
 
     <script>
@@ -257,9 +284,43 @@
         const tierProgressBar = document.getElementById("tier-progress-bar");
         const tierStreakDisplay = document.getElementById("tier-streak-display");
 
-        // Sistem tingkat
-         const TIER_LIMITS = [10, 20, 50, 100, 1000, Infinity];
-         const STREAK_TO_ADVANCE = 20;
+        // Konfigurasi tingkat
+        const STREAK_TO_ADVANCE = 20;
+        const LEVEL_CONFIG = [
+            { // Tingkat 1
+                operations: ['addition'],
+                addition: { min: 1, max: 10 }
+            },
+            { // Tingkat 2
+                operations: ['addition', 'subtraction'],
+                addition: { min: 10, max: 25 },
+                subtraction: { minResult: 1 }
+            },
+            { // Tingkat 3
+                operations: ['addition', 'subtraction'],
+                addition: { min: 25, max: 100 },
+                subtraction: { minResult: 25 }
+            },
+            { // Tingkat 4
+                operations: ['addition', 'subtraction', 'multiplication'],
+                addition: { min: 100, max: 500 },
+                subtraction: { minResult: 100 },
+                multiplication: { max: 25 }
+            },
+            { // Tingkat 5
+                operations: ['addition', 'subtraction', 'multiplication'],
+                addition: { min: 500, max: 1000 },
+                subtraction: { minResult: 500 },
+                multiplication: { max: 100 }
+            },
+            { // Tingkat 6
+                operations: ['addition', 'subtraction', 'multiplication', 'division'],
+                addition: { min: 1000, max: 100000 },
+                subtraction: { minResult: 1000 },
+                multiplication: { max: 500 },
+                division: { minResult: 1 }
+            }
+        ];
 
         // Variabel state
         let currentTier = 0;
@@ -272,18 +333,26 @@
         let totalTime = 0;
         let questionTimes = [];
         let currentQuestion = null;
+        let sessionStartTime = new Date();
+        let correctAnswers = 0;
+        let wrongAnswers = 0;
 
-        // Fungsi pembantu
-        function getMaxNumberForTier(tier) {
-            return TIER_LIMITS[tier];
+        // Fungsi untuk memulai aplikasi
+        function init() {
+            generateQuestion();
+            setupEventListeners();
         }
 
-        function generateRandomNumber(maxValue) {
-            return Math.floor(Math.random() * maxValue) + 1;
+        function setupEventListeners() {
+            finishButton.addEventListener("click", () => {
+                const confirmFinish = confirm("Apakah Anda yakin ingin menyelesaikan sesi ini?");
+                if (confirmFinish) {
+                    finishSession();
+                }
+            });
         }
 
         function updateProgressBars() {
-            // Progress tingkat
             const tierProgressPercentage = (currentTierStreak / STREAK_TO_ADVANCE) * 100;
             tierProgressBar.style.width = `${tierProgressPercentage}%`;
             tierStreakDisplay.textContent = `${currentTierStreak}`;
@@ -292,13 +361,42 @@
         function generateQuestion() {
             questionContainer.innerHTML = "";
             
-            const maxNumber = getMaxNumberForTier(currentTier);
-            const num1 = generateRandomNumber(maxNumber / 2);
-            const num2 = generateRandomNumber(maxNumber / 2);
-            const correctAnswer = num1 + num2;
-
-            // Pastikan hasil tidak melebihi batas tingkat
-            const finalAnswer = Math.min(correctAnswer, maxNumber);
+            const config = LEVEL_CONFIG[currentTier];
+            const operation = config.operations[Math.floor(Math.random() * config.operations.length)];
+            
+            let questionText, correctAnswer;
+            
+            switch (operation) {
+                case 'addition':
+                    const add1 = generateRandomNumber(config.addition.min, config.addition.max);
+                    const add2 = generateRandomNumber(config.addition.min, config.addition.max - add1);
+                    correctAnswer = add1 + add2;
+                    questionText = `${add1} + ${add2}`;
+                    break;
+                    
+                case 'subtraction':
+                    const subResult = generateRandomNumber(config.subtraction.minResult, 1000);
+                    const sub2 = generateRandomNumber(1, subResult - 1);
+                    const sub1 = subResult + sub2;
+                    correctAnswer = sub1 - sub2;
+                    questionText = `${sub1} - ${sub2}`;
+                    break;
+                    
+                case 'multiplication':
+                    const mul1 = generateRandomNumber(1, config.multiplication.max);
+                    const mul2 = generateRandomNumber(1, Math.floor(config.multiplication.max / mul1));
+                    correctAnswer = mul1 * mul2;
+                    questionText = `${mul1} × ${mul2}`;
+                    break;
+                    
+                case 'division':
+                    const divResult = generateRandomNumber(config.division.minResult, 50);
+                    const div2 = generateRandomNumber(1, 20);
+                    const div1 = divResult * div2;
+                    correctAnswer = div1 / div2;
+                    questionText = `${div1} ÷ ${div2}`;
+                    break;
+            }
 
             const questionRow = document.createElement("div");
             questionRow.className = "question-row";
@@ -308,78 +406,84 @@
             questionTimer.textContent = "Waktu: 0s";
             questionRow.appendChild(questionTimer);
 
-            const questionText = document.createElement("div");
-            questionText.className = "question-text";
-            questionText.innerHTML = `${num1} + ${num2} = ?`;
-            questionRow.appendChild(questionText);
+            const questionElement = document.createElement("div");
+            questionElement.className = "question-text";
+            questionElement.textContent = questionText;
+            questionRow.appendChild(questionElement);
 
             const options = document.createElement("div");
             options.className = "options";
 
-            const answers = [finalAnswer];
-            while (answers.length < 4) {
-                const wrongAnswer = generateRandomNumber(maxNumber);
-                if (!answers.includes(wrongAnswer) && wrongAnswer !== finalAnswer) {
-                    answers.push(wrongAnswer);
-                }
-            }
-
-            // Acak urutan jawaban
-            answers.sort(() => Math.random() - 0.5);
+            const answers = generateAnswerOptions(correctAnswer, operation, currentTier);
 
             answers.forEach(answer => {
                 const button = document.createElement("button");
                 button.className = "option-button";
                 button.textContent = answer;
-                button.onclick = () => checkAnswer(button, finalAnswer, answer);
+                button.onclick = () => checkAnswer(button, correctAnswer, answer);
                 options.appendChild(button);
             });
 
             questionRow.appendChild(options);
             questionContainer.appendChild(questionRow);
             
-            // Mulai timer untuk soal ini
             questionStartTime = Date.now();
-            startQuestionTimer(questionTimer);
+            const timerInterval = setInterval(() => {
+                const seconds = Math.floor((Date.now() - questionStartTime) / 1000);
+                questionTimer.textContent = `Waktu: ${seconds}s`;
+            }, 1000);
             
-            // Update nomor soal
             questionNumberDisplay.textContent = currentQuestionNumber;
             levelDisplay.textContent = currentTier + 1;
             
             currentQuestion = {
                 row: questionRow,
                 timer: questionTimer,
-                correctAnswer: finalAnswer,
-                options: options
+                timerInterval: timerInterval,
+                correctAnswer: correctAnswer
             };
         }
 
-        function startQuestionTimer(timerElement) {
-            let seconds = 0;
-            const timerInterval = setInterval(() => {
-                seconds++;
-                timerElement.textContent = `Waktu: ${seconds}s`;
-            }, 1000);
+        function generateRandomNumber(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function generateAnswerOptions(correctAnswer, operation, tier) {
+            const answers = [correctAnswer];
+            const maxDeviation = Math.max(1, Math.floor(correctAnswer * 0.2));
             
-            return timerInterval;
+            while (answers.length < 5) {
+                let wrongAnswer;
+                const deviation = generateRandomNumber(1, maxDeviation);
+                
+                if (Math.random() > 0.5) {
+                    wrongAnswer = correctAnswer + deviation;
+                } else {
+                    wrongAnswer = Math.max(1, correctAnswer - deviation);
+                }
+                
+                // Pastikan jawaban salah tidak sama dengan jawaban benar dan unik
+                if (wrongAnswer !== correctAnswer && !answers.includes(wrongAnswer)) {
+                    answers.push(wrongAnswer);
+                }
+            }
+
+            return answers.sort(() => Math.random() - 0.5);
         }
 
         function checkAnswer(button, correctAnswer, selectedAnswer) {
-            // Hentikan timer
             clearInterval(currentQuestion.timerInterval);
             
-            // Hitung waktu pengerjaan
             const endTime = Date.now();
             const timeSpent = Math.floor((endTime - questionStartTime) / 1000);
             questionTimes.push(timeSpent);
             totalTime += timeSpent;
             timeDisplay.textContent = totalTime;
             
-            // Tandai semua jawaban
             const options = currentQuestion.row.querySelectorAll('.option-button');
             options.forEach(option => {
                 option.disabled = true;
-                const optionValue = parseInt(option.textContent);
+                const optionValue = parseFloat(option.textContent);
                 
                 if (optionValue === correctAnswer) {
                     option.classList.add("correct-answer");
@@ -388,84 +492,102 @@
                 }
             });
             
-            // Update skor dan streak
             if (selectedAnswer === correctAnswer) {
-                totalScore++;
-                currentStreak++;
-                currentTierStreak++;
-                
-                // Cek apakah naik tingkat
-                if (currentTierStreak >= STREAK_TO_ADVANCE && currentTier < TIER_LIMITS.length - 1) {
-                    currentTier++;
-                    currentTierStreak = 0;
-                    alert(`Selamat! Anda naik ke Tingkat ${currentTier + 1} (Penjumlahan hingga ${TIER_LIMITS[currentTier]}))`);
-                }
-                
-                if (currentStreak > maxStreak) {
-                    maxStreak = currentStreak;
-                }
-                
-                scoreDisplay.textContent = totalScore;
-                streakDisplay.textContent = `Beruntun: ${currentStreak}`;
-                streakDisplay.style.display = "block";
-                streakDisplay.style.backgroundColor = "#2ecc71";
+                handleCorrectAnswer();
             } else {
-                currentStreak = 0;
-                currentTierStreak = 0;
-                streakDisplay.textContent = `Beruntun: 0`;
-                streakDisplay.style.display = "block";
-                streakDisplay.style.backgroundColor = "#e74c3c";
+                handleWrongAnswer();
             }
             
-            // Update progress bars
             updateProgressBars();
             
-            // Lanjut ke soal berikutnya hampir instan
             setTimeout(() => {
-            currentQuestionNumber++;
-            generateQuestion();
-            }, 10); // 10 milidetik
+                currentQuestionNumber++;
+                generateQuestion();
+            }, 20); // Interval 20ms ke soal berikutnya
+        }
 
+        function handleCorrectAnswer() {
+            totalScore++;
+            correctAnswers++;
+            currentStreak++;
+            currentTierStreak++;
+            
+            if (currentTierStreak >= STREAK_TO_ADVANCE && currentTier < LEVEL_CONFIG.length - 1) {
+                showLevelUpNotification();
+                currentTier++;
+                currentTierStreak = 0;
+            }
+            
+            if (currentStreak > maxStreak) {
+                maxStreak = currentStreak;
+            }
+            
+            scoreDisplay.textContent = totalScore;
+            streakDisplay.textContent = `Beruntun: ${currentStreak}`;
+            streakDisplay.style.display = "block";
+            streakDisplay.style.backgroundColor = "#2ecc71";
+        }
+
+        function showLevelUpNotification() {
+            const notification = document.createElement("div");
+            notification.className = "level-up-notification";
+            notification.textContent = `Selamat! Naik ke Tingkat ${currentTier + 2}`;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        function handleWrongAnswer() {
+            wrongAnswers++;
+            currentStreak = 0;
+            currentTierStreak = Math.max(0, currentTierStreak - 1);
+            streakDisplay.textContent = `Beruntun: 0`;
+            streakDisplay.style.display = "block";
+            streakDisplay.style.backgroundColor = "#e74c3c";
         }
 
         function finishSession() {
-    console.log("Fungsi finishSession() dipanggil.");
+            const avgTime = questionTimes.length > 0 
+                ? Math.round(questionTimes.reduce((a, b) => a + b, 0) / questionTimes.length) 
+                : 0;
 
-    const avgTime = questionTimes.length > 0 
-        ? Math.round(questionTimes.reduce((a, b) => a + b, 0) / questionTimes.length) 
-        : 0;
+            const sessionData = {
+                date: new Date().toLocaleString("id-ID"),
+                totalQuestions: currentQuestionNumber - 1,
+                correctAnswers: correctAnswers,
+                accuracy: Math.round((correctAnswers / (currentQuestionNumber - 1)) * 100),
+                maxStreak: maxStreak,
+                finalTier: currentTier + 1,
+                totalTime: totalTime,
+                averageTime: avgTime
+            };
 
-    const sessionEndTime = new Date();
-    const sessionData = {
-        startTime: sessionStartTime.toLocaleString("id-ID"),
-        endTime: sessionEndTime.toLocaleString("id-ID"),
-        totalTime: Math.floor((sessionEndTime - sessionStartTime) / 1000),
-        correctAnswers: correctAnswers,
-        wrongAnswers: wrongAnswers
-    };
+            try {
+                const previousResults = JSON.parse(localStorage.getItem("mathQuizResults")) || [];
+                previousResults.push(sessionData);
+                localStorage.setItem("mathQuizResults", JSON.stringify(previousResults));
+            } catch (e) {
+                console.error("Gagal menyimpan hasil:", e);
+            }
 
-    console.log("Data sesi yang akan disimpan:", sessionData);
+            const resultMessage = `Hasil Sesi:\n
+Tingkat akhir: ${currentTier + 1}
+Total soal: ${currentQuestionNumber - 1}
+Jawaban benar: ${correctAnswers}
+Akurasi: ${sessionData.accuracy}%
+Runtutan terpanjang: ${maxStreak}
+Total waktu: ${totalTime} detik
+Rata-rata waktu: ${avgTime} detik/soal`;
 
-    // Simpan data ke LocalStorage
-    const previousResults = JSON.parse(localStorage.getItem("sessionResults")) || [];
-    previousResults.push(sessionData);
-    localStorage.setItem("sessionResults", JSON.stringify(previousResults));
-    console.log("Data sesi berhasil disimpan ke LocalStorage.");
+            if (confirm(`${resultMessage}\n\nKembali ke menu utama?`)) {
+                window.location.href = "index.html";
+            }
+        }
 
-    // Tampilkan hasil sesi
-    alert(`Sesi selesai!\nTingkat akhir: ${currentTier + 1}\nTotal soal: ${currentQuestionNumber}\n` + 
-          `Jawaban benar: ${totalScore}\nRuntutan terpanjang: ${maxStreak}\n` +
-          `Total waktu: ${totalTime}s\nRata-rata waktu per soal: ${avgTime}s`);
-
-    // Tunggu 2 detik sebelum mengalihkan ke halaman utama
-    setTimeout(() => {
-        console.log("Mengalihkan ke index.html...");
-        location.href = "index.html";
-    }, 2000);
-}
-
-        // Inisialisasi pertama
-        generateQuestion();
+        // Mulai aplikasi
+        init();
     </script>
 </body>
 </html>
