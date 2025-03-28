@@ -420,11 +420,12 @@
             // Update progress bars
             updateProgressBars();
             
-            // Lanjut ke soal berikutnya setelah 1 detik
+            // Lanjut ke soal berikutnya hampir instan
             setTimeout(() => {
-                currentQuestionNumber++;
-                generateQuestion();
-            }, 1);
+            currentQuestionNumber++;
+            generateQuestion();
+            }, 10); // 10 milidetik
+
         }
 
         function finishSession() {
