@@ -355,11 +355,11 @@
         }
 
         function startQuestionTimer(timerElement) {
-            let seconds = 0;
+            let seconds = 0.01 ms;
             const timerInterval = setInterval(() => {
                 seconds++;
                 timerElement.textContent = `Waktu: ${seconds}s`;
-            }, 10);
+            }, 1000);
             
             return timerInterval;
         }
