@@ -8,7 +8,7 @@
             text-align: center;
             margin: 0;
             padding: 20px;
-            background: linear-gradient(to right, #e0f7fa, #b3e5fc, #81d4fa, #4fc3f7, #0288d1); /* Gradasi biru */
+            background: linear-gradient(to right, #fff8dc, #fef9e7, #fff8dc); /* Gradasi kuning lembut */
             background-size: 400% 400%;
             animation: gradientBG 30s ease infinite;
         }
@@ -39,9 +39,6 @@
             border: none;
             border-radius: 5px;
         }
-        button:hover {
-            background-color: #2980b9;
-        }
         input[type="text"] {
             background-color: #fff;
             color: #000;
@@ -49,16 +46,23 @@
             text-align: center;
         }
         .feedback {
-            margin-left: 10px;
-            font-size: 18px;
+            margin-left: 15px;
+            font-size: 32px; /* Ukuran feedback lebih besar */
             display: inline-block;
             vertical-align: middle;
         }
         .feedback.correct {
-            color: green;
+            color: limegreen;
+            font-weight: bold;
         }
         .feedback.wrong {
-            color: red;
+            color: crimson;
+            font-weight: bold;
+        }
+        .time-display {
+            font-size: 14px;
+            color: gray;
+            margin-left: 15px;
         }
         #score, #time-statistics {
             margin-top: 20px;
@@ -87,7 +91,6 @@
         let questionStartTime;
         let answeredQuestions = 0;
 
-        let questionData = []; // Statistik soal
         const maxQuestions = 10;
 
         function generateRandomNumber(level) {
@@ -104,6 +107,7 @@
             const timeSpent = Math.floor((Date.now() - questionStartTime) / 1000);
             totalTime += timeSpent;
             timeDisplay.textContent = totalTime;
+            return timeSpent;
         }
 
         function generateQuestions() {
@@ -118,7 +122,12 @@
                 questionDiv.className = "question";
                 questionDiv.innerHTML = `<h3>${i}. Berapakah ${num1} + ${num2}?</h3>`;
 
+                const timeSpan = document.createElement("span");
+                timeSpan.className = "time-display";
+                timeSpan.id = `time-${i}`;
+
                 if (i <= 5) {
+                    // Pilihan ganda
                     const answers = [correctAnswer];
                     while (answers.length < 4) {
                         const wrongAnswer = generateRandomNumber(level) + generateRandomNumber(level);
@@ -132,23 +141,27 @@
                     answers.forEach(answer => {
                         const button = document.createElement("button");
                         button.textContent = answer;
-                        button.onclick = () => checkAnswer(button, answer, correctAnswer, i);
+                        button.onclick = () => checkAnswer(button, answer, correctAnswer, i, timeSpan);
                         questionDiv.appendChild(button);
                     });
                 } else {
+                    // Soal isian
                     const input = document.createElement("input");
                     input.type = "text";
                     input.id = `answer-input-${i}`;
-                    input.placeholder = "Ketik jawaban di sini";
+                    input.placeholder = "Jawab di sini";
 
-                    const checkButton = document.createElement("button");
-                    checkButton.textContent = "Periksa";
-                    checkButton.onclick = () => checkAnswer(input, parseInt(input.value, 10), correctAnswer, i);
+                    input.oninput = () => {
+                        setTimeout(() => {
+                            const userAnswer = parseInt(input.value, 10);
+                            checkAnswer(input, userAnswer, correctAnswer, i, timeSpan);
+                        }, 5000);
+                    };
 
                     questionDiv.appendChild(input);
-                    questionDiv.appendChild(checkButton);
                 }
 
+                questionDiv.appendChild(timeSpan);
                 container.appendChild(questionDiv);
             }
 
@@ -157,8 +170,9 @@
             startTimer();
         }
 
-        function checkAnswer(element, selected, correct, index) {
-            calculateTime();
+        function checkAnswer(element, selected, correct, index, timeSpan) {
+            const timeSpent = calculateTime();
+            timeSpan.textContent = `(${timeSpent} detik)`;
 
             const feedback = document.createElement("span");
             feedback.className = "feedback";
@@ -179,25 +193,21 @@
                 correctStreak = 0;
             }
 
-            questionData.push({ questionIndex: index, correct: selected === correct, time: Math.floor((Date.now() - questionStartTime) / 1000) });
-
             element.parentElement.appendChild(feedback);
             element.disabled = true;
             scoreDisplay.textContent = score;
         }
 
         function goToNextPage() {
-            alert("Anda akan masuk ke halaman berikutnya!");
-            questionData = [];
+            alert("Berikutnya!");
             generateQuestions();
         }
 
         function finishSession() {
-            alert("Rekap hasil: \n" +
-                  "Benar: " + questionData.filter(q => q.correct).length + "\n" +
-                  "Salah: " + questionData.filter(q => !q.correct).length + "\n" +
-                  "Waktu Total: " + totalTime + " detik\n" +
-                  "Skor: " + score);
+            alert(`Rekap:
+Jawaban Benar: ${score}
+Waktu Total: ${totalTime} detik
+Skor Akhir: ${score}`);
             location.reload();
         }
 
