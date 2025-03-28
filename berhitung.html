@@ -429,37 +429,39 @@
         }
 
         function finishSession() {
-            const avgTime = questionTimes.length > 0 ? 
-                Math.round(questionTimes.reduce((a, b) => a + b, 0) / questionTimes.length) : 0;
-            
-alert(`Sesi selesai!\nTingkat akhir: ${currentTier + 1}\nTotal soal: ${currentQuestionNumber}\n` + 
-      `Jawaban benar: ${totalScore}\nRuntutan terpanjang: ${maxStreak}\n` +
-      `Total waktu: ${totalTime}s\nRata-rata waktu per soal: ${avgTime}s`);
+    console.log("Fungsi finishSession() dipanggil.");
 
-setTimeout(() => {
-    console.log("Mengalihkan ke index.html...");
-    location.href = "index.html"; // Pengalihan ke halaman utama
-}, 10); // Tunggu 10 ms
+    const avgTime = questionTimes.length > 0 
+        ? Math.round(questionTimes.reduce((a, b) => a + b, 0) / questionTimes.length) 
+        : 0;
 
     const sessionEndTime = new Date();
     const sessionData = {
-        startTime: sessionStartTime.toLocaleString("id-ID"), // Waktu mulai sesi
-        endTime: sessionEndTime.toLocaleString("id-ID"),    // Waktu selesai sesi
-        totalTime: Math.floor((sessionEndTime - sessionStartTime) / 1000), // Total waktu dalam detik
-        correctAnswers: correctAnswers,                     // Jumlah jawaban benar
-        wrongAnswers: wrongAnswers                          // Jumlah jawaban salah
+        startTime: sessionStartTime.toLocaleString("id-ID"),
+        endTime: sessionEndTime.toLocaleString("id-ID"),
+        totalTime: Math.floor((sessionEndTime - sessionStartTime) / 1000),
+        correctAnswers: correctAnswers,
+        wrongAnswers: wrongAnswers
     };
 
-    // Ambil data sebelumnya dari LocalStorage
+    console.log("Data sesi yang akan disimpan:", sessionData);
+
+    // Simpan data ke LocalStorage
     const previousResults = JSON.parse(localStorage.getItem("sessionResults")) || [];
-    previousResults.push(sessionData); // Tambahkan data sesi baru
-    localStorage.setItem("sessionResults", JSON.stringify(previousResults)); // Simpan kembali
+    previousResults.push(sessionData);
+    localStorage.setItem("sessionResults", JSON.stringify(previousResults));
+    console.log("Data sesi berhasil disimpan ke LocalStorage.");
 
-    alert(`Sesi selesai!\nWaktu mulai: ${sessionData.startTime}\nWaktu selesai: ${sessionData.endTime}\n` +
-          `Total waktu: ${sessionData.totalTime} detik\nJawaban benar: ${sessionData.correctAnswers}\nJawaban salah: ${sessionData.wrongAnswers}`);
+    // Tampilkan hasil sesi
+    alert(`Sesi selesai!\nTingkat akhir: ${currentTier + 1}\nTotal soal: ${currentQuestionNumber}\n` + 
+          `Jawaban benar: ${totalScore}\nRuntutan terpanjang: ${maxStreak}\n` +
+          `Total waktu: ${totalTime}s\nRata-rata waktu per soal: ${avgTime}s`);
 
-    // Navigasi ke halaman rekap hasil belajar
-    location.href = "index.html";
+    // Tunggu 2 detik sebelum mengalihkan ke halaman utama
+    setTimeout(() => {
+        console.log("Mengalihkan ke index.html...");
+        location.href = "index.html";
+    }, 2000);
 }
 
         // Inisialisasi pertama
