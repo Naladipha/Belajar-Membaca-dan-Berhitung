@@ -79,5 +79,86 @@
             }, 300); // Memberikan jeda agar suara selesai sebelum pindah halaman
         }
     </script>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Halaman Utama</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+            background: linear-gradient(to right, #e0f7fa, #b3e5fc);
+        }
+        h1 {
+            color: #2c3e50;
+        }
+        table {
+            margin: 20px auto;
+            border-collapse: collapse;
+            width: 80%;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+    </style>
+</head>
+<body>
+    <h1>Rekap Hasil Belajar</h1>
+    <table id="result-table">
+        <thead>
+            <tr>
+                <th>No.</th>
+                <th>Waktu Mulai (WIB)</th>
+                <th>Waktu Selesai (WIB)</th>
+                <th>Total Waktu (detik)</th>
+                <th>Jawaban Benar</th>
+                <th>Jawaban Salah</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Data hasil pekerjaan akan ditambahkan di sini -->
+        </tbody>
+    </table>
+
+    <button onclick="startNewSession()">Mulai Sesi Baru</button>
+
+    <script>
+        // Fungsi untuk menampilkan hasil yang direkam di LocalStorage
+        function loadResults() {
+            const results = JSON.parse(localStorage.getItem("sessionResults")) || [];
+            const tableBody = document.querySelector("#result-table tbody");
+            tableBody.innerHTML = ""; // Hapus data sebelumnya
+
+            results.forEach((result, index) => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${result.startTime}</td>
+                    <td>${result.endTime}</td>
+                    <td>${result.totalTime}</td>
+                    <td>${result.correctAnswers}</td>
+                    <td>${result.wrongAnswers}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Fungsi untuk memulai sesi baru
+        function startNewSession() {
+            window.location.href = "quiz.html"; // Arahkan ke halaman soal
+        }
+
+        // Muat data saat halaman dibuka
+        loadResults();
+    </script>
+</body>
+</html>
 </body>
 </html>
