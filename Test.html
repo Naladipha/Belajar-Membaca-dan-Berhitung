@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Belajar Berhitung</title>
+    <style>
+        /* Header bagian atas */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: #f8f9fa;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .header-left {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .header-center {
+            font-size: 16px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .header-right {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        /* Gaya utama untuk halaman */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding-top: 70px; /* Ruang untuk header */
+            background: linear-gradient(to right, #fff8dc, #fef9e7);
+        }
+
+        #question-container {
+            display: flex;
+            flex-direction: column; /* Soal disusun vertikal */
+            align-items: flex-start;
+            gap: 10px; /* Jarak antar soal */
+            margin: 20px auto;
+            max-width: 80%; /* Lebar kontainer soal */
+        }
+
+        .question-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .question-text {
+            flex: 0 0 20%; /* Soal memiliki proporsi 20% */
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .options {
+            flex: 0 0 75%; /* Pilihan memiliki proporsi 75% */
+            display: flex;
+            justify-content: space-evenly; /* Semua pilihan sejajar */
+            gap: 15px; /* Jarak antar kotak */
+        }
+
+        .option-button {
+            width: 100px; /* Lebar kotak pilihan */
+            height: 50px; /* Tinggi kotak pilihan */
+            
+            justify-content: center; /* Align horizontally */
+            align-items: center;    /* Align vertically */
+
+            line-height: 50px;
+            background-color: #3498db;
+            color: white;
+            font-size: 14px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .option-button:hover {
+            background-color: #2874a6;
+        }
+
+        .option-button.selected {
+            background-color: #ffd700; /* Kuning untuk pilihan yang dipilih */
+            color: red; /* Teks merah tebal */
+            font-weight: bold;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">Tingkat: <span id="level-display">1</span></div>
+        <div class="header-center">Waktu Berjalan: <span id="runtime-display">00:00</span></div>
+        <div class="header-right">
+            Total Waktu: <span id="time-display">0</span> detik | Skor: <span id="score-display">0</span>
+        </div>
+    </div>
+
+    <div id="question-container"></div>
+    <div class="buttons" style="text-align: center; margin-top: 20px;">
+        <button id="next-button" onclick="goToNextPage()" disabled>Lanjut</button>
+        <button id="finish-button" onclick="finishSession()" disabled>Selesai</button>
+    </div>
+
+    <script>
+        const levelDisplay = document.getElementById("level-display");
+        const scoreDisplay = document.getElementById("score-display");
+        const timeDisplay = document.getElementById("time-display");
+        const runtimeDisplay = document.getElementById("runtime-display");
+        const questionContainer = document.getElementById("question-container");
+        const nextButton = document.getElementById("next-button");
+        const finishButton = document.getElementById("finish-button");
+
+        let level = 1;
+        let score = 0;
+        let totalTime = 0;
+        let runtime = 0;
+        let answeredQuestions = 0;
+        const maxQuestions = 10;
+
+        // Timer runtime berjalan
+        setInterval(() => {
+            runtime++;
+            const minutes = String(Math.floor(runtime / 60)).padStart(2, "0");
+            const seconds = String(runtime % 60).padStart(2, "0");
+            runtimeDisplay.textContent = `${minutes}:${seconds}`;
+        }, 1000);
+
+        function generateQuestions() {
+            questionContainer.innerHTML = "";
+            answeredQuestions = 0;
+
+            for (let i = 1; i <= maxQuestions; i++) {
+                const num1 = Math.floor(Math.random() * 10) + 1;
+                const num2 = Math.floor(Math.random() * 10) + 1;
+                const correctAnswer = num1 + num2;
+
+                const questionRow = document.createElement("div");
+                questionRow.className = "question-row";
+
+                const questionText = document.createElement("div");
+                questionText.className = "question-text";
+                questionText.innerHTML = `[${i}] ${num1} + ${num2}`;
+
+                const options = document.createElement("div");
+                options.className = "options";
+
+                const answers = ["A", "B", "C", "D", "E"];
+                answers.forEach(answer => {
+                    const button = document.createElement("button");
+                    button.className = "option-button";
+                    button.textContent = answer;
+                    button.onclick = () => selectOption(button, i);
+                    options.appendChild(button);
+                });
+
+                questionRow.appendChild(questionText);
+                questionRow.appendChild(options);
+                questionContainer.appendChild(questionRow);
+            }
+        }
+
+        function selectOption(button, questionIndex) {
+            const options = questionContainer.querySelectorAll(`.question-row:nth-child(${questionIndex}) .option-button`);
+            options.forEach(option => option.classList.remove("selected"));
+            button.classList.add("selected");
+
+            answeredQuestions = document.querySelectorAll(".option-button.selected").length;
+            if (answeredQuestions === maxQuestions) {
+                nextButton.disabled = false;
+                finishButton.disabled = false;
+            }
+        }
+
+        function goToNextPage() {
+            nextButton.disabled = true;
+            finishButton.disabled = true;
+            generateQuestions();
+        }
+
+        function finishSession() {
+            alert(`Sesi selesai! Total waktu: ${totalTime} detik. Skor: ${score}`);
+            location.href = "index.html"; // Kembali ke halaman utama
+        }
+
+        generateQuestions();
+    </script>
+</body>
+</html>
