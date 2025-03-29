@@ -6,7 +6,6 @@
     <title>Belajar Berhitung Bertingkat</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -127,10 +126,6 @@
             background: #3498db;
         }
         
-        .btn-email {
-            background: #9b59b6;
-        }
-        
         .level-up {
             position: relative;
             background: #2ecc71;
@@ -146,25 +141,14 @@
         }
         
         .result-container {
-            margin-top: 20px;
-            padding: 20px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             display: none;
-        }
-        
-        .charts {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-around;
-            margin-bottom: 20px;
+            margin-top: 20px;
         }
         
         .chart-container {
             width: 100%;
             max-width: 500px;
-            margin: 10px;
+            margin: 20px auto;
             height: 300px;
         }
         
@@ -172,6 +156,19 @@
             display: block;
             width: 100% !important;
             height: 100% !important;
+        }
+        
+        .result-summary {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .result-summary p {
+            margin: 5px 0;
+            font-size: 16px;
         }
         
         table {
@@ -204,27 +201,10 @@
             background-color: #ffe6e6 !important;
         }
         
-        .correct-check {
-            color: #2ecc71;
+        .wrong-icon {
+            color: #e74c3c;
             font-weight: bold;
-            font-size: 1.2em;
-        }
-        
-        .email-form {
-            margin: 20px 0;
-            padding: 15px;
-            background: #f9f9f9;
-            border-radius: 5px;
-            text-align: center;
-        }
-        
-        .email-form input {
-            padding: 8px;
-            width: 100%;
-            max-width: 300px;
-            margin-right: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            font-size: 18px;
         }
         
         @keyframes fade {
@@ -253,9 +233,25 @@
             .options {
                 grid-template-columns: 1fr;
             }
-            
-            .charts {
-                flex-direction: column;
+        }
+        
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .result-container, .result-container * {
+                visibility: visible;
+            }
+            .result-container {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                margin: 0;
+                padding: 20px;
+            }
+            .no-print {
+                display: none !important;
             }
         }
     </style>
@@ -285,13 +281,12 @@
         <div class="result-container" id="result-container">
             <h2>Hasil Belajar</h2>
             
-            <div class="charts">
-                <div class="chart-container">
-                    <canvas id="timeChart"></canvas>
-                </div>
-                <div class="chart-container">
-                    <canvas id="resultChart"></canvas>
-                </div>
+            <div class="result-summary" id="result-summary">
+                <!-- Will be filled by JavaScript -->
+            </div>
+            
+            <div class="chart-container">
+                <canvas id="resultChart"></canvas>
             </div>
             
             <table id="result-table">
@@ -308,15 +303,9 @@
                 </tbody>
             </table>
             
-            <div class="email-form">
-                <h3>Kirim Hasil via Email</h3>
-                <input type="email" id="email-input" placeholder="Masukkan alamat email">
-                <button class="btn btn-email" id="send-email">Kirim Email</button>
-            </div>
-            
             <div class="controls">
-                <button class="btn btn-print" id="print-pdf">Cetak PDF</button>
-                <button class="btn" id="new-session">Sesi Baru</button>
+                <button class="btn btn-print no-print" id="print-pdf">Cetak Hasil</button>
+                <button class="btn no-print" id="new-session">Sesi Baru</button>
             </div>
         </div>
     </div>
@@ -331,11 +320,11 @@
         const config = [
             { 
                 ops: ['+'], 
-                min: 2,  // Mulai dari 2 bukan 1
+                min: 2,
                 max: 5,
                 diff: 2,
                 maxResult: 10,
-                maxOnes: 2  // Maksimal 2 soal dengan angka 1
+                maxOnes: 2
             },
             { 
                 ops: ['+', '-'], 
@@ -388,7 +377,6 @@
             answers: [],
             results: [],
             timer: null,
-            timeChart: null,
             resultChart: null,
             usedQuestions: new Set(),
             onesCount: 0
@@ -408,11 +396,9 @@
             finish: document.getElementById('finish'),
             levelUp: document.getElementById('level-up'),
             resultContainer: document.getElementById('result-container'),
+            resultSummary: document.getElementById('result-summary'),
             resultBody: document.getElementById('result-body'),
-            timeChart: document.getElementById('timeChart'),
             resultChart: document.getElementById('resultChart'),
-            emailInput: document.getElementById('email-input'),
-            sendEmail: document.getElementById('send-email'),
             printPdf: document.getElementById('print-pdf'),
             newSession: document.getElementById('new-session')
         };
@@ -424,8 +410,7 @@
             
             elements.finish.addEventListener('click', showResults);
             elements.newSession.addEventListener('click', startNewSession);
-            elements.sendEmail.addEventListener('click', sendEmail);
-            elements.printPdf.addEventListener('click', printToPdf);
+            elements.printPdf.addEventListener('click', window.print);
         }
         
         // Generate new question with improved logic
@@ -446,19 +431,16 @@
                             a = rand(levelConfig.min, levelConfig.max);
                             b = rand(levelConfig.min, levelConfig.max);
                             
-                            // Batasi jumlah soal dengan angka 1
                             if ((a === 1 || b === 1) && state.onesCount >= levelConfig.maxOnes) {
                                 a = rand(2, levelConfig.max);
                                 b = rand(2, levelConfig.max);
                             }
                             
-                            // Pastikan hasil <= 10 dan tidak terlalu mudah
                             while (a + b > levelConfig.maxResult || a + b <= 2) {
                                 a = rand(levelConfig.min, levelConfig.max);
                                 b = rand(levelConfig.min, levelConfig.max);
                             }
                             
-                            // Hitung soal dengan angka 1
                             if (a === 1 || b === 1) state.onesCount++;
                         } else {
                             a = rand(levelConfig.min, levelConfig.max);
@@ -469,18 +451,16 @@
                         break;
                     case '-':
                         if (state.level === 0) {
-                            answer = rand(2, 9); // Hasil minimal 2 untuk level 1
+                            answer = rand(2, 9);
                             b = rand(1, answer);
                             a = answer + b;
                             
-                            // Batasi soal dengan angka 1
                             if ((a === 1 || b === 1) && state.onesCount >= levelConfig.maxOnes) {
                                 answer = rand(3, 9);
                                 b = rand(2, answer);
                                 a = answer + b;
                             }
                             
-                            // Hitung soal dengan angka 1
                             if (a === 1 || b === 1) state.onesCount++;
                         } else {
                             answer = rand(levelConfig.min, levelConfig.max);
@@ -594,17 +574,15 @@
             }, 100);
         }
         
-        // Handle correct answer - PERBAIKAN: Naik level hanya jika streak 20
+        // Handle correct answer
         function handleCorrect() {
             state.score++;
             state.correct++;
             state.streak++;
             state.progress++;
             
-            // Hanya naik level jika benar 20 kali berturut-turut
-            if (state.streak >= 20 && state.level < config.length - 1) {
+            if (state.progress >= 20 && state.level < config.length - 1) {
                 state.level++;
-                state.streak = 0; // Reset streak setelah naik level
                 state.progress = 0;
                 showLevelUp();
             }
@@ -620,9 +598,9 @@
         
         // Show level up notification
         function showLevelUp() {
-            elements.levelUp.textContent = `Berhasil 20 benar berurutan! Naik ke Tingkat ${state.level + 1}!`;
+            elements.levelUp.textContent = `Naik ke Tingkat ${state.level + 1}!`;
             elements.levelUp.style.display = 'block';
-            setTimeout(() => elements.levelUp.style.display = 'none', 3000);
+            setTimeout(() => elements.levelUp.style.display = 'none', 2000);
         }
         
         // Update UI elements
@@ -637,33 +615,35 @@
             if (state.streak > 0) {
                 elements.streak.textContent = `Beruntun: ${state.streak}`;
                 elements.streak.style.display = 'block';
-                // Warna berbeda berdasarkan streak
-                if (state.streak >= 15) {
-                    elements.streak.style.background = '#2ecc71'; // Hijau saat mendekati 20
-                } else if (state.streak >= 10) {
-                    elements.streak.style.background = '#f39c12'; // Oranye
-                } else {
-                    elements.streak.style.background = '#e74c3c'; // Merah
-                }
+                elements.streak.style.background = state.streak >= 5 ? '#2ecc71' : '#f39c12';
             } else {
                 elements.streak.style.display = 'none';
             }
         }
         
-        // Show results - PERBAIKAN: Pastikan chart muncul
+        // Show results
         function showResults() {
             clearInterval(state.timer);
             
-            // Sembunyikan bagian quiz
-            elements.question.style.display = 'none';
-            elements.options.style.display = 'none';
-            elements.finish.style.display = 'none';
+            document.getElementById('quiz').style.display = 'none';
+            document.getElementById('result-container').style.display = 'block';
             
-            // Tampilkan result container
-            elements.resultContainer.style.display = 'block';
+            // Calculate summary data
+            const totalQuestions = state.questions.length;
+            const correctAnswers = state.results.filter(r => r).length;
+            const accuracy = Math.round((correctAnswers / totalQuestions) * 100);
+            const avgTime = Math.round(state.questionTimes.reduce((a, b) => a + b, 0) / totalQuestions);
             
-            // Isi tabel hasil
-            elements.resultBody.innerHTML = '';
+            // Update summary
+            elements.resultSummary.innerHTML = `
+                <p><strong>Total Waktu:</strong> ${state.time} detik</p>
+                <p><strong>Rata-rata Waktu per Soal:</strong> ${avgTime} detik</p>
+                <p><strong>Skor:</strong> ${correctAnswers} benar dari ${totalQuestions} soal (${accuracy}%)</p>
+            `;
+            
+            // Update results table
+            const resultBody = document.getElementById('result-body');
+            resultBody.innerHTML = '';
             
             state.questions.forEach((q, i) => {
                 const row = document.createElement('tr');
@@ -673,67 +653,29 @@
                     <td>${i+1}</td>
                     <td>${q}</td>
                     <td>${formatNumber(state.answers[i])}</td>
-                    <td>${state.results[i] ? '<span class="correct-check">✓</span>' : 'Salah'}</td>
+                    <td>${state.results[i] ? '✅' : '<span class="wrong-icon">✕</span>'}</td>
                     <td>${state.questionTimes[i]}s</td>
                 `;
-                elements.resultBody.appendChild(row);
+                resultBody.appendChild(row);
             });
             
-            // Inisialisasi chart setelah delay kecil
-            setTimeout(() => {
-                initCharts();
-            }, 100);
+            initChart();
         }
         
-        // Initialize charts - PERBAIKAN: Pastikan chart muncul
-        function initCharts() {
-            // Hancurkan chart sebelumnya jika ada
-            if (state.timeChart) {
-                state.timeChart.destroy();
-            }
-            if (state.resultChart) {
-                state.resultChart.destroy();
-            }
+        // Initialize chart
+        function initChart() {
+            if (state.resultChart) state.resultChart.destroy();
 
-            // Pastikan elemen canvas ada
-            if (!elements.timeChart || !elements.resultChart) {
-                console.error('Elemen chart tidak ditemukan');
-                return;
-            }
-
-            // Time chart
-            const timeCtx = elements.timeChart.getContext('2d');
-            state.timeChart = new Chart(timeCtx, {
-                type: 'line',
-                data: {
-                    labels: state.questions.map((_, i) => `Soal ${i+1}`),
-                    datasets: [{
-                        label: 'Waktu (detik)',
-                        data: state.questionTimes,
-                        borderColor: '#3498db',
-                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                        tension: 0.1,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: { display: true, text: 'Detik' }
-                        }
-                    }
-                }
-            });
+            // Set canvas dimensions
+            elements.resultChart.width = elements.resultChart.parentElement.offsetWidth;
+            elements.resultChart.height = 300;
 
             // Results chart
             const correct = state.results.filter(r => r).length;
             const wrong = state.results.length - correct;
-            const resultCtx = elements.resultChart.getContext('2d');
+            const ctx = elements.resultChart.getContext('2d');
             
-            state.resultChart = new Chart(resultCtx, {
+            state.resultChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
                     labels: ['Benar', 'Salah'],
@@ -753,40 +695,6 @@
             });
         }
 
-        // Print to PDF
-        async function printToPdf() {
-            const { jsPDF } = window.jspdf;
-            
-            const element = document.getElementById('result-container');
-            const canvas = await html2canvas(element, {
-                scale: 2,
-                logging: false,
-                useCORS: true
-            });
-            
-            const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const imgProps = pdf.getImageProperties(imgData);
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-            
-            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-            pdf.save('hasil-belajar.pdf');
-        }
-        
-        // Send email
-        function sendEmail() {
-            const email = elements.emailInput.value.trim();
-            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                alert('Harap masukkan alamat email yang valid');
-                return;
-            }
-            
-            printToPdf().then(() => {
-                alert(`Laporan PDF telah dibuat dan siap dikirim ke: ${email}\n\n(Fitur pengiriman email membutuhkan integrasi backend)`);
-            });
-        }
-        
         // Start new session
         function startNewSession() {
             state = {
@@ -804,19 +712,13 @@
                 answers: [],
                 results: [],
                 timer: null,
-                timeChart: null,
                 resultChart: null,
                 usedQuestions: new Set(),
                 onesCount: 0
             };
             
-            // Tampilkan kembali elemen quiz
-            elements.question.style.display = 'block';
-            elements.options.style.display = 'grid';
-            elements.finish.style.display = 'block';
-            elements.resultContainer.style.display = 'none';
-            
-            elements.emailInput.value = '';
+            document.getElementById('quiz').style.display = 'block';
+            document.getElementById('result-container').style.display = 'none';
             
             updateUI();
             newQuestion();
