@@ -146,13 +146,13 @@
         }
         
         .result-container {
-    display: none; /* Awalnya disembunyikan */
-    margin-top: 20px;
-    padding: 20px;
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: none;
+        }
         
         .charts {
             display: flex;
@@ -635,17 +635,20 @@
             }
         }
         
-        // Show results - MODIFIED FIX
+        // Show results
         function showResults() {
             clearInterval(state.timer);
             
-            // Hide quiz and show results
-            document.getElementById('quiz').style.display = 'none';
-            document.getElementById('result-container').style.display = 'block';
+            // Sembunyikan bagian quiz yang tidak diperlukan
+            elements.question.style.display = 'none';
+            elements.options.style.display = 'none';
+            elements.finish.style.display = 'none';
+            
+            // Tampilkan result container
+            elements.resultContainer.style.display = 'block';
             
             // Populate result table
-            const resultBody = document.getElementById('result-body');
-            resultBody.innerHTML = '';
+            elements.resultBody.innerHTML = '';
             
             state.questions.forEach((q, i) => {
                 const row = document.createElement('tr');
@@ -658,17 +661,17 @@
                     <td>${state.results[i] ? '✅ Benar' : '❌ Salah'}</td>
                     <td>${state.questionTimes[i]}s</td>
                 `;
-                resultBody.appendChild(row);
+                elements.resultBody.appendChild(row);
             });
             
-            // Initialize charts after a small delay to ensure DOM is ready
+            // Inisialisasi chart setelah memastikan elemen tersedia
             setTimeout(() => {
                 initCharts();
             }, 100);
         }
         
         function initCharts() {
-            // Destroy existing charts if any
+            // Hancurkan chart yang ada jika ada
             if (state.timeChart) {
                 state.timeChart.destroy();
             }
@@ -676,18 +679,8 @@
                 state.resultChart.destroy();
             }
 
-            // Get canvas elements
-            const timeCanvas = document.getElementById('timeChart');
-            const resultCanvas = document.getElementById('resultChart');
-            
-            // Set canvas dimensions
-            timeCanvas.width = timeCanvas.parentElement.offsetWidth;
-            timeCanvas.height = 300;
-            resultCanvas.width = resultCanvas.parentElement.offsetWidth;
-            resultCanvas.height = 300;
-
             // Time chart
-            const timeCtx = timeCanvas.getContext('2d');
+            const timeCtx = elements.timeChart.getContext('2d');
             state.timeChart = new Chart(timeCtx, {
                 type: 'line',
                 data: {
@@ -716,7 +709,7 @@
             // Results chart
             const correct = state.results.filter(r => r).length;
             const wrong = state.results.length - correct;
-            const resultCtx = resultCanvas.getContext('2d');
+            const resultCtx = elements.resultChart.getContext('2d');
             
             state.resultChart = new Chart(resultCtx, {
                 type: 'doughnut',
@@ -761,7 +754,7 @@
         
         // Send email
         function sendEmail() {
-            const email = document.getElementById('email-input').value.trim();
+            const email = elements.emailInput.value.trim();
             if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
                 alert('Harap masukkan alamat email yang valid');
                 return;
@@ -795,9 +788,13 @@
                 onesCount: 0
             };
             
-            document.getElementById('quiz').style.display = 'block';
-            document.getElementById('result-container').style.display = 'none';
-            document.getElementById('email-input').value = '';
+            // Tampilkan kembali elemen quiz
+            elements.question.style.display = 'block';
+            elements.options.style.display = 'grid';
+            elements.finish.style.display = 'block';
+            elements.resultContainer.style.display = 'none';
+            
+            elements.emailInput.value = '';
             
             updateUI();
             newQuestion();
