@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Belajar Berhitung Bertingkat</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -65,7 +63,6 @@
             border-radius: 10px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             width: 90%;
-            position: relative;
         }
         
         .question {
@@ -127,62 +124,40 @@
         }
         
         .level-up {
-            position: relative;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             background: #2ecc71;
             color: white;
-            padding: 15px;
+            padding: 20px;
             border-radius: 10px;
-            font-size: clamp(16px, 4vw, 20px);
-            margin: 20px auto;
-            text-align: center;
-            max-width: 80%;
-            display: none;
+            font-size: 20px;
+            z-index: 200;
             animation: fade 2s;
+            display: none;
         }
         
         .result-container {
             display: none;
-            margin-top: 20px;
-        }
-        
-        .chart-container {
-            width: 100%;
-            max-width: 500px;
-            margin: 20px auto;
-            height: 300px;
-        }
-        
-        canvas {
-            display: block;
-            width: 100% !important;
-            height: 100% !important;
-        }
-        
-        .result-summary {
-            background: #f9f9f9;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        
-        .result-summary p {
-            margin: 5px 0;
-            font-size: 16px;
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         
         table {
             width: 100%;
             border-collapse: collapse;
             margin: 20px 0;
-            text-align: center;
         }
         
         th, td {
             border: 1px solid #ddd;
             padding: 8px;
             text-align: center;
-            vertical-align: middle;
         }
         
         th {
@@ -194,45 +169,26 @@
         }
         
         .correct-row {
-            background-color: #e6ffe6 !important;
+            background-color: #e6ffe6;
         }
         
         .wrong-row {
-            background-color: #ffe6e6 !important;
+            background-color: #ffe6e6;
+        }
+        
+        .correct-icon {
+            color: #2ecc71;
+            font-weight: bold;
         }
         
         .wrong-icon {
             color: #e74c3c;
             font-weight: bold;
-            font-size: 18px;
         }
         
         @keyframes fade {
             0%, 100% { opacity: 0; }
             50% { opacity: 1; }
-        }
-
-        @media (max-width: 480px) {
-            body {
-                padding-top: 120px;
-            }
-            
-            .header {
-                flex-direction: column;
-                padding: 5px;
-            }
-            
-            .progress-container {
-                top: 70px;
-            }
-            
-            .streak {
-                top: 110px;
-            }
-            
-            .options {
-                grid-template-columns: 1fr;
-            }
         }
         
         @media print {
@@ -276,89 +232,40 @@
         <div class="controls">
             <button class="btn" id="finish">Selesai</button>
         </div>
-        <div class="level-up" id="level-up">Level Up!</div>
-        
-        <div class="result-container" id="result-container">
-            <h2>Hasil Belajar</h2>
-            
-            <div class="result-summary" id="result-summary">
-                <!-- Will be filled by JavaScript -->
-            </div>
-            
-            <div class="chart-container">
-                <canvas id="resultChart"></canvas>
-            </div>
-            
-            <table id="result-table">
-                <thead>
-                    <tr>
-                        <th>No</th>
-                        <th>Soal</th>
-                        <th>Jawaban</th>
-                        <th>Hasil</th>
-                        <th>Waktu (detik)</th>
-                    </tr>
-                </thead>
-                <tbody id="result-body">
-                </tbody>
-            </table>
-            
-            <div class="controls">
-                <button class="btn btn-print no-print" id="print-pdf">Cetak Hasil</button>
-                <button class="btn no-print" id="new-session">Sesi Baru</button>
-            </div>
+    </div>
+    
+    <div class="result-container" id="result-container">
+        <h2>Hasil Belajar</h2>
+        <table id="result-table">
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>Soal</th>
+                    <th>Jawaban</th>
+                    <th>Hasil</th>
+                    <th>Waktu (detik)</th>
+                </tr>
+            </thead>
+            <tbody id="result-body">
+            </tbody>
+        </table>
+        <div class="controls">
+            <button class="btn btn-print no-print" id="print-pdf">Cetak PDF</button>
+            <button class="btn no-print" id="new-session">Sesi Baru</button>
         </div>
     </div>
     
+    <div class="level-up" id="level-up">Level Up!</div>
+    
     <script>
-        // Format angka dengan pemisah ribuan
-        function formatNumber(num) {
-            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-        }
-
         // Game configuration
         const config = [
-            { 
-                ops: ['+'], 
-                min: 2,
-                max: 5,
-                diff: 2,
-                maxResult: 10,
-                maxOnes: 2
-            },
-            { 
-                ops: ['+', '-'], 
-                min: 10, 
-                max: 25, 
-                diff: 3 
-            },
-            { 
-                ops: ['+', '-'], 
-                min: 25, 
-                max: 100, 
-                diff: 5 
-            },
-            { 
-                ops: ['+', '-', '×'], 
-                min: 100, 
-                max: 500, 
-                maxMul: 25, 
-                diff: 10 
-            },
-            { 
-                ops: ['+', '-', '×'], 
-                min: 500, 
-                max: 1000, 
-                maxMul: 100, 
-                diff: 20 
-            },
-            { 
-                ops: ['+', '-', '×', '÷'], 
-                min: 1000, 
-                max: 2500, 
-                maxMul: 500, 
-                diff: 50 
-            }
+            { ops: ['+'], min: 1, max: 10 },
+            { ops: ['+', '-'], min: 10, max: 25 },
+            { ops: ['+', '-'], min: 25, max: 100 },
+            { ops: ['+', '-', '×'], min: 100, max: 500, maxMul: 25 },
+            { ops: ['+', '-', '×'], min: 500, max: 1000, maxMul: 100 },
+            { ops: ['+', '-', '×', '÷'], min: 1000, max: 100000, maxMul: 500 }
         ];
         
         // Game state
@@ -376,10 +283,7 @@
             questions: [],
             answers: [],
             results: [],
-            timer: null,
-            resultChart: null,
-            usedQuestions: new Set(),
-            onesCount: 0
+            timer: null
         };
         
         // DOM elements
@@ -396,9 +300,7 @@
             finish: document.getElementById('finish'),
             levelUp: document.getElementById('level-up'),
             resultContainer: document.getElementById('result-container'),
-            resultSummary: document.getElementById('result-summary'),
             resultBody: document.getElementById('result-body'),
-            resultChart: document.getElementById('resultChart'),
             printPdf: document.getElementById('print-pdf'),
             newSession: document.getElementById('new-session')
         };
@@ -409,132 +311,71 @@
             newQuestion();
             
             elements.finish.addEventListener('click', showResults);
-            elements.newSession.addEventListener('click', startNewSession);
             elements.printPdf.addEventListener('click', window.print);
+            elements.newSession.addEventListener('click', startNewSession);
         }
         
-        // Generate new question with improved logic
+        // Generate new question
         function newQuestion() {
             clearInterval(state.timer);
             
             const levelConfig = config[state.level];
             const op = levelConfig.ops[Math.floor(Math.random() * levelConfig.ops.length)];
             let a, b, answer, question;
-            let attempts = 0;
-            const maxAttempts = 20;
             
-            do {
-                attempts++;
-                switch(op) {
-                    case '+':
-                        if (state.level === 0) {
-                            a = rand(levelConfig.min, levelConfig.max);
-                            b = rand(levelConfig.min, levelConfig.max);
-                            
-                            if ((a === 1 || b === 1) && state.onesCount >= levelConfig.maxOnes) {
-                                a = rand(2, levelConfig.max);
-                                b = rand(2, levelConfig.max);
-                            }
-                            
-                            while (a + b > levelConfig.maxResult || a + b <= 2) {
-                                a = rand(levelConfig.min, levelConfig.max);
-                                b = rand(levelConfig.min, levelConfig.max);
-                            }
-                            
-                            if (a === 1 || b === 1) state.onesCount++;
-                        } else {
-                            a = rand(levelConfig.min, levelConfig.max);
-                            b = rand(levelConfig.min, levelConfig.max - a);
-                        }
-                        answer = a + b;
-                        question = `${formatNumber(a)} + ${formatNumber(b)}`;
-                        break;
-                    case '-':
-                        if (state.level === 0) {
-                            answer = rand(2, 9);
-                            b = rand(1, answer);
-                            a = answer + b;
-                            
-                            if ((a === 1 || b === 1) && state.onesCount >= levelConfig.maxOnes) {
-                                answer = rand(3, 9);
-                                b = rand(2, answer);
-                                a = answer + b;
-                            }
-                            
-                            if (a === 1 || b === 1) state.onesCount++;
-                        } else {
-                            answer = rand(levelConfig.min, levelConfig.max);
-                            b = rand(1, answer);
-                            a = answer + b;
-                        }
-                        question = `${formatNumber(a)} - ${formatNumber(b)}`;
-                        break;
-                    case '×':
-                        a = rand(2, levelConfig.maxMul);
-                        b = Math.random() > 0.2 ? rand(3, Math.floor(levelConfig.maxMul / a)) : 2;
-                        answer = a * b;
-                        question = `${formatNumber(a)} × ${formatNumber(b)}`;
-                        break;
-                    case '÷':
-                        answer = rand(1, 50);
-                        b = rand(1, 20);
-                        a = answer * b;
-                        question = `${formatNumber(a)} ÷ ${formatNumber(b)}`;
-                        break;
-                }
-                
-                if (attempts >= maxAttempts) break;
-            } while (state.usedQuestions.has(question));
+            switch(op) {
+                case '+':
+                    a = rand(levelConfig.min, levelConfig.max);
+                    b = rand(levelConfig.min, levelConfig.max - a);
+                    answer = a + b;
+                    question = `${a} + ${b}`;
+                    break;
+                case '-':
+                    answer = rand(levelConfig.min, levelConfig.max);
+                    b = rand(1, answer);
+                    a = answer + b;
+                    question = `${a} - ${b}`;
+                    break;
+                case '×':
+                    a = rand(1, levelConfig.maxMul);
+                    b = rand(1, Math.floor(levelConfig.maxMul / a));
+                    answer = a * b;
+                    question = `${a} × ${b}`;
+                    break;
+                case '÷':
+                    answer = rand(1, 50);
+                    b = rand(1, 20);
+                    a = answer * b;
+                    question = `${a} ÷ ${b}`;
+                    break;
+            }
             
-            state.usedQuestions.add(question);
             state.questions.push(question);
-            
             elements.question.textContent = question;
-            generateOptions(answer, levelConfig.diff);
+            generateOptions(answer);
             state.startTime = Date.now();
             
+            // Start question timer
             state.timer = setInterval(() => {
                 elements.time.textContent = state.time + Math.floor((Date.now() - state.startTime) / 1000);
             }, 1000);
         }
         
-        // Generate answer options with smarter deviations
-        function generateOptions(correct, difficulty) {
+        // Generate answer options
+        function generateOptions(correct) {
             elements.options.innerHTML = '';
             const options = [correct];
             
             while (options.length < 4) {
-                let option;
-                const strategy = Math.floor(Math.random() * 4);
-                
-                switch(strategy) {
-                    case 0: // Similar last digit
-                        option = correct + (Math.random() > 0.5 ? 1 : -1) * (10 + Math.floor(Math.random() * difficulty));
-                        break;
-                    case 1: // Similar first digit
-                        const magnitude = Math.pow(10, Math.floor(Math.log10(correct)));
-                        option = correct + (Math.random() > 0.5 ? 1 : -1) * (magnitude + Math.floor(Math.random() * difficulty * magnitude/10));
-                        break;
-                    case 2: // Off by operation error
-                        option = Math.max(1, correct + (Math.random() > 0.5 ? 1 : -1) * Math.floor(correct * (0.1 + Math.random() * 0.3)));
-                        break;
-                    case 3: // Random in range
-                        const range = Math.max(difficulty * 2, Math.floor(correct * 0.3));
-                        option = rand(Math.max(1, correct - range), correct + range);
-                        break;
-                }
-                
-                option = Math.max(1, option);
-                if (option !== correct && !options.includes(option)) {
-                    options.push(option);
-                }
+                const deviation = rand(1, Math.max(2, Math.floor(correct * 0.2)));
+                const option = Math.max(1, correct + (Math.random() > 0.5 ? deviation : -deviation));
+                if (!options.includes(option)) options.push(option);
             }
             
             options.sort(() => Math.random() - 0.5).forEach(opt => {
                 const btn = document.createElement('button');
                 btn.className = 'option';
-                btn.textContent = formatNumber(opt);
-                btn.dataset.value = opt;
+                btn.textContent = opt;
                 btn.onclick = () => checkAnswer(btn, opt, correct);
                 elements.options.appendChild(btn);
             });
@@ -552,9 +393,10 @@
             const isCorrect = selected === correct;
             state.results.push(isCorrect);
             
+            // Disable all buttons
             Array.from(elements.options.children).forEach(b => {
                 b.disabled = true;
-                if (parseInt(b.dataset.value) === correct) b.classList.add('correct');
+                if (parseInt(b.textContent) === correct) b.classList.add('correct');
             });
             
             if (isCorrect) {
@@ -567,11 +409,12 @@
             
             updateUI();
             
+            // Move to next question after delay
             setTimeout(() => {
                 state.questionNum++;
                 newQuestion();
                 updateUI();
-            }, 100);
+            }, 1000);
         }
         
         // Handle correct answer
@@ -603,6 +446,62 @@
             setTimeout(() => elements.levelUp.style.display = 'none', 2000);
         }
         
+        // Show results
+        function showResults() {
+            clearInterval(state.timer);
+            
+            // Hide quiz elements
+            document.getElementById('quiz').style.display = 'none';
+            
+            // Show results container
+            elements.resultContainer.style.display = 'block';
+            
+            // Build results table
+            elements.resultBody.innerHTML = '';
+            state.questions.forEach((q, i) => {
+                const row = document.createElement('tr');
+                row.className = state.results[i] ? 'correct-row' : 'wrong-row';
+                
+                row.innerHTML = `
+                    <td>${i+1}</td>
+                    <td>${q}</td>
+                    <td>${state.answers[i]}</td>
+                    <td><span class="${state.results[i] ? 'correct-icon' : 'wrong-icon'}">${state.results[i] ? '✓' : '✗'}</span></td>
+                    <td>${state.questionTimes[i]}</td>
+                `;
+                elements.resultBody.appendChild(row);
+            });
+        }
+        
+        // Start new session
+        function startNewSession() {
+            // Reset state
+            state = {
+                level: 0,
+                questionNum: 1,
+                score: 0,
+                streak: 0,
+                progress: 0,
+                time: 0,
+                startTime: 0,
+                correct: 0,
+                maxStreak: 0,
+                questionTimes: [],
+                questions: [],
+                answers: [],
+                results: [],
+                timer: null
+            };
+            
+            // Show quiz elements
+            document.getElementById('quiz').style.display = 'block';
+            elements.resultContainer.style.display = 'none';
+            
+            // Start new game
+            updateUI();
+            newQuestion();
+        }
+        
         // Update UI elements
         function updateUI() {
             elements.questionNum.textContent = state.questionNum;
@@ -619,109 +518,6 @@
             } else {
                 elements.streak.style.display = 'none';
             }
-        }
-        
-        // Show results
-        function showResults() {
-            clearInterval(state.timer);
-            
-            document.getElementById('quiz').style.display = 'none';
-            document.getElementById('result-container').style.display = 'block';
-            
-            // Calculate summary data
-            const totalQuestions = state.questions.length;
-            const correctAnswers = state.results.filter(r => r).length;
-            const accuracy = Math.round((correctAnswers / totalQuestions) * 100);
-            const avgTime = Math.round(state.questionTimes.reduce((a, b) => a + b, 0) / totalQuestions);
-            
-            // Update summary
-            elements.resultSummary.innerHTML = `
-                <p><strong>Total Waktu:</strong> ${state.time} detik</p>
-                <p><strong>Rata-rata Waktu per Soal:</strong> ${avgTime} detik</p>
-                <p><strong>Skor:</strong> ${correctAnswers} benar dari ${totalQuestions} soal (${accuracy}%)</p>
-            `;
-            
-            // Update results table
-            const resultBody = document.getElementById('result-body');
-            resultBody.innerHTML = '';
-            
-            state.questions.forEach((q, i) => {
-                const row = document.createElement('tr');
-                row.className = state.results[i] ? 'correct-row' : 'wrong-row';
-                
-                row.innerHTML = `
-                    <td>${i+1}</td>
-                    <td>${q}</td>
-                    <td>${formatNumber(state.answers[i])}</td>
-                    <td>${state.results[i] ? '✅' : '<span class="wrong-icon">✕</span>'}</td>
-                    <td>${state.questionTimes[i]}s</td>
-                `;
-                resultBody.appendChild(row);
-            });
-            
-            initChart();
-        }
-        
-        // Initialize chart
-        function initChart() {
-            if (state.resultChart) state.resultChart.destroy();
-
-            // Set canvas dimensions
-            elements.resultChart.width = elements.resultChart.parentElement.offsetWidth;
-            elements.resultChart.height = 300;
-
-            // Results chart
-            const correct = state.results.filter(r => r).length;
-            const wrong = state.results.length - correct;
-            const ctx = elements.resultChart.getContext('2d');
-            
-            state.resultChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Benar', 'Salah'],
-                    datasets: [{
-                        data: [correct, wrong],
-                        backgroundColor: ['#2ecc71', '#e74c3c'],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'bottom' }
-                    }
-                }
-            });
-        }
-
-        // Start new session
-        function startNewSession() {
-            state = {
-                level: 0,
-                questionNum: 1,
-                score: 0,
-                streak: 0,
-                progress: 0,
-                time: 0,
-                startTime: 0,
-                correct: 0,
-                maxStreak: 0,
-                questionTimes: [],
-                questions: [],
-                answers: [],
-                results: [],
-                timer: null,
-                resultChart: null,
-                usedQuestions: new Set(),
-                onesCount: 0
-            };
-            
-            document.getElementById('quiz').style.display = 'block';
-            document.getElementById('result-container').style.display = 'none';
-            
-            updateUI();
-            newQuestion();
         }
         
         // Helper function for random numbers
