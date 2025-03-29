@@ -658,20 +658,27 @@
             initCharts();
         }
         
-        // Initialize charts with proper dimensions
         function initCharts() {
             // Destroy existing charts if any
-            if (state.timeChart) state.timeChart.destroy();
-            if (state.resultChart) state.resultChart.destroy();
+            if (state.timeChart) {
+                state.timeChart.destroy();
+            }
+            if (state.resultChart) {
+                state.resultChart.destroy();
+            }
 
+            // Get canvas elements
+            const timeCanvas = document.getElementById('timeChart');
+            const resultCanvas = document.getElementById('resultChart');
+            
             // Set canvas dimensions
-            document.getElementById('timeChart').width = document.getElementById('timeChart').parentElement.offsetWidth;
-            document.getElementById('timeChart').height = 300;
-            document.getElementById('resultChart').width = document.getElementById('resultChart').parentElement.offsetWidth;
-            document.getElementById('resultChart').height = 300;
+            timeCanvas.width = timeCanvas.parentElement.offsetWidth;
+            timeCanvas.height = 300;
+            resultCanvas.width = resultCanvas.parentElement.offsetWidth;
+            resultCanvas.height = 300;
 
             // Time chart
-            const timeCtx = document.getElementById('timeChart').getContext('2d');
+            const timeCtx = timeCanvas.getContext('2d');
             state.timeChart = new Chart(timeCtx, {
                 type: 'line',
                 data: {
@@ -700,7 +707,7 @@
             // Results chart
             const correct = state.results.filter(r => r).length;
             const wrong = state.results.length - correct;
-            const resultCtx = document.getElementById('resultChart').getContext('2d');
+            const resultCtx = resultCanvas.getContext('2d');
             
             state.resultChart = new Chart(resultCtx, {
                 type: 'doughnut',
@@ -720,6 +727,38 @@
                     }
                 }
             });
+        }
+
+        // Show results - MODIFIED FIX
+        function showResults() {
+            clearInterval(state.timer);
+            
+            // Hide quiz and show results
+            document.getElementById('quiz').style.display = 'none';
+            document.getElementById('result-container').style.display = 'block';
+            
+            // Populate result table
+            const resultBody = document.getElementById('result-body');
+            resultBody.innerHTML = '';
+            
+            state.questions.forEach((q, i) => {
+                const row = document.createElement('tr');
+                row.className = state.results[i] ? 'correct-row' : 'wrong-row';
+                
+                row.innerHTML = `
+                    <td>${i+1}</td>
+                    <td>${q}</td>
+                    <td>${formatNumber(state.answers[i])}</td>
+                    <td>${state.results[i] ? '✅ Benar' : '❌ Salah'}</td>
+                    <td>${state.questionTimes[i]}s</td>
+                `;
+                resultBody.appendChild(row);
+            });
+            
+            // Initialize charts after a small delay to ensure DOM is ready
+            setTimeout(() => {
+                initCharts();
+            }, 100);
         }
 
         // Print to PDF
