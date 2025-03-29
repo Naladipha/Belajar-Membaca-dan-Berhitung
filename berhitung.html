@@ -635,39 +635,37 @@
             }
         }
         
-        // Show results
+        // Show results - MODIFIED FIX
         function showResults() {
-    clearInterval(state.timer);
-    
-    // Sembunyikan container quiz
-    document.getElementById('quiz').style.display = 'none';
-    
-    // Tampilkan container hasil
-    const resultContainer = document.getElementById('result-container');
-    resultContainer.style.display = 'block';
-    
-    // Isi tabel hasil
-    const resultBody = document.getElementById('result-body');
-    resultBody.innerHTML = '';
-    
-    state.questions.forEach((q, i) => {
-        const row = document.createElement('tr');
-        row.className = state.results[i] ? 'correct-row' : 'wrong-row';
-        row.innerHTML = `
-            <td>${i+1}</td>
-            <td>${q}</td>
-            <td>${formatNumber(state.answers[i])}</td>
-            <td>${state.results[i] ? '✅ Benar' : '❌ Salah'}</td>
-            <td>${state.questionTimes[i]}s</td>
-        `;
-        resultBody.appendChild(row);
-    });
-    
-    // Inisialisasi chart setelah DOM diupdate
-    setTimeout(() => {
-        initCharts();
-    }, 100);
-}
+            clearInterval(state.timer);
+            
+            // Hide quiz and show results
+            document.getElementById('quiz').style.display = 'none';
+            document.getElementById('result-container').style.display = 'block';
+            
+            // Populate result table
+            const resultBody = document.getElementById('result-body');
+            resultBody.innerHTML = '';
+            
+            state.questions.forEach((q, i) => {
+                const row = document.createElement('tr');
+                row.className = state.results[i] ? 'correct-row' : 'wrong-row';
+                
+                row.innerHTML = `
+                    <td>${i+1}</td>
+                    <td>${q}</td>
+                    <td>${formatNumber(state.answers[i])}</td>
+                    <td>${state.results[i] ? '✅ Benar' : '❌ Salah'}</td>
+                    <td>${state.questionTimes[i]}s</td>
+                `;
+                resultBody.appendChild(row);
+            });
+            
+            // Initialize charts after a small delay to ensure DOM is ready
+            setTimeout(() => {
+                initCharts();
+            }, 100);
+        }
         
         function initCharts() {
             // Destroy existing charts if any
@@ -738,38 +736,6 @@
                     }
                 }
             });
-        }
-
-        // Show results - MODIFIED FIX
-        function showResults() {
-            clearInterval(state.timer);
-            
-            // Hide quiz and show results
-            document.getElementById('quiz').style.display = 'none';
-            document.getElementById('result-container').style.display = 'block';
-            
-            // Populate result table
-            const resultBody = document.getElementById('result-body');
-            resultBody.innerHTML = '';
-            
-            state.questions.forEach((q, i) => {
-                const row = document.createElement('tr');
-                row.className = state.results[i] ? 'correct-row' : 'wrong-row';
-                
-                row.innerHTML = `
-                    <td>${i+1}</td>
-                    <td>${q}</td>
-                    <td>${formatNumber(state.answers[i])}</td>
-                    <td>${state.results[i] ? '✅ Benar' : '❌ Salah'}</td>
-                    <td>${state.questionTimes[i]}s</td>
-                `;
-                resultBody.appendChild(row);
-            });
-            
-            // Initialize charts after a small delay to ensure DOM is ready
-            setTimeout(() => {
-                initCharts();
-            }, 100);
         }
 
         // Print to PDF
