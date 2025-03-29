@@ -210,10 +210,6 @@
             font-size: clamp(18px, 5vw, 22px);
         }
         
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        
         .correct-row {
             background-color: #e6ffe6;
         }
@@ -256,6 +252,16 @@
             }
             .no-print {
                 display: none !important;
+            }
+            table {
+                page-break-inside: auto;
+            }
+            tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
+            thead {
+                display: table-header-group;
             }
         }
         
@@ -341,7 +347,7 @@
             </div>
             <div class="summary-row">
                 <span class="summary-label">Total Waktu:</span>
-                <span id="total-time">0 detik</span>
+                <span id="total-time">00:00:00</span>
             </div>
             <div class="summary-row">
                 <span class="summary-label">Rata-rata Waktu:</span>
@@ -408,7 +414,7 @@
             sessionEndTime: 0,
             correct: 0,
             maxStreak: 0,
-            questionTimes: [],
+            questionTimes: [], // Dalam milidetik
             questions: [],
             answers: [],
             results: [],
@@ -468,6 +474,27 @@
                 second: '2-digit'
             };
             return date.toLocaleString('id-ID', options).replace(/\//g, '-');
+        }
+        
+        // Format durasi ke HH:MM:SS
+        function formatDuration(ms) {
+            const totalSeconds = Math.floor(ms / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            
+            return [
+                hours.toString().padStart(2, '0'),
+                minutes.toString().padStart(2, '0'),
+                seconds.toString().padStart(2, '0')
+            ].join(':');
+        }
+        
+        // Format detik ke menit:detik
+        function formatSeconds(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins > 0 ? mins + 'm ' : ''}${secs}s`;
         }
         
         // Generate new question with improved logic for level 1
@@ -540,7 +567,7 @@
             
             // Start question timer
             state.timer = setInterval(() => {
-                elements.time.textContent = state.time + Math.floor((Date.now() - state.startTime) / 1000);
+                elements.time.textContent = Math.floor((Date.now() - state.startTime) / 1000);
             }, 200);
         }
         
@@ -568,8 +595,8 @@
         function checkAnswer(btn, selected, correct) {
             clearInterval(state.timer);
             
-            const timeSpent = Math.floor((Date.now() - state.startTime) / 1000);
-            state.time += timeSpent;
+            const timeSpent = Date.now() - state.startTime; // Dalam milidetik
+            state.time += Math.floor(timeSpent / 1000);
             state.questionTimes.push(timeSpent);
             state.answers.push(selected);
             
@@ -631,32 +658,88 @@
             setTimeout(() => elements.levelUp.style.display = 'none', 3000);
         }
         
-        // Print to PDF
+        // Print to PDF with improved formatting
         async function printToPdf() {
             const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
             
             try {
                 const element = document.getElementById('result-container');
-                const canvas = await html2canvas(element, {
-                    scale: 2,
-                    logging: false,
-                    useCORS: true,
-                    scrollX: 0,
-                    scrollY: 0,
-                    windowWidth: element.scrollWidth,
-                    windowHeight: element.scrollHeight
+                const pageWidth = doc.internal.pageSize.getWidth() - 20;
+                const pageHeight = doc.internal.pageSize.getHeight() - 20;
+                
+                // Add title
+                doc.setFontSize(18);
+                doc.setTextColor(0, 0, 0);
+                doc.text("Hasil Belajar", 105, 15, { align: 'center' });
+                
+                // Add summary
+                doc.setFontSize(12);
+                const summaryLines = [
+                    `Jumlah Soal: ${elements.totalQuestions.textContent}`,
+                    `Jumlah Benar: ${elements.totalCorrect.textContent}`,
+                    `Jumlah Salah: ${elements.totalWrong.textContent}`,
+                    `Score: ${elements.scorePercentage.textContent}`,
+                    `Total Waktu: ${elements.totalTime.textContent}`,
+                    `Rata-rata Waktu: ${elements.averageTime.textContent}`,
+                    `Waktu Mulai: ${elements.startTime.textContent}`,
+                    `Waktu Selesai: ${elements.endTime.textContent}`
+                ];
+                
+                let y = 30;
+                summaryLines.forEach(line => {
+                    doc.text(line, 20, y);
+                    y += 7;
                 });
                 
-                const imgData = canvas.toDataURL('image/png');
-                const pdf = new jsPDF('p', 'mm', 'a4');
-                const imgProps = pdf.getImageProperties(imgData);
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                y += 10;
                 
-                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-                pdf.save('hasil-belajar.pdf');
+                // Add table
+                const table = document.getElementById('result-table');
+                const headers = Array.from(table.querySelectorAll('th')).map(th => th.textContent);
+                const rows = Array.from(table.querySelectorAll('tbody tr')).map(tr => {
+                    return Array.from(tr.querySelectorAll('td')).map(td => td.textContent);
+                });
+                
+                // Table settings
+                const columns = [
+                    { header: headers[0], dataKey: 'no', width: 15 },
+                    { header: headers[1], dataKey: 'question', width: 50 },
+                    { header: headers[2], dataKey: 'answer', width: 30 },
+                    { header: headers[3], dataKey: 'result', width: 30 },
+                    { header: headers[4], dataKey: 'time', width: 25 }
+                ];
+                
+                // Add table with autoTable
+                doc.autoTable({
+                    head: [headers],
+                    body: rows,
+                    startY: y,
+                    margin: { left: 20 },
+                    styles: {
+                        fontSize: 10,
+                        cellPadding: 4,
+                        overflow: 'linebreak'
+                    },
+                    columnStyles: {
+                        0: { cellWidth: 15 },
+                        1: { cellWidth: 50 },
+                        2: { cellWidth: 30 },
+                        3: { cellWidth: 30 },
+                        4: { cellWidth: 25 }
+                    },
+                    didDrawPage: function(data) {
+                        // Footer with page number
+                        const pageCount = doc.internal.getNumberOfPages();
+                        doc.setFontSize(10);
+                        doc.text(`Halaman ${data.pageNumber} dari ${pageCount}`, 105, 287, { align: 'center' });
+                    }
+                });
+                
+                doc.save('hasil-belajar.pdf');
             } catch (error) {
                 console.error('Error generating PDF:', error);
+                alert('Gagal membuat PDF, mencoba metode alternatif...');
                 window.print();
             }
         }
@@ -682,15 +765,15 @@
             const correctAnswers = state.results.slice(0, totalQuestions).filter(r => r).length;
             const wrongAnswers = totalQuestions - correctAnswers;
             const scorePercentage = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
-            const totalTime = state.questionTimes.slice(0, totalQuestions).reduce((a, b) => a + b, 0);
-            const averageTime = totalQuestions > 0 ? Math.round(totalTime / totalQuestions) : 0;
+            const totalTimeMs = state.sessionEndTime - state.sessionStartTime;
+            const averageTime = totalQuestions > 0 ? Math.round(state.questionTimes.slice(0, totalQuestions).reduce((a, b) => a + b, 0) / totalQuestions / 1000) : 0;
             
             // Update summary
             elements.totalQuestions.textContent = totalQuestions;
             elements.totalCorrect.textContent = correctAnswers;
             elements.totalWrong.textContent = wrongAnswers;
             elements.scorePercentage.textContent = `${scorePercentage}%`;
-            elements.totalTime.textContent = `${totalTime} detik`;
+            elements.totalTime.textContent = formatDuration(totalTimeMs);
             elements.averageTime.textContent = `${averageTime} detik`;
             elements.startTime.textContent = formatWIB(state.sessionStartTime);
             elements.endTime.textContent = formatWIB(state.sessionEndTime);
@@ -706,7 +789,7 @@
                     <td>${q}</td>
                     <td>${state.answers[i]}</td>
                     <td><span class="${state.results[i] ? 'correct-icon' : 'wrong-icon'}">${state.results[i] ? '✓' : '✗'}</span></td>
-                    <td>${state.questionTimes[i]}s</td>
+                    <td>${formatSeconds(Math.floor(state.questionTimes[i] / 1000))}</td>
                 `;
                 elements.resultBody.appendChild(row);
             });
@@ -727,7 +810,7 @@
                 sessionEndTime: 0,
                 correct: 0,
                 maxStreak: 0,
-                questionTimes: [],
+                questionTimes: [], // Dalam milidetik
                 questions: [],
                 answers: [],
                 results: [],
@@ -749,7 +832,7 @@
             elements.questionNum.textContent = state.questionNum;
             elements.level.textContent = state.level + 1;
             elements.score.textContent = state.score;
-            elements.time.textContent = state.time;
+            elements.time.textContent = Math.floor((Date.now() - state.startTime) / 1000);
             elements.progress.textContent = state.progress;
             elements.progressBar.style.width = `${(state.progress / 20) * 100}%`;
             
