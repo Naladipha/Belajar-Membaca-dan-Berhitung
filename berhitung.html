@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Belajar Berhitung Bertingkat</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -341,6 +343,14 @@
                 <span class="summary-label">Rata-rata Waktu:</span>
                 <span id="average-time">0 detik</span>
             </div>
+            <div class="summary-row">
+                <span class="summary-label">Waktu Mulai:</span>
+                <span id="start-time">-</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">Waktu Selesai:</span>
+                <span id="end-time">-</span>
+            </div>
         </div>
         
         <table id="result-table">
@@ -372,7 +382,7 @@
             { ops: ['+', '-'], min: 25, max: 100 },
             { ops: ['+', '-', '×'], min: 100, max: 500, maxMul: 25 },
             { ops: ['+', '-', '×'], min: 500, max: 1000, maxMul: 100 },
-            { ops: ['+', '-', '×', '÷'], min: 1000, max: 2500, maxMul: 500 }
+            { ops: ['+', '-', '×', '÷'], min: 1000, max: 100000, maxMul: 500 }
         ];
         
         // Game state
@@ -384,6 +394,8 @@
             progress: 0,
             time: 0,
             startTime: 0,
+            sessionStartTime: 0,
+            sessionEndTime: 0,
             correct: 0,
             maxStreak: 0,
             questionTimes: [],
@@ -415,17 +427,36 @@
             totalWrong: document.getElementById('total-wrong'),
             scorePercentage: document.getElementById('score-percentage'),
             totalTime: document.getElementById('total-time'),
-            averageTime: document.getElementById('average-time')
+            averageTime: document.getElementById('average-time'),
+            startTime: document.getElementById('start-time'),
+            endTime: document.getElementById('end-time')
         };
         
         // Initialize game
         function init() {
+            state.sessionStartTime = Date.now();
             updateUI();
             newQuestion();
             
             elements.finish.addEventListener('click', showResults);
-            elements.printPdf.addEventListener('click', window.print);
+            elements.printPdf.addEventListener('click', printToPdf);
             elements.newSession.addEventListener('click', startNewSession);
+        }
+        
+        // Format waktu WIB
+        function formatWIB(timestamp) {
+            const date = new Date(timestamp);
+            const options = {
+                timeZone: 'Asia/Jakarta',
+                hour12: false,
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            };
+            return date.toLocaleString('id-ID', options).replace(/\//g, '-');
         }
         
         // Generate new question
@@ -471,7 +502,7 @@
             // Start question timer
             state.timer = setInterval(() => {
                 elements.time.textContent = state.time + Math.floor((Date.now() - state.startTime) / 1000);
-            }, 500);
+            }, 1000);
         }
         
         // Generate answer options
@@ -560,9 +591,36 @@
             setTimeout(() => elements.levelUp.style.display = 'none', 3000);
         }
         
+        // Print to PDF
+        async function printToPdf() {
+            const { jsPDF } = window.jspdf;
+            
+            try {
+                const element = document.getElementById('result-container');
+                const canvas = await html2canvas(element, {
+                    scale: 2,
+                    logging: false,
+                    useCORS: true
+                });
+                
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const imgProps = pdf.getImageProperties(imgData);
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                pdf.save('hasil-belajar.pdf');
+            } catch (error) {
+                console.error('Error generating PDF:', error);
+                window.print();
+            }
+        }
+        
         // Show results
         function showResults() {
             clearInterval(state.timer);
+            state.sessionEndTime = Date.now();
             
             // Hide quiz elements
             document.getElementById('quiz').style.display = 'none';
@@ -570,12 +628,17 @@
             // Show results container
             elements.resultContainer.style.display = 'block';
             
+            // Filter out the last question if it's undefined
+            const validQuestions = state.questions.filter((q, i) => 
+                q !== undefined && state.answers[i] !== undefined && state.results[i] !== undefined
+            );
+            
             // Calculate summary data
-            const totalQuestions = state.questions.length;
-            const correctAnswers = state.results.filter(r => r).length;
+            const totalQuestions = validQuestions.length;
+            const correctAnswers = state.results.slice(0, totalQuestions).filter(r => r).length;
             const wrongAnswers = totalQuestions - correctAnswers;
-            const scorePercentage = Math.round((correctAnswers / totalQuestions) * 100);
-            const totalTime = state.questionTimes.reduce((a, b) => a + b, 0);
+            const scorePercentage = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+            const totalTime = state.questionTimes.slice(0, totalQuestions).reduce((a, b) => a + b, 0);
             const averageTime = totalQuestions > 0 ? Math.round(totalTime / totalQuestions) : 0;
             
             // Update summary
@@ -585,15 +648,12 @@
             elements.scorePercentage.textContent = `${scorePercentage}%`;
             elements.totalTime.textContent = `${totalTime} detik`;
             elements.averageTime.textContent = `${averageTime} detik`;
+            elements.startTime.textContent = formatWIB(state.sessionStartTime);
+            elements.endTime.textContent = formatWIB(state.sessionEndTime);
             
             // Build results table
             elements.resultBody.innerHTML = '';
-            state.questions.forEach((q, i) => {
-                // Skip undefined or invalid entries
-                if (q === undefined || state.answers[i] === undefined || state.results[i] === undefined) {
-                    return;
-                }
-                
+            validQuestions.forEach((q, i) => {
                 const row = document.createElement('tr');
                 row.className = state.results[i] ? 'correct-row' : 'wrong-row';
                 
@@ -619,6 +679,8 @@
                 progress: 0,
                 time: 0,
                 startTime: 0,
+                sessionStartTime: Date.now(),
+                sessionEndTime: 0,
                 correct: 0,
                 maxStreak: 0,
                 questionTimes: [],
