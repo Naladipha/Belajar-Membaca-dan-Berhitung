@@ -59,7 +59,7 @@
         }
         
         .quiz-container {
-            max-width: 800px;
+            max-width: 600px;
             margin: 30px auto;
             padding: 20px;
             background: white;
@@ -163,6 +163,13 @@
             width: 100%;
             max-width: 500px;
             margin: 10px;
+            height: 300px;
+        }
+        
+        canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
         }
         
         table {
@@ -312,12 +319,46 @@
 
         // Game configuration
         const config = [
-            { ops: ['+'], min: 1, max: 10, diff: 2 },
-            { ops: ['+', '-'], min: 10, max: 25, diff: 3 },
-            { ops: ['+', '-'], min: 25, max: 100, diff: 5 },
-            { ops: ['+', '-', '×'], min: 100, max: 500, maxMul: 25, diff: 10 },
-            { ops: ['+', '-', '×'], min: 500, max: 1000, maxMul: 100, diff: 20 },
-            { ops: ['+', '-', '×', '÷'], min: 1000, max: 2500, maxMul: 500, diff: 50 }
+            { 
+                ops: ['+'], 
+                min: 1, 
+                max: 5,
+                diff: 2,
+                maxResult: 10
+            },
+            { 
+                ops: ['+', '-'], 
+                min: 10, 
+                max: 25, 
+                diff: 3 
+            },
+            { 
+                ops: ['+', '-'], 
+                min: 25, 
+                max: 100, 
+                diff: 5 
+            },
+            { 
+                ops: ['+', '-', '×'], 
+                min: 100, 
+                max: 500, 
+                maxMul: 25, 
+                diff: 10 
+            },
+            { 
+                ops: ['+', '-', '×'], 
+                min: 500, 
+                max: 1000, 
+                maxMul: 100, 
+                diff: 20 
+            },
+            { 
+                ops: ['+', '-', '×', '÷'], 
+                min: 1000, 
+                max: 2500, 
+                maxMul: 500, 
+                diff: 50 
+            }
         ];
         
         // Game state
@@ -337,7 +378,8 @@
             results: [],
             timer: null,
             timeChart: null,
-            resultChart: null
+            resultChart: null,
+            usedQuestions: new Set()
         };
         
         // DOM elements
@@ -374,51 +416,75 @@
             elements.printPdf.addEventListener('click', printToPdf);
         }
         
-        // Generate new question
+        // Generate new question with improved logic
         function newQuestion() {
             clearInterval(state.timer);
             
             const levelConfig = config[state.level];
             const op = levelConfig.ops[Math.floor(Math.random() * levelConfig.ops.length)];
             let a, b, answer, question;
+            let attempts = 0;
+            const maxAttempts = 20;
             
-            switch(op) {
-                case '+':
-                    a = rand(levelConfig.min, levelConfig.max);
-                    b = rand(levelConfig.min, levelConfig.max - a);
-                    answer = a + b;
-                    question = `${formatNumber(a)} + ${formatNumber(b)}`;
-                    break;
-                case '-':
-                    answer = rand(levelConfig.min, levelConfig.max);
-                    b = rand(1, answer);
-                    a = answer + b;
-                    question = `${formatNumber(a)} - ${formatNumber(b)}`;
-                    break;
-                case '×':
-                    // Hindari perkalian dengan 1, sesekali perkalian 2 diperbolehkan
-                    a = rand(2, levelConfig.maxMul);
-                    // Untuk perkalian, pastikan b minimal 2, kecuali sesekali boleh 2
-                    b = Math.random() > 0.2 ? rand(3, Math.floor(levelConfig.maxMul / a)) : 2;
-                    answer = a * b;
-                    question = `${formatNumber(a)} × ${formatNumber(b)}`;
-                    break;
-                case '÷':
-                    answer = rand(1, 50);
-                    b = rand(1, 20);
-                    a = answer * b;
-                    question = `${formatNumber(a)} ÷ ${formatNumber(b)}`;
-                    break;
-            }
+            do {
+                attempts++;
+                switch(op) {
+                    case '+':
+                        if (state.level === 0) {
+                            a = rand(1, 5);
+                            b = rand(1, 5);
+                            while (a + b <= 1 || a + b > 10) {
+                                a = rand(1, 5);
+                                b = rand(1, 5);
+                            }
+                        } else {
+                            a = rand(levelConfig.min, levelConfig.max);
+                            b = rand(levelConfig.min, levelConfig.max - a);
+                        }
+                        answer = a + b;
+                        question = `${formatNumber(a)} + ${formatNumber(b)}`;
+                        break;
+                    case '-':
+                        if (state.level === 0) {
+                            answer = rand(2, 9);
+                            b = rand(1, answer);
+                            a = answer + b;
+                            while (a - b > 10) {
+                                answer = rand(2, 9);
+                                b = rand(1, answer);
+                                a = answer + b;
+                            }
+                        } else {
+                            answer = rand(levelConfig.min, levelConfig.max);
+                            b = rand(1, answer);
+                            a = answer + b;
+                        }
+                        question = `${formatNumber(a)} - ${formatNumber(b)}`;
+                        break;
+                    case '×':
+                        a = rand(2, levelConfig.maxMul);
+                        b = Math.random() > 0.2 ? rand(3, Math.floor(levelConfig.maxMul / a)) : 2;
+                        answer = a * b;
+                        question = `${formatNumber(a)} × ${formatNumber(b)}`;
+                        break;
+                    case '÷':
+                        answer = rand(1, 50);
+                        b = rand(1, 20);
+                        a = answer * b;
+                        question = `${formatNumber(a)} ÷ ${formatNumber(b)}`;
+                        break;
+                }
+                
+                if (attempts >= maxAttempts) break;
+            } while (state.usedQuestions.has(question));
             
-            // Simpan data pertanyaan
+            state.usedQuestions.add(question);
             state.questions.push(question);
             
             elements.question.textContent = question;
             generateOptions(answer, levelConfig.diff);
             state.startTime = Date.now();
             
-            // Start question timer
             state.timer = setInterval(() => {
                 elements.time.textContent = state.time + Math.floor((Date.now() - state.startTime) / 1000);
             }, 1000);
@@ -429,7 +495,6 @@
             elements.options.innerHTML = '';
             const options = [correct];
             
-            // Generate more challenging options
             while (options.length < 4) {
                 let option;
                 const strategy = Math.floor(Math.random() * 4);
@@ -442,7 +507,7 @@
                         const magnitude = Math.pow(10, Math.floor(Math.log10(correct)));
                         option = correct + (Math.random() > 0.5 ? 1 : -1) * (magnitude + Math.floor(Math.random() * difficulty * magnitude/10));
                         break;
-                    case 2: // Off by operation error (e.g., adding instead of multiplying)
+                    case 2: // Off by operation error
                         option = Math.max(1, correct + (Math.random() > 0.5 ? 1 : -1) * Math.floor(correct * (0.1 + Math.random() * 0.3)));
                         break;
                     case 3: // Random in range
@@ -451,19 +516,17 @@
                         break;
                 }
                 
-                // Ensure option is positive and unique
                 option = Math.max(1, option);
                 if (option !== correct && !options.includes(option)) {
                     options.push(option);
                 }
             }
             
-            // Shuffle options and format numbers
             options.sort(() => Math.random() - 0.5).forEach(opt => {
                 const btn = document.createElement('button');
                 btn.className = 'option';
                 btn.textContent = formatNumber(opt);
-                btn.dataset.value = opt; // Simpan nilai asli sebagai data attribute
+                btn.dataset.value = opt;
                 btn.onclick = () => checkAnswer(btn, opt, correct);
                 elements.options.appendChild(btn);
             });
@@ -481,7 +544,6 @@
             const isCorrect = selected === correct;
             state.results.push(isCorrect);
             
-            // Disable all buttons
             Array.from(elements.options.children).forEach(b => {
                 b.disabled = true;
                 if (parseInt(b.dataset.value) === correct) b.classList.add('correct');
@@ -497,7 +559,6 @@
             
             updateUI();
             
-            // Move to next question after very short delay (100ms)
             setTimeout(() => {
                 state.questionNum++;
                 newQuestion();
@@ -556,148 +617,122 @@
         function showResults() {
             clearInterval(state.timer);
             
-            // Hide quiz elements
-            elements.question.style.display = 'none';
-            elements.options.style.display = 'none';
-            elements.finish.style.display = 'none';
+            document.getElementById('quiz').style.display = 'none';
+            document.getElementById('result-container').style.display = 'block';
             
-            // Show results container
-            elements.resultContainer.style.display = 'block';
+            const resultBody = document.getElementById('result-body');
+            resultBody.innerHTML = '';
             
-            // Build results table
-            elements.resultBody.innerHTML = '';
             state.questions.forEach((q, i) => {
                 const row = document.createElement('tr');
-                if (state.results[i]) {
-                    row.classList.add('correct-row');
-                } else {
-                    row.classList.add('wrong-row');
-                }
+                row.className = state.results[i] ? 'correct-row' : 'wrong-row';
                 
                 row.innerHTML = `
-                    <td>${i + 1}</td>
+                    <td>${i+1}</td>
                     <td>${q}</td>
                     <td>${formatNumber(state.answers[i])}</td>
-                    <td>${state.results[i] ? 'Benar' : 'Salah'}</td>
-                    <td>${state.questionTimes[i]}</td>
+                    <td>${state.results[i] ? '✅ Benar' : '❌ Salah'}</td>
+                    <td>${state.questionTimes[i]}s</td>
                 `;
-                
-                elements.resultBody.appendChild(row);
+                resultBody.appendChild(row);
             });
             
-            // Create charts
-            createCharts();
+            initCharts();
         }
         
-        // Create charts for results
-        function createCharts() {
-            // Destroy existing charts if they exist
-            if (state.timeChart) {
-                state.timeChart.destroy();
-            }
-            if (state.resultChart) {
-                state.resultChart.destroy();
-            }
+        // Initialize charts
+        function initCharts() {
+            if (state.timeChart) state.timeChart.destroy();
+            if (state.resultChart) state.resultChart.destroy();
             
-            // Time per question chart
-            state.timeChart = new Chart(elements.timeChart, {
+            // Time chart
+            const timeCtx = document.getElementById('timeChart').getContext('2d');
+            state.timeChart = new Chart(timeCtx, {
                 type: 'line',
                 data: {
-                    labels: state.questions.map((_, i) => `Soal ${i + 1}`),
+                    labels: state.questions.map((_, i) => `Soal ${i+1}`),
                     datasets: [{
                         label: 'Waktu (detik)',
                         data: state.questionTimes,
-                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                        borderColor: 'rgba(54, 162, 235, 1)',
-                        borderWidth: 1
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        tension: 0.1,
+                        fill: true
                     }]
                 },
                 options: {
                     responsive: true,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Waktu Pengerjaan per Soal'
-                        }
-                    },
+                    maintainAspectRatio: false,
                     scales: {
                         y: {
                             beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Detik'
-                            }
+                            title: { display: true, text: 'Detik' }
                         }
                     }
                 }
             });
             
-            // Correct vs wrong chart
-            const correctCount = state.results.filter(r => r).length;
-            const wrongCount = state.results.length - correctCount;
+            // Results chart
+            const correct = state.results.filter(r => r).length;
+            const wrong = state.results.length - correct;
+            const resultCtx = document.getElementById('resultChart').getContext('2d');
             
-            state.resultChart = new Chart(elements.resultChart, {
+            state.resultChart = new Chart(resultCtx, {
                 type: 'doughnut',
                 data: {
                     labels: ['Benar', 'Salah'],
                     datasets: [{
-                        data: [correctCount, wrongCount],
-                        backgroundColor: [
-                            'rgba(46, 204, 113, 0.7)',
-                            'rgba(231, 76, 60, 0.7)'
-                        ],
-                        borderColor: [
-                            'rgba(46, 204, 113, 1)',
-                            'rgba(231, 76, 60, 1)'
-                        ],
+                        data: [correct, wrong],
+                        backgroundColor: ['#2ecc71', '#e74c3c'],
                         borderWidth: 1
                     }]
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
                     plugins: {
-                        title: {
-                            display: true,
-                            text: 'Hasil Jawaban'
-                        }
+                        legend: { position: 'bottom' }
                     }
                 }
             });
         }
         
-        // Send email with results
+        // Print to PDF
+        async function printToPdf() {
+            const { jsPDF } = window.jspdf;
+            
+            const element = document.getElementById('result-container');
+            const canvas = await html2canvas(element, {
+                scale: 2,
+                logging: false,
+                useCORS: true
+            });
+            
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const imgProps = pdf.getImageProperties(imgData);
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+            
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            pdf.save('hasil-belajar.pdf');
+        }
+        
+        // Send email
         function sendEmail() {
-            const email = elements.emailInput.value.trim();
-            if (!email) {
-                alert('Silakan masukkan alamat email yang valid');
+            const email = document.getElementById('email-input').value.trim();
+            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                alert('Harap masukkan alamat email yang valid');
                 return;
             }
             
-            // In a real app, you would send this to a server
-            // This is just a simulation
-            alert(`Hasil akan dikirim ke ${email}\n\nFitur ini membutuhkan integrasi dengan backend.`);
-        }
-        
-        // Print to PDF
-        function printToPdf() {
-            // Using html2canvas and jsPDF
-            const { jsPDF } = window.jspdf;
-            
-            html2canvas(document.getElementById('result-container')).then(canvas => {
-                const imgData = canvas.toDataURL('image/png');
-                const pdf = new jsPDF('p', 'mm', 'a4');
-                const imgProps = pdf.getImageProperties(imgData);
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-                
-                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-                pdf.save('hasil-belajar.pdf');
+            printToPdf().then(() => {
+                alert(`Laporan PDF telah dibuat dan siap dikirim ke: ${email}\n\n(Fitur pengiriman email membutuhkan integrasi backend)`);
             });
         }
         
         // Start new session
         function startNewSession() {
-            // Reset state
             state = {
                 level: 0,
                 questionNum: 1,
@@ -714,18 +749,14 @@
                 results: [],
                 timer: null,
                 timeChart: null,
-                resultChart: null
+                resultChart: null,
+                usedQuestions: new Set()
             };
             
-            // Show quiz elements
-            elements.question.style.display = 'block';
-            elements.options.style.display = 'grid';
-            elements.finish.style.display = 'block';
+            document.getElementById('quiz').style.display = 'block';
+            document.getElementById('result-container').style.display = 'none';
+            document.getElementById('email-input').value = '';
             
-            // Hide results
-            elements.resultContainer.style.display = 'none';
-            
-            // Reset UI
             updateUI();
             newQuestion();
         }
