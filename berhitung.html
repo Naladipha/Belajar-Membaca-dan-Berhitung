@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Belajar Berhitung Bertingkat</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        /* CSS yang sama seperti sebelumnya */
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -122,6 +123,14 @@
             margin: 5px;
         }
         
+        .btn-print {
+            background: #3498db;
+        }
+        
+        .btn-email {
+            background: #9b59b6;
+        }
+        
         .level-up {
             position: relative;
             background: #2ecc71;
@@ -191,6 +200,23 @@
             background-color: #ffe6e6 !important;
         }
         
+        .email-form {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .email-form input {
+            padding: 8px;
+            width: 100%;
+            max-width: 300px;
+            margin-right: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
         @keyframes fade {
             0%, 100% { opacity: 0; }
             50% { opacity: 1; }
@@ -225,7 +251,6 @@
     </style>
 </head>
 <body>
-    <!-- Bagian HTML yang sama seperti sebelumnya -->
     <div class="header">
         <div>Soal: <span id="question-num">1</span></div>
         <div>Tingkat: <span id="level">1</span></div>
@@ -273,7 +298,14 @@
                 </tbody>
             </table>
             
+            <div class="email-form">
+                <h3>Kirim Hasil via Email</h3>
+                <input type="email" id="email-input" placeholder="Masukkan alamat email">
+                <button class="btn btn-email" id="send-email">Kirim Email</button>
+            </div>
+            
             <div class="controls">
+                <button class="btn btn-print" id="print-pdf">Cetak PDF</button>
                 <button class="btn" id="new-session">Sesi Baru</button>
             </div>
         </div>
@@ -289,11 +321,11 @@
         const config = [
             { 
                 ops: ['+'], 
-                min: 2,
+                min: 2,  // Mulai dari 2 bukan 1
                 max: 5,
                 diff: 2,
                 maxResult: 10,
-                maxOnes: 2
+                maxOnes: 2  // Maksimal 2 soal dengan angka 1
             },
             { 
                 ops: ['+', '-'], 
@@ -335,7 +367,7 @@
             level: 0,
             questionNum: 1,
             score: 0,
-            consecutiveCorrect: 0, // Untuk menghitung jawaban benar beruntun
+            streak: 0,
             progress: 0,
             time: 0,
             startTime: 0,
@@ -369,6 +401,9 @@
             resultBody: document.getElementById('result-body'),
             timeChart: document.getElementById('timeChart'),
             resultChart: document.getElementById('resultChart'),
+            emailInput: document.getElementById('email-input'),
+            sendEmail: document.getElementById('send-email'),
+            printPdf: document.getElementById('print-pdf'),
             newSession: document.getElementById('new-session')
         };
         
@@ -379,41 +414,224 @@
             
             elements.finish.addEventListener('click', showResults);
             elements.newSession.addEventListener('click', startNewSession);
+            elements.sendEmail.addEventListener('click', sendEmail);
+            elements.printPdf.addEventListener('click', printToPdf);
         }
         
-        // [Bagian generateQuestion(), generateOptions(), checkAnswer() tetap sama seperti kode asli]
+        // Generate new question with improved logic
+        function newQuestion() {
+            clearInterval(state.timer);
+            
+            const levelConfig = config[state.level];
+            const op = levelConfig.ops[Math.floor(Math.random() * levelConfig.ops.length)];
+            let a, b, answer, question;
+            let attempts = 0;
+            const maxAttempts = 20;
+            
+            do {
+                attempts++;
+                switch(op) {
+                    case '+':
+                        if (state.level === 0) {
+                            a = rand(levelConfig.min, levelConfig.max);
+                            b = rand(levelConfig.min, levelConfig.max);
+                            
+                            // Batasi jumlah soal dengan angka 1
+                            if ((a === 1 || b === 1) && state.onesCount >= levelConfig.maxOnes) {
+                                a = rand(2, levelConfig.max);
+                                b = rand(2, levelConfig.max);
+                            }
+                            
+                            // Pastikan hasil <= 10 dan tidak terlalu mudah
+                            while (a + b > levelConfig.maxResult || a + b <= 2) {
+                                a = rand(levelConfig.min, levelConfig.max);
+                                b = rand(levelConfig.min, levelConfig.max);
+                            }
+                            
+                            // Hitung soal dengan angka 1
+                            if (a === 1 || b === 1) state.onesCount++;
+                        } else {
+                            a = rand(levelConfig.min, levelConfig.max);
+                            b = rand(levelConfig.min, levelConfig.max - a);
+                        }
+                        answer = a + b;
+                        question = `${formatNumber(a)} + ${formatNumber(b)}`;
+                        break;
+                    case '-':
+                        if (state.level === 0) {
+                            answer = rand(2, 9); // Hasil minimal 2 untuk level 1
+                            b = rand(1, answer);
+                            a = answer + b;
+                            
+                            // Batasi soal dengan angka 1
+                            if ((a === 1 || b === 1) && state.onesCount >= levelConfig.maxOnes) {
+                                answer = rand(3, 9);
+                                b = rand(2, answer);
+                                a = answer + b;
+                            }
+                            
+                            // Hitung soal dengan angka 1
+                            if (a === 1 || b === 1) state.onesCount++;
+                        } else {
+                            answer = rand(levelConfig.min, levelConfig.max);
+                            b = rand(1, answer);
+                            a = answer + b;
+                        }
+                        question = `${formatNumber(a)} - ${formatNumber(b)}`;
+                        break;
+                    case '×':
+                        a = rand(2, levelConfig.maxMul);
+                        b = Math.random() > 0.2 ? rand(3, Math.floor(levelConfig.maxMul / a)) : 2;
+                        answer = a * b;
+                        question = `${formatNumber(a)} × ${formatNumber(b)}`;
+                        break;
+                    case '÷':
+                        answer = rand(1, 50);
+                        b = rand(1, 20);
+                        a = answer * b;
+                        question = `${formatNumber(a)} ÷ ${formatNumber(b)}`;
+                        break;
+                }
+                
+                if (attempts >= maxAttempts) break;
+            } while (state.usedQuestions.has(question));
+            
+            state.usedQuestions.add(question);
+            state.questions.push(question);
+            
+            elements.question.textContent = question;
+            generateOptions(answer, levelConfig.diff);
+            state.startTime = Date.now();
+            
+            state.timer = setInterval(() => {
+                elements.time.textContent = state.time + Math.floor((Date.now() - state.startTime) / 1000);
+            }, 1000);
+        }
         
-        // Handle correct answer - MODIFIED untuk sistem 20 jawaban benar beruntun
+        // Generate answer options with smarter deviations
+        function generateOptions(correct, difficulty) {
+            elements.options.innerHTML = '';
+            const options = [correct];
+            
+            while (options.length < 4) {
+                let option;
+                const strategy = Math.floor(Math.random() * 4);
+                
+                switch(strategy) {
+                    case 0: // Similar last digit
+                        option = correct + (Math.random() > 0.5 ? 1 : -1) * (10 + Math.floor(Math.random() * difficulty));
+                        break;
+                    case 1: // Similar first digit
+                        const magnitude = Math.pow(10, Math.floor(Math.log10(correct)));
+                        option = correct + (Math.random() > 0.5 ? 1 : -1) * (magnitude + Math.floor(Math.random() * difficulty * magnitude/10));
+                        break;
+                    case 2: // Off by operation error
+                        option = Math.max(1, correct + (Math.random() > 0.5 ? 1 : -1) * Math.floor(correct * (0.1 + Math.random() * 0.3)));
+                        break;
+                    case 3: // Random in range
+                        const range = Math.max(difficulty * 2, Math.floor(correct * 0.3));
+                        option = rand(Math.max(1, correct - range), correct + range);
+                        break;
+                }
+                
+                option = Math.max(1, option);
+                if (option !== correct && !options.includes(option)) {
+                    options.push(option);
+                }
+            }
+            
+            options.sort(() => Math.random() - 0.5).forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'option';
+                btn.textContent = formatNumber(opt);
+                btn.dataset.value = opt;
+                btn.onclick = () => checkAnswer(btn, opt, correct);
+                elements.options.appendChild(btn);
+            });
+        }
+        
+        // Check selected answer
+        function checkAnswer(btn, selected, correct) {
+            clearInterval(state.timer);
+            
+            const timeSpent = Math.floor((Date.now() - state.startTime) / 1000);
+            state.time += timeSpent;
+            state.questionTimes.push(timeSpent);
+            state.answers.push(selected);
+            
+            const isCorrect = selected === correct;
+            state.results.push(isCorrect);
+            
+            Array.from(elements.options.children).forEach(b => {
+                b.disabled = true;
+                if (parseInt(b.dataset.value) === correct) b.classList.add('correct');
+            });
+            
+            if (isCorrect) {
+                btn.classList.add('correct');
+                handleCorrect();
+            } else {
+                btn.classList.add('wrong');
+                handleWrong();
+            }
+            
+            updateUI();
+            
+            setTimeout(() => {
+                state.questionNum++;
+                newQuestion();
+                updateUI();
+            }, 100);
+        }
+        
+        // Handle correct answer
         function handleCorrect() {
             state.score++;
             state.correct++;
-            state.consecutiveCorrect++;
+            state.streak++;
             state.progress++;
             
-            // Cek apakah sudah mencapai 20 jawaban benar beruntun
-            if (state.consecutiveCorrect >= 20 && state.level < config.length - 1) {
+            if (state.progress >= 20 && state.level < config.length - 1) {
                 state.level++;
-                state.consecutiveCorrect = 0; // Reset counter
                 state.progress = 0;
                 showLevelUp();
             }
             
-            if (state.consecutiveCorrect > state.maxStreak) {
-                state.maxStreak = state.consecutiveCorrect;
-            }
-            
-            updateUI();
+            if (state.streak > state.maxStreak) state.maxStreak = state.streak;
         }
         
-        // Handle wrong answer - MODIFIED untuk reset progress
+        // Handle wrong answer
         function handleWrong() {
-            // Reset progress dan consecutive correct answers
-            state.consecutiveCorrect = 0;
-            state.progress = 0;
-            updateUI();
+            state.streak = 0;
+            state.progress = Math.max(0, state.progress - 1);
         }
         
-        // Show results - MODIFIED untuk menampilkan chart dan table
+        // Show level up notification
+        function showLevelUp() {
+            elements.levelUp.textContent = `Naik ke Tingkat ${state.level + 1}!`;
+            elements.levelUp.style.display = 'block';
+            setTimeout(() => elements.levelUp.style.display = 'none', 2000);
+        }
+        
+        // Update UI elements
+        function updateUI() {
+            elements.questionNum.textContent = state.questionNum;
+            elements.level.textContent = state.level + 1;
+            elements.score.textContent = state.score;
+            elements.time.textContent = state.time;
+            elements.progress.textContent = state.progress;
+            elements.progressBar.style.width = `${(state.progress / 20) * 100}%`;
+            
+            if (state.streak > 0) {
+                elements.streak.textContent = `Beruntun: ${state.streak}`;
+                elements.streak.style.display = 'block';
+                elements.streak.style.background = state.streak >= 5 ? '#2ecc71' : '#f39c12';
+            } else {
+                elements.streak.style.display = 'none';
+            }
+        }
+        
+        // Show results
         function showResults() {
             clearInterval(state.timer);
             
@@ -423,7 +641,6 @@
             const resultBody = document.getElementById('result-body');
             resultBody.innerHTML = '';
             
-            // Isi tabel hasil
             state.questions.forEach((q, i) => {
                 const row = document.createElement('tr');
                 row.className = state.results[i] ? 'correct-row' : 'wrong-row';
@@ -438,17 +655,22 @@
                 resultBody.appendChild(row);
             });
             
-            // Buat chart
             initCharts();
         }
         
-        // Initialize charts
+        // Initialize charts with proper dimensions
         function initCharts() {
-            // Hancurkan chart yang ada jika ada
+            // Destroy existing charts if any
             if (state.timeChart) state.timeChart.destroy();
             if (state.resultChart) state.resultChart.destroy();
 
-            // Line chart untuk waktu pengerjaan
+            // Set canvas dimensions
+            document.getElementById('timeChart').width = document.getElementById('timeChart').parentElement.offsetWidth;
+            document.getElementById('timeChart').height = 300;
+            document.getElementById('resultChart').width = document.getElementById('resultChart').parentElement.offsetWidth;
+            document.getElementById('resultChart').height = 300;
+
+            // Time chart
             const timeCtx = document.getElementById('timeChart').getContext('2d');
             state.timeChart = new Chart(timeCtx, {
                 type: 'line',
@@ -475,7 +697,7 @@
                 }
             });
 
-            // Donut chart untuk hasil benar/salah
+            // Results chart
             const correct = state.results.filter(r => r).length;
             const wrong = state.results.length - correct;
             const resultCtx = document.getElementById('resultChart').getContext('2d');
@@ -499,6 +721,40 @@
                 }
             });
         }
+
+        // Print to PDF
+        async function printToPdf() {
+            const { jsPDF } = window.jspdf;
+            
+            const element = document.getElementById('result-container');
+            const canvas = await html2canvas(element, {
+                scale: 2,
+                logging: false,
+                useCORS: true
+            });
+            
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const imgProps = pdf.getImageProperties(imgData);
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+            
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            pdf.save('hasil-belajar.pdf');
+        }
+        
+        // Send email
+        function sendEmail() {
+            const email = document.getElementById('email-input').value.trim();
+            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                alert('Harap masukkan alamat email yang valid');
+                return;
+            }
+            
+            printToPdf().then(() => {
+                alert(`Laporan PDF telah dibuat dan siap dikirim ke: ${email}\n\n(Fitur pengiriman email membutuhkan integrasi backend)`);
+            });
+        }
         
         // Start new session
         function startNewSession() {
@@ -506,7 +762,7 @@
                 level: 0,
                 questionNum: 1,
                 score: 0,
-                consecutiveCorrect: 0,
+                streak: 0,
                 progress: 0,
                 time: 0,
                 startTime: 0,
@@ -525,12 +781,16 @@
             
             document.getElementById('quiz').style.display = 'block';
             document.getElementById('result-container').style.display = 'none';
+            document.getElementById('email-input').value = '';
             
             updateUI();
             newQuestion();
         }
         
-        // [Fungsi helper lainnya tetap sama]
+        // Helper function for random numbers
+        function rand(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
         
         // Start the game
         init();
