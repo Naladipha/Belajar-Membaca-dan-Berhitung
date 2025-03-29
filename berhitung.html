@@ -372,7 +372,7 @@
             { ops: ['+', '-'], min: 25, max: 100 },
             { ops: ['+', '-', '×'], min: 100, max: 500, maxMul: 25 },
             { ops: ['+', '-', '×'], min: 500, max: 1000, maxMul: 100 },
-            { ops: ['+', '-', '×', '÷'], min: 1000, max: 100000, maxMul: 500 }
+            { ops: ['+', '-', '×', '÷'], min: 1000, max: 2500, maxMul: 500 }
         ];
         
         // Game state
@@ -471,7 +471,7 @@
             // Start question timer
             state.timer = setInterval(() => {
                 elements.time.textContent = state.time + Math.floor((Date.now() - state.startTime) / 1000);
-            }, 1000);
+            }, 500);
         }
         
         // Generate answer options
