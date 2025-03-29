@@ -66,6 +66,7 @@
             border-radius: 10px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             width: 90%;
+            position: relative;
         }
         
         .question {
@@ -131,20 +132,17 @@
         }
         
         .level-up {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            position: relative;
             background: #2ecc71;
             color: white;
-            padding: 20px;
+            padding: 15px;
             border-radius: 10px;
-            font-size: clamp(18px, 5vw, 24px);
-            z-index: 200;
-            animation: fade 2s;
-            display: none;
+            font-size: clamp(16px, 4vw, 20px);
+            margin: 20px auto;
             text-align: center;
             max-width: 80%;
+            display: none;
+            animation: fade 2s;
         }
         
         .result-container {
@@ -176,29 +174,15 @@
             width: 100%;
             border-collapse: collapse;
             margin: 20px 0;
+            text-align: center;
         }
         
         th, td {
             border: 1px solid #ddd;
             padding: 8px;
+            text-align: center;
+            vertical-align: middle;
         }
-
-
-    /* ... CSS sebelumnya tetap sama ... */
-
-    /* Tambahkan ini di bagian manapun dalam <style> */
-    #result-table {
-        text-align: center;
-    }
-    
-    #result-table th, 
-    #result-table td {
-        text-align: center;
-        vertical-align: middle;
-    }
-
-    /* ... CSS setelahnya tetap sama ... */
-
         
         th {
             background-color: #f2f2f2;
@@ -221,6 +205,7 @@
             padding: 15px;
             background: #f9f9f9;
             border-radius: 5px;
+            text-align: center;
         }
         
         .email-form input {
@@ -285,6 +270,7 @@
         <div class="controls">
             <button class="btn" id="finish">Selesai</button>
         </div>
+        <div class="level-up" id="level-up">Level Up!</div>
         
         <div class="result-container" id="result-container">
             <h2>Hasil Belajar</h2>
@@ -325,8 +311,6 @@
         </div>
     </div>
     
-    <div class="level-up" id="level-up">Level Up!</div>
-    
     <script>
         // Format angka dengan pemisah ribuan
         function formatNumber(num) {
@@ -337,10 +321,11 @@
         const config = [
             { 
                 ops: ['+'], 
-                min: 1, 
+                min: 2,  // Mulai dari 2 bukan 1
                 max: 5,
                 diff: 2,
-                maxResult: 10
+                maxResult: 10,
+                maxOnes: 2  // Maksimal 2 soal dengan angka 1
             },
             { 
                 ops: ['+', '-'], 
@@ -395,7 +380,8 @@
             timer: null,
             timeChart: null,
             resultChart: null,
-            usedQuestions: new Set()
+            usedQuestions: new Set(),
+            onesCount: 0
         };
         
         // DOM elements
@@ -447,12 +433,23 @@
                 switch(op) {
                     case '+':
                         if (state.level === 0) {
-                            a = rand(1, 5);
-                            b = rand(1, 5);
-                            while (a + b <= 1 || a + b > 10) {
-                                a = rand(1, 5);
-                                b = rand(1, 5);
+                            a = rand(levelConfig.min, levelConfig.max);
+                            b = rand(levelConfig.min, levelConfig.max);
+                            
+                            // Batasi jumlah soal dengan angka 1
+                            if ((a === 1 || b === 1) && state.onesCount >= levelConfig.maxOnes) {
+                                a = rand(2, levelConfig.max);
+                                b = rand(2, levelConfig.max);
                             }
+                            
+                            // Pastikan hasil <= 10 dan tidak terlalu mudah
+                            while (a + b > levelConfig.maxResult || a + b <= 2) {
+                                a = rand(levelConfig.min, levelConfig.max);
+                                b = rand(levelConfig.min, levelConfig.max);
+                            }
+                            
+                            // Hitung soal dengan angka 1
+                            if (a === 1 || b === 1) state.onesCount++;
                         } else {
                             a = rand(levelConfig.min, levelConfig.max);
                             b = rand(levelConfig.min, levelConfig.max - a);
@@ -462,14 +459,19 @@
                         break;
                     case '-':
                         if (state.level === 0) {
-                            answer = rand(2, 9);
+                            answer = rand(2, 9); // Hasil minimal 2 untuk level 1
                             b = rand(1, answer);
                             a = answer + b;
-                            while (a - b > 10) {
-                                answer = rand(2, 9);
-                                b = rand(1, answer);
+                            
+                            // Batasi soal dengan angka 1
+                            if ((a === 1 || b === 1) && state.onesCount >= levelConfig.maxOnes) {
+                                answer = rand(3, 9);
+                                b = rand(2, answer);
                                 a = answer + b;
                             }
+                            
+                            // Hitung soal dengan angka 1
+                            if (a === 1 || b === 1) state.onesCount++;
                         } else {
                             answer = rand(levelConfig.min, levelConfig.max);
                             b = rand(1, answer);
@@ -656,11 +658,18 @@
             initCharts();
         }
         
-        // Initialize charts
+        // Initialize charts with proper dimensions
         function initCharts() {
+            // Destroy existing charts if any
             if (state.timeChart) state.timeChart.destroy();
             if (state.resultChart) state.resultChart.destroy();
-            
+
+            // Set canvas dimensions
+            document.getElementById('timeChart').width = document.getElementById('timeChart').parentElement.offsetWidth;
+            document.getElementById('timeChart').height = 300;
+            document.getElementById('resultChart').width = document.getElementById('resultChart').parentElement.offsetWidth;
+            document.getElementById('resultChart').height = 300;
+
             // Time chart
             const timeCtx = document.getElementById('timeChart').getContext('2d');
             state.timeChart = new Chart(timeCtx, {
@@ -687,7 +696,7 @@
                     }
                 }
             });
-            
+
             // Results chart
             const correct = state.results.filter(r => r).length;
             const wrong = state.results.length - correct;
@@ -712,7 +721,7 @@
                 }
             });
         }
-        
+
         // Print to PDF
         async function printToPdf() {
             const { jsPDF } = window.jspdf;
@@ -766,7 +775,8 @@
                 timer: null,
                 timeChart: null,
                 resultChart: null,
-                usedQuestions: new Set()
+                usedQuestions: new Set(),
+                onesCount: 0
             };
             
             document.getElementById('quiz').style.display = 'block';
