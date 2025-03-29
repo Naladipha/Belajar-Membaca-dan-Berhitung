@@ -1,7 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Belajar Berhitung Bertingkat</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -20,6 +25,7 @@
             background: white;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             z-index: 100;
+            font-size: clamp(12px, 3vw, 16px);
         }
         
         .progress-container {
@@ -30,6 +36,7 @@
             background: #e0e0e0;
             text-align: center;
             z-index: 100;
+            font-size: clamp(12px, 3vw, 16px);
         }
         
         .progress-bar {
@@ -48,21 +55,24 @@
             padding: 5px 10px;
             border-radius: 5px;
             display: none;
+            font-size: clamp(12px, 3vw, 16px);
         }
         
         .quiz-container {
-            max-width: 600px;
+            max-width: 800px;
             margin: 30px auto;
             padding: 20px;
             background: white;
             border-radius: 10px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            width: 90%;
         }
         
         .question {
-            font-size: 24px;
+            font-size: clamp(20px, 6vw, 28px);
             text-align: center;
             margin: 20px 0;
+            word-break: break-word;
         }
         
         .options {
@@ -74,13 +84,14 @@
         
         .option {
             padding: 15px;
-            font-size: 18px;
+            font-size: clamp(16px, 4vw, 20px);
             background: #3498db;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             transition: background 0.2s;
+            min-height: 50px;
         }
         
         .option:hover {
@@ -107,6 +118,16 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            font-size: clamp(14px, 3.5vw, 18px);
+            margin: 5px;
+        }
+        
+        .btn-print {
+            background: #3498db;
+        }
+        
+        .btn-email {
+            background: #9b59b6;
         }
         
         .level-up {
@@ -118,15 +139,106 @@
             color: white;
             padding: 20px;
             border-radius: 10px;
-            font-size: 20px;
+            font-size: clamp(18px, 5vw, 24px);
             z-index: 200;
             animation: fade 2s;
             display: none;
+            text-align: center;
+            max-width: 80%;
+        }
+        
+        .result-container {
+            display: none;
+            margin-top: 20px;
+        }
+        
+        .charts {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+        
+        .chart-container {
+            width: 100%;
+            max-width: 500px;
+            margin: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #f2f2f2;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .correct-row {
+            background-color: #e6ffe6 !important;
+        }
+        
+        .wrong-row {
+            background-color: #ffe6e6 !important;
+        }
+        
+        .email-form {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+        
+        .email-form input {
+            padding: 8px;
+            width: 100%;
+            max-width: 300px;
+            margin-right: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
         }
         
         @keyframes fade {
             0%, 100% { opacity: 0; }
             50% { opacity: 1; }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding-top: 120px;
+            }
+            
+            .header {
+                flex-direction: column;
+                padding: 5px;
+            }
+            
+            .progress-container {
+                top: 70px;
+            }
+            
+            .streak {
+                top: 110px;
+            }
+            
+            .options {
+                grid-template-columns: 1fr;
+            }
+            
+            .charts {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
@@ -150,19 +262,62 @@
         <div class="controls">
             <button class="btn" id="finish">Selesai</button>
         </div>
+        
+        <div class="result-container" id="result-container">
+            <h2>Hasil Belajar</h2>
+            
+            <div class="charts">
+                <div class="chart-container">
+                    <canvas id="timeChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <canvas id="resultChart"></canvas>
+                </div>
+            </div>
+            
+            <table id="result-table">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Soal</th>
+                        <th>Jawaban</th>
+                        <th>Hasil</th>
+                        <th>Waktu (detik)</th>
+                    </tr>
+                </thead>
+                <tbody id="result-body">
+                </tbody>
+            </table>
+            
+            <div class="email-form">
+                <h3>Kirim Hasil via Email</h3>
+                <input type="email" id="email-input" placeholder="Masukkan alamat email">
+                <button class="btn btn-email" id="send-email">Kirim Email</button>
+            </div>
+            
+            <div class="controls">
+                <button class="btn btn-print" id="print-pdf">Cetak PDF</button>
+                <button class="btn" id="new-session">Sesi Baru</button>
+            </div>
+        </div>
     </div>
     
     <div class="level-up" id="level-up">Level Up!</div>
     
     <script>
+        // Format angka dengan pemisah ribuan
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
         // Game configuration
         const config = [
-            { ops: ['+'], min: 1, max: 10 },
-            { ops: ['+', '-'], min: 10, max: 25 },
-            { ops: ['+', '-'], min: 25, max: 100 },
-            { ops: ['+', '-', '×'], min: 100, max: 500, maxMul: 25 },
-            { ops: ['+', '-', '×'], min: 500, max: 1000, maxMul: 100 },
-            { ops: ['+', '-', '×', '÷'], min: 1000, max: 100000, maxMul: 500 }
+            { ops: ['+'], min: 1, max: 10, diff: 2 },
+            { ops: ['+', '-'], min: 10, max: 25, diff: 3 },
+            { ops: ['+', '-'], min: 25, max: 100, diff: 5 },
+            { ops: ['+', '-', '×'], min: 100, max: 500, maxMul: 25, diff: 10 },
+            { ops: ['+', '-', '×'], min: 500, max: 1000, maxMul: 100, diff: 20 },
+            { ops: ['+', '-', '×', '÷'], min: 1000, max: 2500, maxMul: 500, diff: 50 }
         ];
         
         // Game state
@@ -177,7 +332,12 @@
             correct: 0,
             maxStreak: 0,
             questionTimes: [],
-            timer: null
+            questions: [],
+            answers: [],
+            results: [],
+            timer: null,
+            timeChart: null,
+            resultChart: null
         };
         
         // DOM elements
@@ -192,7 +352,15 @@
             progress: document.getElementById('progress'),
             progressBar: document.getElementById('progress-bar'),
             finish: document.getElementById('finish'),
-            levelUp: document.getElementById('level-up')
+            levelUp: document.getElementById('level-up'),
+            resultContainer: document.getElementById('result-container'),
+            resultBody: document.getElementById('result-body'),
+            timeChart: document.getElementById('timeChart'),
+            resultChart: document.getElementById('resultChart'),
+            emailInput: document.getElementById('email-input'),
+            sendEmail: document.getElementById('send-email'),
+            printPdf: document.getElementById('print-pdf'),
+            newSession: document.getElementById('new-session')
         };
         
         // Initialize game
@@ -200,9 +368,10 @@
             updateUI();
             newQuestion();
             
-            elements.finish.addEventListener('click', () => {
-                if (confirm('Selesai bermain?')) finishGame();
-            });
+            elements.finish.addEventListener('click', showResults);
+            elements.newSession.addEventListener('click', startNewSession);
+            elements.sendEmail.addEventListener('click', sendEmail);
+            elements.printPdf.addEventListener('click', printToPdf);
         }
         
         // Generate new question
@@ -218,30 +387,35 @@
                     a = rand(levelConfig.min, levelConfig.max);
                     b = rand(levelConfig.min, levelConfig.max - a);
                     answer = a + b;
-                    question = `${a} + ${b}`;
+                    question = `${formatNumber(a)} + ${formatNumber(b)}`;
                     break;
                 case '-':
                     answer = rand(levelConfig.min, levelConfig.max);
                     b = rand(1, answer);
                     a = answer + b;
-                    question = `${a} - ${b}`;
+                    question = `${formatNumber(a)} - ${formatNumber(b)}`;
                     break;
                 case '×':
-                    a = rand(1, levelConfig.maxMul);
-                    b = rand(1, Math.floor(levelConfig.maxMul / a));
+                    // Hindari perkalian dengan 1, sesekali perkalian 2 diperbolehkan
+                    a = rand(2, levelConfig.maxMul);
+                    // Untuk perkalian, pastikan b minimal 2, kecuali sesekali boleh 2
+                    b = Math.random() > 0.2 ? rand(3, Math.floor(levelConfig.maxMul / a)) : 2;
                     answer = a * b;
-                    question = `${a} × ${b}`;
+                    question = `${formatNumber(a)} × ${formatNumber(b)}`;
                     break;
                 case '÷':
                     answer = rand(1, 50);
                     b = rand(1, 20);
                     a = answer * b;
-                    question = `${a} ÷ ${b}`;
+                    question = `${formatNumber(a)} ÷ ${formatNumber(b)}`;
                     break;
             }
             
+            // Simpan data pertanyaan
+            state.questions.push(question);
+            
             elements.question.textContent = question;
-            generateOptions(answer);
+            generateOptions(answer, levelConfig.diff);
             state.startTime = Date.now();
             
             // Start question timer
@@ -250,21 +424,46 @@
             }, 1000);
         }
         
-        // Generate answer options
-        function generateOptions(correct) {
+        // Generate answer options with smarter deviations
+        function generateOptions(correct, difficulty) {
             elements.options.innerHTML = '';
             const options = [correct];
             
+            // Generate more challenging options
             while (options.length < 4) {
-                const deviation = rand(1, Math.max(2, Math.floor(correct * 0.2)));
-                const option = Math.max(1, correct + (Math.random() > 0.5 ? deviation : -deviation));
-                if (!options.includes(option)) options.push(option);
+                let option;
+                const strategy = Math.floor(Math.random() * 4);
+                
+                switch(strategy) {
+                    case 0: // Similar last digit
+                        option = correct + (Math.random() > 0.5 ? 1 : -1) * (10 + Math.floor(Math.random() * difficulty));
+                        break;
+                    case 1: // Similar first digit
+                        const magnitude = Math.pow(10, Math.floor(Math.log10(correct)));
+                        option = correct + (Math.random() > 0.5 ? 1 : -1) * (magnitude + Math.floor(Math.random() * difficulty * magnitude/10));
+                        break;
+                    case 2: // Off by operation error (e.g., adding instead of multiplying)
+                        option = Math.max(1, correct + (Math.random() > 0.5 ? 1 : -1) * Math.floor(correct * (0.1 + Math.random() * 0.3)));
+                        break;
+                    case 3: // Random in range
+                        const range = Math.max(difficulty * 2, Math.floor(correct * 0.3));
+                        option = rand(Math.max(1, correct - range), correct + range);
+                        break;
+                }
+                
+                // Ensure option is positive and unique
+                option = Math.max(1, option);
+                if (option !== correct && !options.includes(option)) {
+                    options.push(option);
+                }
             }
             
+            // Shuffle options and format numbers
             options.sort(() => Math.random() - 0.5).forEach(opt => {
                 const btn = document.createElement('button');
                 btn.className = 'option';
-                btn.textContent = opt;
+                btn.textContent = formatNumber(opt);
+                btn.dataset.value = opt; // Simpan nilai asli sebagai data attribute
                 btn.onclick = () => checkAnswer(btn, opt, correct);
                 elements.options.appendChild(btn);
             });
@@ -277,14 +476,18 @@
             const timeSpent = Math.floor((Date.now() - state.startTime) / 1000);
             state.time += timeSpent;
             state.questionTimes.push(timeSpent);
+            state.answers.push(selected);
+            
+            const isCorrect = selected === correct;
+            state.results.push(isCorrect);
             
             // Disable all buttons
             Array.from(elements.options.children).forEach(b => {
                 b.disabled = true;
-                if (parseInt(b.textContent) === correct) b.classList.add('correct');
+                if (parseInt(b.dataset.value) === correct) b.classList.add('correct');
             });
             
-            if (selected === correct) {
+            if (isCorrect) {
                 btn.classList.add('correct');
                 handleCorrect();
             } else {
@@ -294,12 +497,12 @@
             
             updateUI();
             
-            // Move to next question after delay
+            // Move to next question after very short delay (100ms)
             setTimeout(() => {
                 state.questionNum++;
                 newQuestion();
                 updateUI();
-            }, 1000);
+            }, 100);
         }
         
         // Handle correct answer
@@ -349,28 +552,182 @@
             }
         }
         
-        // Finish game and show results
-        function finishGame() {
-            const avgTime = state.questionTimes.length > 0 
-                ? Math.round(state.questionTimes.reduce((a, b) => a + b) / state.questionTimes.length)
-                : 0;
+        // Show results
+        function showResults() {
+            clearInterval(state.timer);
             
-            const accuracy = Math.round((state.correct / (state.questionNum - 1)) * 100);
+            // Hide quiz elements
+            elements.question.style.display = 'none';
+            elements.options.style.display = 'none';
+            elements.finish.style.display = 'none';
             
-            const result = `
-                Hasil Sesi:
-                Tingkat akhir: ${state.level + 1}
-                Total soal: ${state.questionNum - 1}
-                Jawaban benar: ${state.correct}
-                Akurasi: ${accuracy}%
-                Runtutan terpanjang: ${state.maxStreak}
-                Total waktu: ${state.time} detik
-                Rata-rata waktu: ${avgTime} detik/soal
-            `;
+            // Show results container
+            elements.resultContainer.style.display = 'block';
             
-            if (confirm(result + '\n\nKembali ke menu utama?')) {
-                window.location.href = "index.html";
+            // Build results table
+            elements.resultBody.innerHTML = '';
+            state.questions.forEach((q, i) => {
+                const row = document.createElement('tr');
+                if (state.results[i]) {
+                    row.classList.add('correct-row');
+                } else {
+                    row.classList.add('wrong-row');
+                }
+                
+                row.innerHTML = `
+                    <td>${i + 1}</td>
+                    <td>${q}</td>
+                    <td>${formatNumber(state.answers[i])}</td>
+                    <td>${state.results[i] ? 'Benar' : 'Salah'}</td>
+                    <td>${state.questionTimes[i]}</td>
+                `;
+                
+                elements.resultBody.appendChild(row);
+            });
+            
+            // Create charts
+            createCharts();
+        }
+        
+        // Create charts for results
+        function createCharts() {
+            // Destroy existing charts if they exist
+            if (state.timeChart) {
+                state.timeChart.destroy();
             }
+            if (state.resultChart) {
+                state.resultChart.destroy();
+            }
+            
+            // Time per question chart
+            state.timeChart = new Chart(elements.timeChart, {
+                type: 'line',
+                data: {
+                    labels: state.questions.map((_, i) => `Soal ${i + 1}`),
+                    datasets: [{
+                        label: 'Waktu (detik)',
+                        data: state.questionTimes,
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Waktu Pengerjaan per Soal'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Detik'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Correct vs wrong chart
+            const correctCount = state.results.filter(r => r).length;
+            const wrongCount = state.results.length - correctCount;
+            
+            state.resultChart = new Chart(elements.resultChart, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Benar', 'Salah'],
+                    datasets: [{
+                        data: [correctCount, wrongCount],
+                        backgroundColor: [
+                            'rgba(46, 204, 113, 0.7)',
+                            'rgba(231, 76, 60, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgba(46, 204, 113, 1)',
+                            'rgba(231, 76, 60, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Hasil Jawaban'
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Send email with results
+        function sendEmail() {
+            const email = elements.emailInput.value.trim();
+            if (!email) {
+                alert('Silakan masukkan alamat email yang valid');
+                return;
+            }
+            
+            // In a real app, you would send this to a server
+            // This is just a simulation
+            alert(`Hasil akan dikirim ke ${email}\n\nFitur ini membutuhkan integrasi dengan backend.`);
+        }
+        
+        // Print to PDF
+        function printToPdf() {
+            // Using html2canvas and jsPDF
+            const { jsPDF } = window.jspdf;
+            
+            html2canvas(document.getElementById('result-container')).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const imgProps = pdf.getImageProperties(imgData);
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                pdf.save('hasil-belajar.pdf');
+            });
+        }
+        
+        // Start new session
+        function startNewSession() {
+            // Reset state
+            state = {
+                level: 0,
+                questionNum: 1,
+                score: 0,
+                streak: 0,
+                progress: 0,
+                time: 0,
+                startTime: 0,
+                correct: 0,
+                maxStreak: 0,
+                questionTimes: [],
+                questions: [],
+                answers: [],
+                results: [],
+                timer: null,
+                timeChart: null,
+                resultChart: null
+            };
+            
+            // Show quiz elements
+            elements.question.style.display = 'block';
+            elements.options.style.display = 'grid';
+            elements.finish.style.display = 'block';
+            
+            // Hide results
+            elements.resultContainer.style.display = 'none';
+            
+            // Reset UI
+            updateUI();
+            newQuestion();
         }
         
         // Helper function for random numbers
