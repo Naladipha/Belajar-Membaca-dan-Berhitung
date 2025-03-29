@@ -502,7 +502,7 @@
             // Start question timer
             state.timer = setInterval(() => {
                 elements.time.textContent = state.time + Math.floor((Date.now() - state.startTime) / 1000);
-            }, 1000);
+            }, 200);
         }
         
         // Generate answer options
