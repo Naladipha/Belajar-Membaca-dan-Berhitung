@@ -204,6 +204,12 @@
             background-color: #ffe6e6 !important;
         }
         
+        .correct-check {
+            color: #2ecc71;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        
         .email-form {
             margin: 20px 0;
             padding: 15px;
@@ -588,15 +594,17 @@
             }, 100);
         }
         
-        // Handle correct answer
+        // Handle correct answer - PERBAIKAN: Naik level hanya jika streak 20
         function handleCorrect() {
             state.score++;
             state.correct++;
             state.streak++;
             state.progress++;
             
-            if (state.progress >= 20 && state.level < config.length - 1) {
+            // Hanya naik level jika benar 20 kali berturut-turut
+            if (state.streak >= 20 && state.level < config.length - 1) {
                 state.level++;
+                state.streak = 0; // Reset streak setelah naik level
                 state.progress = 0;
                 showLevelUp();
             }
@@ -612,9 +620,9 @@
         
         // Show level up notification
         function showLevelUp() {
-            elements.levelUp.textContent = `Naik ke Tingkat ${state.level + 1}!`;
+            elements.levelUp.textContent = `Berhasil 20 benar berurutan! Naik ke Tingkat ${state.level + 1}!`;
             elements.levelUp.style.display = 'block';
-            setTimeout(() => elements.levelUp.style.display = 'none', 2000);
+            setTimeout(() => elements.levelUp.style.display = 'none', 3000);
         }
         
         // Update UI elements
@@ -629,17 +637,24 @@
             if (state.streak > 0) {
                 elements.streak.textContent = `Beruntun: ${state.streak}`;
                 elements.streak.style.display = 'block';
-                elements.streak.style.background = state.streak >= 5 ? '#2ecc71' : '#f39c12';
+                // Warna berbeda berdasarkan streak
+                if (state.streak >= 15) {
+                    elements.streak.style.background = '#2ecc71'; // Hijau saat mendekati 20
+                } else if (state.streak >= 10) {
+                    elements.streak.style.background = '#f39c12'; // Oranye
+                } else {
+                    elements.streak.style.background = '#e74c3c'; // Merah
+                }
             } else {
                 elements.streak.style.display = 'none';
             }
         }
         
-        // Show results
+        // Show results - PERBAIKAN: Pastikan chart muncul
         function showResults() {
             clearInterval(state.timer);
             
-            // Sembunyikan bagian quiz yang tidak diperlukan
+            // Sembunyikan bagian quiz
             elements.question.style.display = 'none';
             elements.options.style.display = 'none';
             elements.finish.style.display = 'none';
@@ -647,7 +662,7 @@
             // Tampilkan result container
             elements.resultContainer.style.display = 'block';
             
-            // Populate result table
+            // Isi tabel hasil
             elements.resultBody.innerHTML = '';
             
             state.questions.forEach((q, i) => {
@@ -658,25 +673,32 @@
                     <td>${i+1}</td>
                     <td>${q}</td>
                     <td>${formatNumber(state.answers[i])}</td>
-                    <td>${state.results[i] ? '✅ Benar' : '❌ Salah'}</td>
+                    <td>${state.results[i] ? '<span class="correct-check">✓</span>' : 'Salah'}</td>
                     <td>${state.questionTimes[i]}s</td>
                 `;
                 elements.resultBody.appendChild(row);
             });
             
-            // Inisialisasi chart setelah memastikan elemen tersedia
+            // Inisialisasi chart setelah delay kecil
             setTimeout(() => {
                 initCharts();
             }, 100);
         }
         
+        // Initialize charts - PERBAIKAN: Pastikan chart muncul
         function initCharts() {
-            // Hancurkan chart yang ada jika ada
+            // Hancurkan chart sebelumnya jika ada
             if (state.timeChart) {
                 state.timeChart.destroy();
             }
             if (state.resultChart) {
                 state.resultChart.destroy();
+            }
+
+            // Pastikan elemen canvas ada
+            if (!elements.timeChart || !elements.resultChart) {
+                console.error('Elemen chart tidak ditemukan');
+                return;
             }
 
             // Time chart
