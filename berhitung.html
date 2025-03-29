@@ -339,10 +339,7 @@
                 <span class="summary-label">Total Waktu:</span>
                 <span id="total-time">00:00:00</span>
             </div>
-            <div class="summary-row">
-                <span class="summary-label">Rata-rata Waktu per Soal:</span>
-                <span id="average-time">0.00 detik</span>
-            </div>
+            <div id="level-average-times-container"></div>
             <div class="summary-row">
                 <span class="summary-label">Waktu Mulai:</span>
                 <span id="start-time">-</span>
@@ -357,10 +354,11 @@
             <thead>
                 <tr>
                     <th>No</th>
+                    <th>Tingkat</th>
                     <th>Soal</th>
                     <th>Jawaban</th>
                     <th>Hasil</th>
-                    <th>Waktu (detik)</th>
+                    <th>Waktu</th>
                 </tr>
             </thead>
             <tbody id="result-body">
@@ -438,7 +436,8 @@
             averageTime: document.getElementById('average-time'),
             startTime: document.getElementById('start-time'),
             endTime: document.getElementById('end-time'),
-            resultLevel: document.getElementById('result-level')
+            resultLevel: document.getElementById('result-level'),
+            levelAverageTimesContainer: document.getElementById('level-average-times-container')
         };
         
         // Initialize game
@@ -468,18 +467,22 @@
             return date.toLocaleString('id-ID', options).replace(/\//g, '-');
         }
         
-        // Format durasi ke HH:MM:SS
+        // Format durasi ke format yang lebih mudah dibaca
         function formatDuration(ms) {
-            const totalSeconds = Math.floor(ms / 1000);
-            const hours = Math.floor(totalSeconds / 3600);
-            const minutes = Math.floor((totalSeconds % 3600) / 60);
-            const seconds = totalSeconds % 60;
+            const totalSeconds = ms / 1000;
             
-            return [
-                hours.toString().padStart(2, '0'),
-                minutes.toString().padStart(2, '0'),
-                seconds.toString().padStart(2, '0')
-            ].join(':');
+            if (totalSeconds < 60) {
+                return `${totalSeconds.toFixed(2)} detik`;
+            } else if (totalSeconds < 3600) {
+                const minutes = Math.floor(totalSeconds / 60);
+                const seconds = (totalSeconds % 60).toFixed(2);
+                return `${minutes} menit ${seconds} detik`;
+            } else {
+                const hours = Math.floor(totalSeconds / 3600);
+                const remainingMinutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = (totalSeconds % 60).toFixed(2);
+                return `${hours} jam ${remainingMinutes} menit ${seconds} detik`;
+            }
         }
         
         // Format waktu dalam detik dengan 2 desimal
@@ -609,12 +612,12 @@
             
             updateUI();
             
-            // Move to next question after delay
+            // Move to next question after delay (reduced to 200ms)
             setTimeout(() => {
                 state.questionNum++;
                 newQuestion();
                 updateUI();
-            }, 1000);
+            }, 200);
         }
         
         // Handle correct answer
@@ -675,10 +678,17 @@
         
         // Print to PDF with improved formatting
         async function printToPdf() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('p', 'mm', 'a4');
-            
             try {
+                // Use browser's print functionality for better control
+                window.print();
+            } catch (error) {
+                console.error('Error printing:', error);
+                alert('Gagal membuka dialog print, mencoba metode alternatif...');
+                
+                // Fallback to jsPDF if browser print fails
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('p', 'mm', 'a4');
+                
                 // Set judul
                 doc.setFontSize(18);
                 doc.setTextColor(0, 0, 0);
@@ -697,6 +707,13 @@
                     `Waktu Selesai: ${elements.endTime.textContent}`
                 ];
                 
+                // Add level-specific average times
+                state.levelResults.forEach(level => {
+                    const avgTime = level.totalQuestions > 0 ? 
+                        (level.totalTimeMs / level.totalQuestions / 1000).toFixed(2) : 0;
+                    summaryLines.push(`Rata-rata Waktu Tingkat ${level.level}: ${avgTime} detik`);
+                });
+                
                 let y = 30;
                 summaryLines.forEach(line => {
                     doc.text(line, 20, y);
@@ -706,7 +723,7 @@
                 y += 10;
                 
                 // Prepare table data
-                const headers = ['No', 'Soal', 'Jawaban', 'Hasil', 'Waktu (detik)'];
+                const headers = ['No', 'Tingkat', 'Soal', 'Jawaban', 'Hasil', 'Waktu (detik)'];
                 const rows = [];
                 
                 const validQuestions = state.questions.filter((q, i) => 
@@ -714,8 +731,21 @@
                 );
                 
                 validQuestions.forEach((q, i) => {
+                    // Find which level this question belongs to
+                    let questionLevel = 1;
+                    let cumulativeQuestions = 0;
+                    for (const level of state.levelResults) {
+                        if (i < cumulativeQuestions + level.totalQuestions) {
+                            questionLevel = level.level;
+                            break;
+                        }
+                        cumulativeQuestions += level.totalQuestions;
+                    }
+                    if (i >= cumulativeQuestions) questionLevel = state.level + 1;
+                    
                     rows.push([
                         (i+1).toString(),
+                        questionLevel.toString(),
                         q,
                         state.answers[i].toString(),
                         state.results[i] ? '✓' : '✗',
@@ -740,7 +770,8 @@
                         1: { cellWidth: 'auto' },
                         2: { cellWidth: 'auto' },
                         3: { cellWidth: 'auto' },
-                        4: { cellWidth: 'auto' }
+                        4: { cellWidth: 'auto' },
+                        5: { cellWidth: 'auto' }
                     },
                     tableWidth: 'wrap',
                     showHead: 'everyPage',
@@ -766,10 +797,6 @@
                 });
                 
                 doc.save(`hasil-belajar-tingkat-${state.level + 1}.pdf`);
-            } catch (error) {
-                console.error('Error generating PDF:', error);
-                alert('Gagal membuat PDF, mencoba metode alternatif...');
-                window.print();
             }
         }
         
@@ -807,18 +834,66 @@
             elements.totalWrong.textContent = wrongAnswers;
             elements.scorePercentage.textContent = `${scorePercentage}%`;
             elements.totalTime.textContent = formatDuration(totalTimeMs);
-            elements.averageTime.textContent = `${averageTime.toFixed(2)} detik`;
             elements.startTime.textContent = formatWIB(state.sessionStartTime);
             elements.endTime.textContent = formatWIB(state.sessionEndTime);
+            
+            // Clear previous level average times
+            elements.levelAverageTimesContainer.innerHTML = '';
+            
+            // Add level-specific average times
+            state.levelResults.forEach(level => {
+                const avgTime = level.totalQuestions > 0 ? 
+                    (level.totalTimeMs / level.totalQuestions / 1000).toFixed(2) : 0;
+                
+                const row = document.createElement('div');
+                row.className = 'summary-row';
+                row.innerHTML = `
+                    <span class="summary-label">Rata-rata Waktu Tingkat ${level.level}:</span>
+                    <span>${avgTime} detik</span>
+                `;
+                elements.levelAverageTimesContainer.appendChild(row);
+            });
+            
+            // Add current level average time if there are questions
+            if (totalQuestions > 0) {
+                const currentLevelQuestions = state.levelResults.reduce((acc, level) => acc + level.totalQuestions, 0);
+                const currentLevelCount = totalQuestions - currentLevelQuestions;
+                
+                if (currentLevelCount > 0) {
+                    const currentLevelTime = state.questionTimes.slice(currentLevelQuestions).reduce((a, b) => a + b, 0);
+                    const avgTime = (currentLevelTime / currentLevelCount / 1000).toFixed(2);
+                    
+                    const row = document.createElement('div');
+                    row.className = 'summary-row';
+                    row.innerHTML = `
+                        <span class="summary-label">Rata-rata Waktu Tingkat ${state.level + 1}:</span>
+                        <span>${avgTime} detik</span>
+                    `;
+                    elements.levelAverageTimesContainer.appendChild(row);
+                }
+            }
             
             // Build results table
             elements.resultBody.innerHTML = '';
             validQuestions.forEach((q, i) => {
+                // Find which level this question belongs to
+                let questionLevel = 1;
+                let cumulativeQuestions = 0;
+                for (const level of state.levelResults) {
+                    if (i < cumulativeQuestions + level.totalQuestions) {
+                        questionLevel = level.level;
+                        break;
+                    }
+                    cumulativeQuestions += level.totalQuestions;
+                }
+                if (i >= cumulativeQuestions) questionLevel = state.level + 1;
+                
                 const row = document.createElement('tr');
                 row.className = state.results[i] ? 'correct-row' : 'wrong-row';
                 
                 row.innerHTML = `
                     <td>${i+1}</td>
+                    <td>${questionLevel}</td>
                     <td>${q}</td>
                     <td>${state.answers[i]}</td>
                     <td><span class="${state.results[i] ? 'correct-icon' : 'wrong-icon'}">${state.results[i] ? '✓' : '✗'}</span></td>
