@@ -139,6 +139,10 @@
             background: #3498db;
         }
         
+        .btn-next-level {
+            background: #2ecc71;
+        }
+        
         .level-up {
             position: fixed;
             top: 50%;
@@ -296,7 +300,7 @@
 <body>
     <div class="header">
         <div>Soal: <span id="question-num">1</span></div>
-        <div>Tingkat: <span id="level">1</span></div>
+        <div>Tingkat: <span id="level">1 Level 1</span></div>
         <div><span id="score">0</span> benar | Waktu: <span id="time">0</span>s</div>
     </div>
     
@@ -316,7 +320,7 @@
     </div>
     
     <div class="result-container" id="result-container">
-        <div class="result-title">Hasil Belajar - Tingkat <span id="result-level">1</span></div>
+        <div class="result-title">Hasil Belajar - <span id="result-level">Tingkat 1 Level 1</span></div>
         
         <div class="result-summary">
             <div class="summary-row">
@@ -367,6 +371,7 @@
         <div class="controls">
             <button class="btn btn-print no-print" id="print-pdf">Cetak PDF</button>
             <button class="btn no-print" id="new-session">Sesi Baru</button>
+            <button class="btn btn-next-level no-print" id="next-level" style="display: none;">Lanjut ke Tingkat 2</button>
         </div>
     </div>
     
@@ -376,17 +381,46 @@
         // Game configuration
         const config = [
             { 
+                name: "Tingkat 1 Level 1",
                 ops: ['+'], 
                 min: 2,
                 max: 10,
                 maxResult: 10,
                 maxOnes: 1
             },
-            { ops: ['+', '-'], min: 10, max: 25 },
-            { ops: ['+', '-'], min: 25, max: 100 },
-            { ops: ['+', '-', '×'], min: 100, max: 500, maxMul: 25 },
-            { ops: ['+', '-', '×'], min: 500, max: 1000, maxMul: 100 },
-            { ops: ['+', '-', '×', '÷'], min: 1000, max: 2500, maxMul: 500 }
+            { 
+                name: "Tingkat 1 Level 2",
+                ops: ['+', '-'], 
+                min: 10, 
+                max: 25 
+            },
+            { 
+                name: "Tingkat 1 Level 3",
+                ops: ['+', '-'], 
+                min: 25, 
+                max: 100 
+            },
+            { 
+                name: "Tingkat 1 Level 4",
+                ops: ['+', '-', '×'], 
+                min: 100, 
+                max: 500, 
+                maxMul: 25 
+            },
+            { 
+                name: "Tingkat 1 Level 5",
+                ops: ['+', '-', '×'], 
+                min: 500, 
+                max: 1000, 
+                maxMul: 100 
+            },
+            { 
+                name: "Tingkat 1 Level 6",
+                ops: ['+', '-', '×', '÷'], 
+                min: 1000, 
+                max: 2500, 
+                maxMul: 500 
+            }
         ];
         
         // Game state
@@ -428,6 +462,7 @@
             resultBody: document.getElementById('result-body'),
             printPdf: document.getElementById('print-pdf'),
             newSession: document.getElementById('new-session'),
+            nextLevel: document.getElementById('next-level'),
             totalQuestions: document.getElementById('total-questions'),
             totalCorrect: document.getElementById('total-correct'),
             totalWrong: document.getElementById('total-wrong'),
@@ -449,6 +484,14 @@
             elements.finish.addEventListener('click', showResults);
             elements.printPdf.addEventListener('click', printToPdf);
             elements.newSession.addEventListener('click', startNewSession);
+            elements.nextLevel.addEventListener('click', goToNextLevel);
+        }
+        
+        // Navigate to next level
+        function goToNextLevel() {
+            if (state.level === 5) { // If current level is 6 (index 5)
+                window.location.href = "Tingkat_2.html";
+            }
         }
         
         // Format waktu WIB
@@ -636,6 +679,13 @@
                 state.progress = 0;
                 state.onesCount = 0;
                 showLevelUp();
+                
+                // If we reached level 6 (index 5) and got 20 correct in a row, show results
+                if (state.level === 5) {
+                    setTimeout(() => {
+                        showResults();
+                    }, 1000);
+                }
             }
             
             if (state.streak > state.maxStreak) state.maxStreak = state.streak;
@@ -653,6 +703,7 @@
             
             state.levelResults.push({
                 level: state.level + 1,
+                levelName: config[state.level].name,
                 totalQuestions,
                 correctAnswers,
                 totalTimeMs,
@@ -671,7 +722,7 @@
         
         // Show level up notification
         function showLevelUp() {
-            elements.levelUp.textContent = `Berhasil 20 benar berurutan! Naik ke Tingkat ${state.level + 1}!`;
+            elements.levelUp.textContent = `Berhasil 20 benar berurutan! Naik ke ${config[state.level].name}!`;
             elements.levelUp.style.display = 'block';
             setTimeout(() => elements.levelUp.style.display = 'none', 3000);
         }
@@ -692,7 +743,7 @@
                 // Set judul
                 doc.setFontSize(18);
                 doc.setTextColor(0, 0, 0);
-                doc.text(`Hasil Belajar - Tingkat ${state.level + 1}`, 105, 15, { align: 'center' });
+                doc.text(`Hasil Belajar - ${config[state.level].name}`, 105, 15, { align: 'center' });
                 
                 // Set summary
                 doc.setFontSize(12);
@@ -711,7 +762,7 @@
                 state.levelResults.forEach(level => {
                     const avgTime = level.totalQuestions > 0 ? 
                         (level.totalTimeMs / level.totalQuestions / 1000).toFixed(2) : 0;
-                    summaryLines.push(`Rata-rata Waktu Tingkat ${level.level}: ${avgTime} detik`);
+                    summaryLines.push(`Rata-rata Waktu ${level.levelName}: ${avgTime} detik`);
                 });
                 
                 let y = 30;
@@ -732,20 +783,20 @@
                 
                 validQuestions.forEach((q, i) => {
                     // Find which level this question belongs to
-                    let questionLevel = 1;
+                    let questionLevel = config[0].name;
                     let cumulativeQuestions = 0;
                     for (const level of state.levelResults) {
                         if (i < cumulativeQuestions + level.totalQuestions) {
-                            questionLevel = level.level;
+                            questionLevel = level.levelName;
                             break;
                         }
                         cumulativeQuestions += level.totalQuestions;
                     }
-                    if (i >= cumulativeQuestions) questionLevel = state.level + 1;
+                    if (i >= cumulativeQuestions) questionLevel = config[state.level].name;
                     
                     rows.push([
                         (i+1).toString(),
-                        questionLevel.toString(),
+                        questionLevel,
                         q,
                         state.answers[i].toString(),
                         state.results[i] ? '✓' : '✗',
@@ -796,7 +847,7 @@
                     }
                 });
                 
-                doc.save(`hasil-belajar-tingkat-${state.level + 1}.pdf`);
+                doc.save(`hasil-belajar-${config[state.level].name.toLowerCase().replace(/ /g, '-')}.pdf`);
             }
         }
         
@@ -813,7 +864,16 @@
             
             // Show results container
             elements.resultContainer.style.display = 'block';
-            elements.resultLevel.textContent = state.level + 1;
+            elements.resultLevel.textContent = config[state.level].name;
+            
+            // Show/hide next level button
+            if (state.level === 5) { // If current level is 6 (index 5)
+                elements.nextLevel.style.display = 'block';
+                elements.newSession.style.display = 'none';
+            } else {
+                elements.nextLevel.style.display = 'none';
+                elements.newSession.style.display = 'block';
+            }
             
             // Filter out the last question if it's undefined
             const validQuestions = state.questions.filter((q, i) => 
@@ -848,7 +908,7 @@
                 const row = document.createElement('div');
                 row.className = 'summary-row';
                 row.innerHTML = `
-                    <span class="summary-label">Rata-rata Waktu Tingkat ${level.level}:</span>
+                    <span class="summary-label">Rata-rata Waktu ${level.levelName}:</span>
                     <span>${avgTime} detik</span>
                 `;
                 elements.levelAverageTimesContainer.appendChild(row);
@@ -866,7 +926,7 @@
                     const row = document.createElement('div');
                     row.className = 'summary-row';
                     row.innerHTML = `
-                        <span class="summary-label">Rata-rata Waktu Tingkat ${state.level + 1}:</span>
+                        <span class="summary-label">Rata-rata Waktu ${config[state.level].name}:</span>
                         <span>${avgTime} detik</span>
                     `;
                     elements.levelAverageTimesContainer.appendChild(row);
@@ -877,16 +937,16 @@
             elements.resultBody.innerHTML = '';
             validQuestions.forEach((q, i) => {
                 // Find which level this question belongs to
-                let questionLevel = 1;
+                let questionLevel = config[0].name;
                 let cumulativeQuestions = 0;
                 for (const level of state.levelResults) {
                     if (i < cumulativeQuestions + level.totalQuestions) {
-                        questionLevel = level.level;
+                        questionLevel = level.levelName;
                         break;
                     }
                     cumulativeQuestions += level.totalQuestions;
                 }
-                if (i >= cumulativeQuestions) questionLevel = state.level + 1;
+                if (i >= cumulativeQuestions) questionLevel = config[state.level].name;
                 
                 const row = document.createElement('tr');
                 row.className = state.results[i] ? 'correct-row' : 'wrong-row';
@@ -939,7 +999,7 @@
         // Update UI elements
         function updateUI() {
             elements.questionNum.textContent = state.questionNum;
-            elements.level.textContent = state.level + 1;
+            elements.level.textContent = config[state.level].name;
             elements.score.textContent = state.score;
             elements.time.textContent = ((Date.now() - state.startTime) / 1000).toFixed(1);
             elements.progress.textContent = state.progress;
