@@ -12,7 +12,7 @@
         body {
             font-family: Arial, sans-serif;
             margin: 0;
-            padding: 100px 0 20px;
+            padding: 110px 0 20px;
             background: #f5f5f5;
             -webkit-text-size-adjust: 100%;
         }
@@ -27,7 +27,7 @@
             background: white;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             z-index: 100;
-            font-size: 18px;
+            font-size: clamp(16px, 4vw, 18px);
         }
         
         .progress-container {
@@ -38,7 +38,7 @@
             background: #e0e0e0;
             text-align: center;
             z-index: 100;
-            font-size: 16px;
+            font-size: clamp(14px, 3.5vw, 16px);
         }
         
         .progress-bar {
@@ -57,7 +57,7 @@
             padding: 8px 12px;
             border-radius: 5px;
             display: none;
-            font-size: 16px;
+            font-size: clamp(14px, 3.5vw, 16px);
             z-index: 100;
         }
         
@@ -72,7 +72,7 @@
         }
         
         .question {
-            font-size: 28px;
+            font-size: clamp(24px, 6vw, 28px);
             text-align: center;
             margin: 25px 0;
             word-break: break-word;
@@ -87,15 +87,15 @@
         }
         
         .option {
-            padding: 20px;
-            font-size: 24px;
+            padding: clamp(15px, 4vw, 20px);
+            font-size: clamp(20px, 5vw, 24px);
             background: #3498db;
             color: white;
             border: none;
             border-radius: 10px;
             cursor: pointer;
             transition: background 0.2s;
-            min-height: 60px;
+            min-height: clamp(50px, 10vw, 60px);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -119,15 +119,15 @@
         }
         
         .btn {
-            padding: 15px 25px;
+            padding: clamp(12px, 3vw, 15px) clamp(20px, 4vw, 25px);
             background: #e74c3c;
             color: white;
             border: none;
             border-radius: 10px;
             cursor: pointer;
-            font-size: 18px;
+            font-size: clamp(16px, 4vw, 18px);
             margin: 10px;
-            min-width: 120px;
+            min-width: clamp(100px, 25vw, 120px);
         }
         
         .btn-print {
@@ -163,16 +163,34 @@
         }
         
         .result-title {
-            font-size: 24px;
+            font-size: clamp(20px, 5vw, 24px);
             text-align: center;
             margin-bottom: 20px;
+        }
+        
+        .result-summary {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: clamp(14px, 3.5vw, 16px);
+        }
+        
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        
+        .summary-label {
+            font-weight: bold;
         }
         
         table {
             width: 100%;
             border-collapse: collapse;
             margin: 20px 0;
-            font-size: 16px;
+            font-size: clamp(14px, 3.5vw, 16px);
         }
         
         th, td {
@@ -183,7 +201,7 @@
         
         th {
             background-color: #f2f2f2;
-            font-size: 18px;
+            font-size: clamp(16px, 4vw, 18px);
         }
         
         tr:nth-child(even) {
@@ -201,13 +219,13 @@
         .correct-icon {
             color: #2ecc71;
             font-weight: bold;
-            font-size: 20px;
+            font-size: clamp(18px, 4.5vw, 20px);
         }
         
         .wrong-icon {
             color: #e74c3c;
             font-weight: bold;
-            font-size: 20px;
+            font-size: clamp(18px, 4.5vw, 20px);
         }
         
         @keyframes fade {
@@ -236,25 +254,25 @@
         }
         
         @media (max-width: 480px) {
+            body {
+                padding-top: 120px;
+            }
+            
             .header {
-                font-size: 16px;
                 padding: 12px 8px;
             }
             
             .progress-container {
                 top: 55px;
-                font-size: 14px;
                 padding: 10px;
             }
             
             .streak {
                 top: 100px;
-                font-size: 14px;
                 padding: 6px 10px;
             }
             
             .question {
-                font-size: 24px;
                 margin: 20px 0;
             }
             
@@ -263,29 +281,12 @@
                 gap: 12px;
             }
             
-            .option {
-                padding: 18px;
-                font-size: 20px;
-                min-height: 50px;
-            }
-            
-            .btn {
-                padding: 12px 20px;
-                font-size: 16px;
-                min-width: 100px;
+            .result-summary {
+                padding: 12px;
             }
             
             th, td {
                 padding: 10px 8px;
-                font-size: 14px;
-            }
-            
-            th {
-                font-size: 16px;
-            }
-            
-            .correct-icon, .wrong-icon {
-                font-size: 18px;
             }
         }
     </style>
@@ -314,6 +315,34 @@
     
     <div class="result-container" id="result-container">
         <div class="result-title">Hasil Belajar</div>
+        
+        <div class="result-summary">
+            <div class="summary-row">
+                <span class="summary-label">Jumlah Soal:</span>
+                <span id="total-questions">0</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">Jumlah Benar:</span>
+                <span id="total-correct">0</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">Jumlah Salah:</span>
+                <span id="total-wrong">0</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">Score:</span>
+                <span id="score-percentage">0%</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">Total Waktu:</span>
+                <span id="total-time">0 detik</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">Rata-rata Waktu:</span>
+                <span id="average-time">0 detik</span>
+            </div>
+        </div>
+        
         <table id="result-table">
             <thead>
                 <tr>
@@ -380,7 +409,13 @@
             resultContainer: document.getElementById('result-container'),
             resultBody: document.getElementById('result-body'),
             printPdf: document.getElementById('print-pdf'),
-            newSession: document.getElementById('new-session')
+            newSession: document.getElementById('new-session'),
+            totalQuestions: document.getElementById('total-questions'),
+            totalCorrect: document.getElementById('total-correct'),
+            totalWrong: document.getElementById('total-wrong'),
+            scorePercentage: document.getElementById('score-percentage'),
+            totalTime: document.getElementById('total-time'),
+            averageTime: document.getElementById('average-time')
         };
         
         // Initialize game
@@ -502,8 +537,9 @@
             state.streak++;
             state.progress++;
             
-            if (state.progress >= 20 && state.level < config.length - 1) {
+            if (state.streak >= 20 && state.level < config.length - 1) {
                 state.level++;
+                state.streak = 0;
                 state.progress = 0;
                 showLevelUp();
             }
@@ -519,9 +555,9 @@
         
         // Show level up notification
         function showLevelUp() {
-            elements.levelUp.textContent = `Naik ke Tingkat ${state.level + 1}!`;
+            elements.levelUp.textContent = `Berhasil 20 benar berurutan! Naik ke Tingkat ${state.level + 1}!`;
             elements.levelUp.style.display = 'block';
-            setTimeout(() => elements.levelUp.style.display = 'none', 2000);
+            setTimeout(() => elements.levelUp.style.display = 'none', 3000);
         }
         
         // Show results
@@ -534,9 +570,30 @@
             // Show results container
             elements.resultContainer.style.display = 'block';
             
+            // Calculate summary data
+            const totalQuestions = state.questions.length;
+            const correctAnswers = state.results.filter(r => r).length;
+            const wrongAnswers = totalQuestions - correctAnswers;
+            const scorePercentage = Math.round((correctAnswers / totalQuestions) * 100);
+            const totalTime = state.questionTimes.reduce((a, b) => a + b, 0);
+            const averageTime = totalQuestions > 0 ? Math.round(totalTime / totalQuestions) : 0;
+            
+            // Update summary
+            elements.totalQuestions.textContent = totalQuestions;
+            elements.totalCorrect.textContent = correctAnswers;
+            elements.totalWrong.textContent = wrongAnswers;
+            elements.scorePercentage.textContent = `${scorePercentage}%`;
+            elements.totalTime.textContent = `${totalTime} detik`;
+            elements.averageTime.textContent = `${averageTime} detik`;
+            
             // Build results table
             elements.resultBody.innerHTML = '';
             state.questions.forEach((q, i) => {
+                // Skip undefined or invalid entries
+                if (q === undefined || state.answers[i] === undefined || state.results[i] === undefined) {
+                    return;
+                }
+                
                 const row = document.createElement('tr');
                 row.className = state.results[i] ? 'correct-row' : 'wrong-row';
                 
@@ -592,7 +649,8 @@
             if (state.streak > 0) {
                 elements.streak.textContent = `Beruntun: ${state.streak}`;
                 elements.streak.style.display = 'block';
-                elements.streak.style.background = state.streak >= 5 ? '#2ecc71' : '#f39c12';
+                elements.streak.style.background = state.streak >= 15 ? '#2ecc71' : 
+                                                  state.streak >= 10 ? '#f39c12' : '#e74c3c';
             } else {
                 elements.streak.style.display = 'none';
             }
