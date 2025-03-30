@@ -1,236 +1,449 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Belajar Berhitung</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Tebak Bendera</title>
     <style>
-        /* Header bagian atas */
-        .header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            background-color: #f8f9fa;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            z-index: 1000;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 20px;
-            border-bottom: 1px solid #ccc;
-        }
-
-        .header-left {
-            font-size: 20px;
-            font-weight: bold;
-            color: #2c3e50;
-        }
-
-        .header-center {
-            font-size: 16px;
-            font-weight: bold;
-            color: #2c3e50;
-        }
-
-        .header-right {
-            font-size: 16px;
-            font-weight: bold;
-        }
-
-        /* Gaya utama untuk halaman */
         body {
             font-family: Arial, sans-serif;
-            margin: 0;
-            padding-top: 70px; /* Ruang untuk header */
-            background: linear-gradient(to right, #fff8dc, #fef9e7);
+            text-align: center;
+            background-color: #f0f8ff;
+            padding: 20px;
         }
-
-        #question-container {
-            display: flex;
-            flex-direction: column; /* Soal disusun vertikal */
-            align-items: Center;
-            gap: 20px; /* Jarak antar soal */
-            margin: 20px auto;
-            max-width: 80%; /* Lebar kontainer soal */
+        h1 {
+            color: #2c3e50;
         }
-
-        .question-row {
+        .game-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .flag-container {
+            margin: 20px 0;
+            height: 150px;
             display: flex;
+            justify-content: center;
             align-items: center;
-            justify-content: space-between;
-            width: 100%;
         }
-
-        .question-text {
-            flex: 0 0 20%; /* Soal memiliki proporsi 20% */
-            font-size: 18px;
-            font-weight: bold;
-            color: #333;
+        .flag {
+            max-height: 120px;
+            max-width: 200px;
+            border: 1px solid #ddd;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
         }
-
         .options {
-            flex: 0 0 75%; /* Pilihan memiliki proporsi 75% */
-            display: flex;
-            justify-content: space-evenly; /* Semua pilihan sejajar */
-            gap: 15px; /* Jarak antar kotak */
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
         }
-
-        .option-button {
-            width: 100px; /* Lebar kotak pilihan */
-            height: 50px; /* Tinggi kotak pilihan */
-            display: flex;
-            justify-content: center; /* Align horizontally */
-            align-items: center;    /* Align vertically */
-            
-            line-height: 50px;
+        button {
+            padding: 10px;
+            font-size: 16px;
             background-color: #3498db;
             color: white;
-            font-size: 16px;
-            font-weight: bold;
             border: none;
-            border-radius: 8px;
+            border-radius: 5px;
             cursor: pointer;
-            transition: background-color 0.3s ease, color 0.3s ease;
+            transition: background-color 0.3s;
         }
-
-        .option-button:hover {
-            background-color: #2874a6;
+        button:hover {
+            background-color: #2980b9;
         }
-
-        .option-button.selected {
-            background-color: #ffd700; /* Kuning untuk pilihan yang dipilih */
-            color: red; /* Teks merah tebal */
-            font-weight: bold;
+        .score {
+            font-size: 18px;
+            margin: 10px 0;
         }
-
-        button {
+        .correct {
+            background-color: #2ecc71 !important;
+        }
+        .wrong {
+            background-color: #e74c3c !important;
+        }
+        .finish-btn {
+            background-color: #e74c3c;
             padding: 10px 20px;
             font-size: 16px;
+            margin: 10px auto;
+            display: block;
+        }
+        .finish-btn:hover {
+            background-color: #c0392b;
+        }
+        .summary {
+            display: none;
+            margin-top: 30px;
+            text-align: left;
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .stat-item {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        tr.correct-row {
+            background-color: #d4edda;
+        }
+        tr.wrong-row {
+            background-color: #f8d7da;
+        }
+        .correct-mark {
+            color: #00aa00;
+            font-weight: bold;
+        }
+        .wrong-mark {
+            color: #ff0000;
+            font-weight: bold;
+        }
+        .timer {
+            font-size: 18px;
+            margin: 10px 0;
+        }
+        .loading {
+            font-style: italic;
+            color: #7f8c8d;
+        }
+        .action-buttons {
+            display: none;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .new-session {
+            background-color: #3498db;
+            padding: 10px 20px;
+            color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
         }
-
-        button:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
+        .back-to-index {
+            background-color: #9b59b6;
+            padding: 10px 20px;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="header-left">Tingkat: <span id="level-display">1</span></div>
-        <div class="header-center">Waktu Berjalan: <span id="runtime-display">00:00</span></div>
-        <div class="header-right">
-            Total Waktu: <span id="time-display">0</span> detik | Skor: <span id="score-display">0</span>
+    <div class="game-container">
+        <h1>Tebak Bendera</h1>
+        <div class="timer">Waktu: <span id="timer">0.00</span>s</div>
+        <div class="score">Skor: <span id="score">0</span> (<span id="score-percent">0%</span>)</div>
+        <div class="flag-container">
+            <img id="flag" class="flag" src="" alt="Bendera">
+            <div id="loading" class="loading" style="display: none;">Memuat bendera...</div>
+        </div>
+        <div class="options" id="options"></div>
+        <button id="finish-btn" class="finish-btn">Selesai</button>
+        
+        <div id="summary" class="summary">
+            <h2>Hasil Permainan</h2>
+            <div class="stats">
+                <div class="stat-item">Jumlah Soal: <span id="total-questions">0</span></div>
+                <div class="stat-item">Jumlah Benar: <span id="correct-answers">0</span></div>
+                <div class="stat-item">Jumlah Salah: <span id="wrong-answers">0</span></div>
+                <div class="stat-item">Skor: <span id="final-score">0</span> (<span id="final-score-percent">0%</span>)</div>
+                <div class="stat-item">Total Waktu: <span id="total-time">0.00</span>s</div>
+            </div>
+            
+            <table id="results-table">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Bendera</th>
+                        <th>Jawaban Benar</th>
+                        <th>Jawaban Anda</th>
+                        <th>Hasil</th>
+                        <th>Waktu (s)</th>
+                    </tr>
+                </thead>
+                <tbody id="results-body"></tbody>
+            </table>
+
+            <div class="action-buttons">
+                <button id="new-session-btn" class="new-session">Sesi Baru</button>
+                <button id="back-to-index-btn" class="back-to-index">Kembali ke Beranda</button>
+            </div>
         </div>
     </div>
 
-    <div id="question-container"></div>
-    <div class="buttons" style="text-align: center; margin-top: 20px;">
-        <button id="next-button" onclick="goToNextPage()" disabled>Lanjut</button>
-        <button id="finish-button" onclick="finishSession()" disabled>Selesai</button>
-    </div>
-
     <script>
-        const levelDisplay = document.getElementById("level-display");
-        const scoreDisplay = document.getElementById("score-display");
-        const timeDisplay = document.getElementById("time-display");
-        const runtimeDisplay = document.getElementById("runtime-display");
-        const questionContainer = document.getElementById("question-container");
-        const nextButton = document.getElementById("next-button");
-        const finishButton = document.getElementById("finish-button");
+        // Data bendera (2 negara saja)
+        const flagData = [
+            { country: "Indonesia", flag: "https://flagcdn.com/w320/id.png" },
+            { country: "Malaysia", flag: "https://flagcdn.com/w320/my.png" }
+        ];
 
-        let level = 1;
+        // Variabel game
+        let currentFlag = null;
         let score = 0;
+        let answered = false;
+        let questionCount = 0;
+        let correctCount = 0;
+        let wrongCount = 0;
+        let startTime = null;
+        let endTime = null;
+        let questionStartTime = null;
         let totalTime = 0;
-        let runtime = 0;
-        let answeredQuestions = 0;
-        const maxQuestions = 10;
+        let gameHistory = [];
+        let timeoutId = null;
+        let animationFrameId = null;
 
-        // Timer runtime berjalan
-        setInterval(() => {
-            runtime++;
-            const minutes = String(Math.floor(runtime / 60)).padStart(2, "0");
-            const seconds = String(runtime % 60).padStart(2, "0");
-            runtimeDisplay.textContent = `${minutes}:${seconds}`;
-        }, 1000);
+        // Elemen DOM
+        const flagElement = document.getElementById('flag');
+        const optionsElement = document.getElementById('options');
+        const scoreElement = document.getElementById('score');
+        const scorePercentElement = document.getElementById('score-percent');
+        const timerElement = document.getElementById('timer');
+        const finishButton = document.getElementById('finish-btn');
+        const summaryElement = document.getElementById('summary');
+        const resultsBody = document.getElementById('results-body');
+        const totalQuestionsElement = document.getElementById('total-questions');
+        const correctAnswersElement = document.getElementById('correct-answers');
+        const wrongAnswersElement = document.getElementById('wrong-answers');
+        const finalScoreElement = document.getElementById('final-score');
+        const finalScorePercentElement = document.getElementById('final-score-percent');
+        const totalTimeElement = document.getElementById('total-time');
+        const loadingElement = document.getElementById('loading');
 
-        function generateRandomNumber(maxValue) {
-            return Math.floor(Math.random() * maxValue) + 1;
+        // Fungsi untuk menghitung skor dalam persentase
+        function calculateScorePercent() {
+            return questionCount > 0 ? Math.round((correctCount / questionCount) * 100) : 0;
         }
 
-        function generateQuestions() {
-            questionContainer.innerHTML = "";
-            answeredQuestions = 0;
-
-            for (let i = 1; i <= maxQuestions; i++) {
-                const num1 = generateRandomNumber(10);
-                const num2 = generateRandomNumber(10);
-                const correctAnswer = num1 + num2;
-
-                const questionRow = document.createElement("div");
-                questionRow.className = "question-row";
-
-                const questionText = document.createElement("div");
-                questionText.className = "question-text";
-                questionText.innerHTML = `[${i}] ${num1} + ${num2}`;
-
-                const options = document.createElement("div");
-                options.className = "options";
-
-                const answers = [correctAnswer];
-                while (answers.length < 5) {
-                    const wrongAnswer = generateRandomNumber(20);
-                    if (!answers.includes(wrongAnswer)) {
-                        answers.push(wrongAnswer);
-                    }
-                }
-
-                answers.sort(() => Math.random() - 0.5);
-
-                answers.forEach(answer => {
-                    const button = document.createElement("button");
-                    button.className = "option-button";
-                    button.textContent = answer;
-                    button.onclick = () => selectOption(button, i, correctAnswer, answer);
-                    options.appendChild(button);
-                });
-
-                questionRow.appendChild(questionText);
-                questionRow.appendChild(options);
-                questionContainer.appendChild(questionRow);
+        // Fungsi untuk memulai permainan
+        function startGame() {
+            if (startTime === null) {
+                startTime = new Date();
+                gameHistory = [];
             }
+            
+            // Hentikan timer dan timeout sebelumnya
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            if (timeoutId) clearTimeout(timeoutId);
+            
+            answered = false;
+            questionStartTime = new Date();
+            
+            // Pilih bendera secara acak
+            currentFlag = flagData[Math.floor(Math.random() * flagData.length)];
+            
+            // Tampilkan loading
+            flagElement.style.display = 'none';
+            loadingElement.style.display = 'block';
+            
+            // Tampilkan bendera dengan error handling
+            flagElement.onload = function() {
+                loadingElement.style.display = 'none';
+                flagElement.style.display = 'block';
+                updateTimer();
+            };
+            
+            flagElement.onerror = function() {
+                startGame();
+                return;
+            };
+            
+            flagElement.src = currentFlag.flag;
+            flagElement.alt = `Bendera ${currentFlag.country}`;
+            
+            // Buat pilihan jawaban
+            createOptions(currentFlag.country);
         }
 
-        function selectOption(button, questionIndex, correctAnswer, selectedAnswer) {
-            const options = questionContainer.querySelectorAll(`.question-row:nth-child(${questionIndex}) .option-button`);
-            options.forEach(option => option.classList.remove("selected"));
-            button.classList.add("selected");
+        // Fungsi untuk membuat pilihan jawaban
+        function createOptions(correctAnswer) {
+            optionsElement.innerHTML = '';
+            
+            let options = [correctAnswer];
+            while (options.length < 4) {
+                const randomCountry = flagData[Math.floor(Math.random() * flagData.length)].country;
+                if (!options.includes(randomCountry)) options.push(randomCountry);
+            }
+            
+            // Acak urutan pilihan
+            options = shuffleArray(options);
+            
+            // Buat tombol untuk setiap pilihan
+            options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.addEventListener('click', () => checkAnswer(option, correctAnswer));
+                optionsElement.appendChild(button);
+            });
+        }
 
-            if (selectedAnswer === correctAnswer) {
+        // Fungsi untuk mengacak array
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Fungsi untuk memeriksa jawaban
+        function checkAnswer(selectedAnswer, correctAnswer) {
+            if (answered) return;
+            answered = true;
+            questionCount++;
+            
+            // Hentikan timer
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            
+            const questionTime = (new Date() - questionStartTime) / 1000;
+            totalTime += questionTime;
+            
+            const isCorrect = selectedAnswer === correctAnswer;
+            if (isCorrect) {
+                correctCount++;
                 score++;
-                scoreDisplay.textContent = score;
+                scoreElement.textContent = score;
+            } else {
+                wrongCount++;
             }
+            
+            // Update skor persentase
+            scorePercentElement.textContent = `${calculateScorePercent()}%`;
+            
+            // Catat history
+            gameHistory.push({
+                flag: currentFlag.flag,
+                country: currentFlag.country,
+                answer: selectedAnswer,
+                isCorrect: isCorrect,
+                time: questionTime
+            });
+            
+            // Tandai jawaban benar/salah
+            const buttons = optionsElement.querySelectorAll('button');
+            buttons.forEach(button => {
+                if (button.textContent === correctAnswer) {
+                    button.classList.add('correct');
+                } else if (button.textContent === selectedAnswer && !isCorrect) {
+                    button.classList.add('wrong');
+                }
+                button.disabled = true;
+            });
+            
+            // Lanjut ke pertanyaan berikutnya setelah 1.5 detik
+            timeoutId = setTimeout(startGame, 1500);
+        }
 
-            answeredQuestions = document.querySelectorAll(".option-button.selected").length;
-            if (answeredQuestions === maxQuestions) {
-                nextButton.disabled = false;
-                finishButton.disabled = false;
+        // Fungsi untuk mengupdate timer
+        function updateTimer() {
+            if (!answered && questionStartTime) {
+                const elapsedTime = (new Date() - questionStartTime) / 1000;
+                timerElement.textContent = elapsedTime.toFixed(2);
+                animationFrameId = requestAnimationFrame(updateTimer);
             }
         }
 
-        function goToNextPage() {
-            nextButton.disabled = true;
-            finishButton.disabled = true;
-            generateQuestions();
+        // Fungsi untuk menyelesaikan permainan
+        function finishGame() {
+            endTime = new Date();
+            
+            // Hentikan semua timer
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            if (timeoutId) clearTimeout(timeoutId);
+            
+            // Hitung statistik
+            totalQuestionsElement.textContent = questionCount;
+            correctAnswersElement.textContent = correctCount;
+            wrongAnswersElement.textContent = wrongCount;
+            finalScoreElement.textContent = score;
+            finalScorePercentElement.textContent = `${calculateScorePercent()}%`;
+            totalTimeElement.textContent = totalTime.toFixed(2);
+            
+            // Tampilkan history
+            resultsBody.innerHTML = '';
+            gameHistory.forEach((item, index) => {
+                const row = document.createElement('tr');
+                row.className = item.isCorrect ? 'correct-row' : 'wrong-row';
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td><img src="${item.flag}" alt="Flag" style="height: 30px;"></td>
+                    <td>${item.country}</td>
+                    <td>${item.answer}</td>
+                    <td class="${item.isCorrect ? 'correct-mark' : 'wrong-mark'}">
+                        ${item.isCorrect ? '✓ Benar' : '✗ Salah'}
+                    </td>
+                    <td>${item.time.toFixed(2)}</td>
+                `;
+                resultsBody.appendChild(row);
+            });
+            
+            // Tampilkan summary dan tombol aksi
+            document.querySelector('.flag-container').style.display = 'none';
+            optionsElement.style.display = 'none';
+            finishButton.style.display = 'none';
+            summaryElement.style.display = 'block';
+            document.querySelector('.action-buttons').style.display = 'flex';
         }
 
-        function finishSession() {
-            alert(`Sesi selesai! Total waktu: ${totalTime} detik. Skor: ${score}`);
-            location.href = "index.html"; // Kembali ke halaman utama
+        // Fungsi untuk memulai sesi baru
+        function newSession() {
+            // Reset semua variabel game
+            score = 0;
+            questionCount = 0;
+            correctCount = 0;
+            wrongCount = 0;
+            totalTime = 0;
+            gameHistory = [];
+            startTime = null;
+            
+            // Reset tampilan
+            scoreElement.textContent = score;
+            scorePercentElement.textContent = "0%";
+            timerElement.textContent = "0.00";
+            document.querySelector('.flag-container').style.display = 'flex';
+            optionsElement.style.display = 'grid';
+            finishButton.style.display = 'block';
+            summaryElement.style.display = 'none';
+            document.querySelector('.action-buttons').style.display = 'none';
+            
+            // Mulai game baru
+            startGame();
         }
 
-        generateQuestions();
+        // Event listeners
+        finishButton.addEventListener('click', finishGame);
+        document.getElementById('new-session-btn').addEventListener('click', newSession);
+        document.getElementById('back-to-index-btn').addEventListener('click', () => {
+            window.location.href = 'index.html';
+        });
+
+        // Mulai permainan saat halaman dimuat
+        window.addEventListener('load', startGame);
     </script>
 </body>
 </html>
