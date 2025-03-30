@@ -64,16 +64,6 @@
         .wrong {
             background-color: #e74c3c !important;
         }
-        .next-btn {
-            background-color: #27ae60;
-            padding: 10px 20px;
-            font-size: 16px;
-            display: none;
-            margin: 0 auto;
-        }
-        .next-btn:hover {
-            background-color: #219653;
-        }
         .finish-btn {
             background-color: #e74c3c;
             padding: 10px 20px;
@@ -91,11 +81,6 @@
             background-color: #f9f9f9;
             padding: 20px;
             border-radius: 10px;
-        }
-        .summary h2 {
-            color: #2c3e50;
-            border-bottom: 1px solid #ddd;
-            padding-bottom: 10px;
         }
         .stats {
             display: grid;
@@ -145,16 +130,26 @@
             color: #7f8c8d;
         }
         .action-buttons {
-            display: flex;
+            display: none;
             justify-content: center;
             gap: 10px;
             margin-top: 20px;
         }
         .new-session {
             background-color: #3498db;
+            padding: 10px 20px;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
         }
         .back-to-index {
             background-color: #9b59b6;
+            padding: 10px 20px;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -167,9 +162,7 @@
             <img id="flag" class="flag" src="" alt="Bendera">
             <div id="loading" class="loading" style="display: none;">Memuat bendera...</div>
         </div>
-        <div class="options" id="options">
-            <!-- Opsi jawaban akan diisi oleh JavaScript -->
-        </div>
+        <div class="options" id="options"></div>
         <button id="finish-btn" class="finish-btn">Selesai</button>
         
         <div id="summary" class="summary">
@@ -180,8 +173,6 @@
                 <div class="stat-item">Jumlah Salah: <span id="wrong-answers">0</span></div>
                 <div class="stat-item">Skor: <span id="final-score">0</span> (<span id="final-score-percent">0%</span>)</div>
                 <div class="stat-item">Total Waktu: <span id="total-time">0.00</span>s</div>
-                <div class="stat-item">Waktu Mulai: <span id="start-time">-</span></div>
-                <div class="stat-item">Waktu Selesai: <span id="end-time">-</span></div>
             </div>
             
             <table id="results-table">
@@ -195,20 +186,18 @@
                         <th>Waktu (s)</th>
                     </tr>
                 </thead>
-                <tbody id="results-body">
-                    <!-- Hasil akan diisi oleh JavaScript -->
-                </tbody>
+                <tbody id="results-body"></tbody>
             </table>
 
             <div class="action-buttons">
                 <button id="new-session-btn" class="new-session">Sesi Baru</button>
-                <button id="back-to-index-btn" class="back-to-index">Kembali ke Halaman Utama</button>
+                <button id="back-to-index-btn" class="back-to-index">Kembali ke Beranda</button>
             </div>
         </div>
     </div>
 
     <script>
-        // Data bendera dari semua negara di dunia menggunakan FlagCDN
+// Data bendera dari semua negara di dunia menggunakan FlagCDN
         const flagData = [
             { country: "Afghanistan", flag: "https://flagcdn.com/w320/af.png" },
             { country: "Albania", flag: "https://flagcdn.com/w320/al.png" },
@@ -406,7 +395,7 @@
             { country: "Zimbabwe", flag: "https://flagcdn.com/w320/zw.png" }
         ];
 
-                // Variabel game
+        // Variabel game
         let currentFlag = null;
         let score = 0;
         let answered = false;
@@ -436,11 +425,7 @@
         const finalScoreElement = document.getElementById('final-score');
         const finalScorePercentElement = document.getElementById('final-score-percent');
         const totalTimeElement = document.getElementById('total-time');
-        const startTimeElement = document.getElementById('start-time');
-        const endTimeElement = document.getElementById('end-time');
         const loadingElement = document.getElementById('loading');
-        const newSessionBtn = document.getElementById('new-session-btn');
-        const backToIndexBtn = document.getElementById('back-to-index-btn');
 
         // Fungsi untuk menghitung skor dalam persentase
         function calculateScorePercent() {
@@ -449,37 +434,20 @@
 
         // Fungsi untuk memulai permainan
         function startGame() {
-            // Reset game state jika ini permainan baru
             if (startTime === null) {
-                score = 0;
-                scoreElement.textContent = score;
-                scorePercentElement.textContent = "0%";
-                questionCount = 0;
-                correctCount = 0;
-                wrongCount = 0;
-                totalTime = 0;
-                gameHistory = [];
-                
                 startTime = new Date();
-                startTimeElement.textContent = formatDateTime(startTime);
+                gameHistory = [];
             }
             
-            // Hentikan timer dan timeout sebelumnya jika ada
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-                animationFrameId = null;
-            }
-            if (timeoutId) {
-                clearTimeout(timeoutId);
-                timeoutId = null;
-            }
+            // Hentikan timer dan timeout sebelumnya
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            if (timeoutId) clearTimeout(timeoutId);
             
             answered = false;
             questionStartTime = new Date();
             
             // Pilih bendera secara acak
-            const randomIndex = Math.floor(Math.random() * flagData.length);
-            currentFlag = flagData[randomIndex];
+            currentFlag = flagData[Math.floor(Math.random() * flagData.length)];
             
             // Tampilkan loading
             flagElement.style.display = 'none';
@@ -489,13 +457,10 @@
             flagElement.onload = function() {
                 loadingElement.style.display = 'none';
                 flagElement.style.display = 'block';
-                updateTimer(); // Mulai timer setelah gambar selesai dimuat
+                updateTimer();
             };
             
             flagElement.onerror = function() {
-                // Jika gambar gagal dimuat, coba bendera lain
-                loadingElement.style.display = 'none';
-                flagElement.style.display = 'block';
                 startGame();
                 return;
             };
@@ -511,14 +476,10 @@
         function createOptions(correctAnswer) {
             optionsElement.innerHTML = '';
             
-            // Buat array dengan jawaban yang benar dan 3 jawaban salah
             let options = [correctAnswer];
             while (options.length < 4) {
-                const randomIndex = Math.floor(Math.random() * flagData.length);
-                const randomCountry = flagData[randomIndex].country;
-                if (!options.includes(randomCountry)) {
-                    options.push(randomCountry);
-                }
+                const randomCountry = flagData[Math.floor(Math.random() * flagData.length)].country;
+                if (!options.includes(randomCountry)) options.push(randomCountry);
             }
             
             // Acak urutan pilihan
@@ -549,17 +510,12 @@
             questionCount++;
             
             // Hentikan timer
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-                animationFrameId = null;
-            }
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
             
-            const questionEndTime = new Date();
-            const questionTime = (questionEndTime - questionStartTime) / 1000;
+            const questionTime = (new Date() - questionStartTime) / 1000;
             totalTime += questionTime;
             
             const isCorrect = selectedAnswer === correctAnswer;
-            
             if (isCorrect) {
                 correctCount++;
                 score++;
@@ -580,8 +536,8 @@
                 time: questionTime
             });
             
+            // Tandai jawaban benar/salah
             const buttons = optionsElement.querySelectorAll('button');
-            
             buttons.forEach(button => {
                 if (button.textContent === correctAnswer) {
                     button.classList.add('correct');
@@ -591,17 +547,14 @@
                 button.disabled = true;
             });
             
-            // Otomatis lanjut ke pertanyaan berikutnya setelah 1.5 detik
-            timeoutId = setTimeout(() => {
-                startGame();
-            }, 1500);
+            // Lanjut ke pertanyaan berikutnya setelah 1.5 detik
+            timeoutId = setTimeout(startGame, 1500);
         }
 
         // Fungsi untuk mengupdate timer
         function updateTimer() {
             if (!answered && questionStartTime) {
-                const currentTime = new Date();
-                const elapsedTime = (currentTime - questionStartTime) / 1000;
+                const elapsedTime = (new Date() - questionStartTime) / 1000;
                 timerElement.textContent = elapsedTime.toFixed(2);
                 animationFrameId = requestAnimationFrame(updateTimer);
             }
@@ -610,17 +563,10 @@
         // Fungsi untuk menyelesaikan permainan
         function finishGame() {
             endTime = new Date();
-            endTimeElement.textContent = formatDateTime(endTime);
             
             // Hentikan semua timer
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-                animationFrameId = null;
-            }
-            if (timeoutId) {
-                clearTimeout(timeoutId);
-                timeoutId = null;
-            }
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            if (timeoutId) clearTimeout(timeoutId);
             
             // Hitung statistik
             totalQuestionsElement.textContent = questionCount;
@@ -635,7 +581,6 @@
             gameHistory.forEach((item, index) => {
                 const row = document.createElement('tr');
                 row.className = item.isCorrect ? 'correct-row' : 'wrong-row';
-                
                 row.innerHTML = `
                     <td>${index + 1}</td>
                     <td><img src="${item.flag}" alt="Flag" style="height: 30px;"></td>
@@ -646,36 +591,27 @@
                     </td>
                     <td>${item.time.toFixed(2)}</td>
                 `;
-                
                 resultsBody.appendChild(row);
             });
             
-            // Sembunyikan game, tampilkan summary
+            // Tampilkan summary dan tombol aksi
             document.querySelector('.flag-container').style.display = 'none';
             optionsElement.style.display = 'none';
             finishButton.style.display = 'none';
             summaryElement.style.display = 'block';
+            document.querySelector('.action-buttons').style.display = 'flex';
         }
 
-        // Fungsi untuk memformat tanggal dan waktu
-        function formatDateTime(date) {
-            return date.toLocaleString();
-        }
-
-        // Fungsi untuk mereset game dan memulai sesi baru
+        // Fungsi untuk memulai sesi baru
         function newSession() {
             // Reset semua variabel game
-            currentFlag = null;
             score = 0;
-            answered = false;
             questionCount = 0;
             correctCount = 0;
             wrongCount = 0;
-            startTime = null;
-            endTime = null;
-            questionStartTime = null;
             totalTime = 0;
             gameHistory = [];
+            startTime = null;
             
             // Reset tampilan
             scoreElement.textContent = score;
@@ -685,20 +621,17 @@
             optionsElement.style.display = 'grid';
             finishButton.style.display = 'block';
             summaryElement.style.display = 'none';
+            document.querySelector('.action-buttons').style.display = 'none';
             
             // Mulai game baru
             startGame();
         }
 
-        // Event listener untuk tombol selesai
+        // Event listeners
         finishButton.addEventListener('click', finishGame);
-
-        // Event listener untuk tombol sesi baru
-        newSessionBtn.addEventListener('click', newSession);
-
-        // Event listener untuk tombol kembali ke halaman utama
-        backToIndexBtn.addEventListener('click', () => {
-            window.location.href = 'index.html'; // Ganti dengan URL halaman utama Anda
+        document.getElementById('new-session-btn').addEventListener('click', newSession);
+        document.getElementById('back-to-index-btn').addEventListener('click', () => {
+            window.location.href = 'index.html';
         });
 
         // Mulai permainan saat halaman dimuat
