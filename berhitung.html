@@ -203,23 +203,22 @@
             border-collapse: collapse;
             margin: 30px 0;
             font-size: clamp(20px, 6vw, 24px);
-            table-layout: fixed; /* Add this */
+            table-layout: fixed;
         }
         
         th, td {
             border: 3px solid #ddd;
             padding: 20px;
             text-align: center;
-            word-break: keep-all; /* Add this */
+            word-break: keep-all;
         }
 
-        /* Add these specific column width adjustments */
-            th:nth-child(1), td:nth-child(1) { width: 10%; } /* No */
-            th:nth-child(2), td:nth-child(2) { width: 20%; } /* Tingkat */
-            th:nth-child(3), td:nth-child(3) { width: 25%; } /* Soal - increased width */
-            th:nth-child(4), td:nth-child(4) { width: 15%; } /* Jawaban */
-            th:nth-child(5), td:nth-child(5) { width: 10%; } /* Hasil */
-            th:nth-child(6), td:nth-child(6) { width: 20%; } /* Waktu */
+        th:nth-child(1), td:nth-child(1) { width: 10%; }
+        th:nth-child(2), td:nth-child(2) { width: 20%; }
+        th:nth-child(3), td:nth-child(3) { width: 25%; }
+        th:nth-child(4), td:nth-child(4) { width: 15%; }
+        th:nth-child(5), td:nth-child(5) { width: 10%; }
+        th:nth-child(6), td:nth-child(6) { width: 20%; }
         
         th {
             background-color: #f2f2f2;
@@ -246,7 +245,6 @@
             font-size: clamp(24px, 7vw, 30px);
         }
         
-               
         @media print {
             body * {
                 visibility: hidden;
@@ -444,15 +442,15 @@
             sessionEndTime: 0,
             correct: 0,
             maxStreak: 0,
-            questionTimes: [], // Dalam milidetik
+            questionTimes: [],
             questions: [],
             answers: [],
             results: [],
             timer: null,
             onesCount: 0,
-            levelResults: [], // Menyimpan hasil per level
-            currentLevelQuestions: [] // Menyimpan jumlah soal per level
-            levelUpTimeout: null // ADD THIS NEW PROPERTY
+            levelResults: [],
+            currentLevelQuestions: [],
+            levelUpTimeout: null
         };
         
         // DOM elements
@@ -478,7 +476,6 @@
             totalWrong: document.getElementById('total-wrong'),
             scorePercentage: document.getElementById('score-percentage'),
             totalTime: document.getElementById('total-time'),
-            averageTime: document.getElementById('average-time'),
             startTime: document.getElementById('start-time'),
             endTime: document.getElementById('end-time'),
             resultLevel: document.getElementById('result-level'),
@@ -499,7 +496,7 @@
         
         // Navigate to next level
         function goToNextLevel() {
-            if (state.level === 5) { // If current level is 6 (index 5)
+            if (state.level === 5) {
                 window.location.href = "Tingkat_2.html";
             }
         }
@@ -543,7 +540,12 @@
             return seconds.toFixed(2);
         }
         
-        // Generate new question with improved logic for level 1
+        // Helper function for random numbers
+        function rand(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+        
+        // Generate new question
         function newQuestion() {
             clearInterval(state.timer);
             
@@ -552,17 +554,13 @@
             let a, b, answer, question;
             
             if (state.level === 0) {
-                // Logika khusus untuk level 1
+                // Special logic for level 1
                 do {
                     a = rand(levelConfig.min, levelConfig.max);
                     b = rand(levelConfig.min, levelConfig.max);
                     
-                    // Pastikan hasil tidak lebih dari 10
-                    if (a + b > levelConfig.maxResult) {
-                        continue;
-                    }
+                    if (a + b > levelConfig.maxResult) continue;
                     
-                    // Batasi jumlah soal dengan angka 1 (maksimal 10%)
                     if ((a === 1 || b === 1) && state.onesCount >= levelConfig.maxOnes) {
                         a = rand(2, levelConfig.max);
                         b = rand(2, levelConfig.max);
@@ -572,12 +570,10 @@
                     answer = a + b;
                     question = `${a} + ${b}`;
                     
-                    // Hitung soal dengan angka 1
                     if (a === 1 || b === 1) state.onesCount++;
                     break;
                 } while (true);
             } else {
-                // Logika untuk level lainnya
                 switch(op) {
                     case '+':
                         a = rand(levelConfig.min, levelConfig.max);
@@ -611,7 +607,6 @@
             generateOptions(answer);
             state.startTime = Date.now();
             
-            // Start question timer
             state.timer = setInterval(() => {
                 elements.time.textContent = ((Date.now() - state.startTime) / 1000).toFixed(1);
             }, 100);
@@ -641,7 +636,7 @@
         function checkAnswer(btn, selected, correct) {
             clearInterval(state.timer);
             
-            const timeSpent = Date.now() - state.startTime; // Dalam milidetik
+            const timeSpent = Date.now() - state.startTime;
             state.time += timeSpent / 1000;
             state.questionTimes.push(timeSpent);
             state.answers.push(selected);
@@ -649,7 +644,6 @@
             const isCorrect = selected === correct;
             state.results.push(isCorrect);
             
-            // Disable all buttons
             Array.from(elements.options.children).forEach(b => {
                 b.disabled = true;
                 if (parseInt(b.textContent) === correct) b.classList.add('correct');
@@ -665,7 +659,6 @@
             
             updateUI();
             
-            // Move to next question after delay (reduced to 200ms)
             setTimeout(() => {
                 state.questionNum++;
                 newQuestion();
@@ -681,7 +674,6 @@
             state.progress++;
             
             if (state.streak >= 20 && state.level < config.length - 1) {
-                // Simpan hasil level sebelum naik
                 saveLevelResults();
                 
                 state.level++;
@@ -690,7 +682,6 @@
                 state.onesCount = 0;
                 showLevelUp();
                 
-                // If we reached level 6 (index 5) and got 20 correct in a row, show results
                 if (state.level === 5) {
                     setTimeout(() => {
                         showResults();
@@ -701,14 +692,13 @@
             if (state.streak > state.maxStreak) state.maxStreak = state.streak;
         }
         
-        // Simpan hasil level
+        // Save level results
         function saveLevelResults() {
             const levelQuestions = [];
             const levelAnswers = [];
             const levelResults = [];
             const levelTimes = [];
             
-            // Get questions for current level
             const startIdx = state.currentLevelQuestions.reduce((a, b) => a + b, 0);
             const endIdx = state.questions.length;
             
@@ -739,7 +729,6 @@
                 questionTimes: levelTimes
             });
             
-            // Track number of questions for this level
             state.currentLevelQuestions.push(totalQuestions);
         }
         
@@ -751,46 +740,37 @@
         
         // Show level up notification
         function showLevelUp() {
-    // Clear any existing timeout
-    if (state.levelUpTimeout) {
-        clearTimeout(state.levelUpTimeout);
-    }
+            if (state.levelUpTimeout) {
+                clearTimeout(state.levelUpTimeout);
+            }
 
-    elements.levelUp.textContent = `Berhasil 20 benar berurutan! Naik ke ${config[state.level].name}!`;
-    elements.levelUp.style.display = 'block';
-    elements.levelUp.style.opacity = '1';
-    elements.levelUp.style.transition = 'opacity 2s ease-out';
+            elements.levelUp.textContent = `Berhasil 20 benar berurutan! Naik ke ${config[state.level].name}!`;
+            elements.levelUp.style.display = 'block';
+            elements.levelUp.style.opacity = '1';
 
-    // Start fade after 1 second, fade over 2 seconds
-    state.levelUpTimeout = setTimeout(() => {
-        elements.levelUp.style.opacity = '0';
+            state.levelUpTimeout = setTimeout(() => {
+                elements.levelUp.style.opacity = '0';
+                setTimeout(() => {
+                    elements.levelUp.style.display = 'none';
+                }, 2000);
+            }, 1000);
+        }
         
-        // Hide completely after fade completes
-        setTimeout(() => {
-            elements.levelUp.style.display = 'none';
-        }, 2000);
-    }, 1000);
-    }
-        
-        // Print to PDF with improved formatting
+        // Print to PDF
         async function printToPdf() {
             try {
-                // Use browser's print functionality for better control
                 window.print();
             } catch (error) {
                 console.error('Error printing:', error);
                 alert('Gagal membuka dialog print, mencoba metode alternatif...');
                 
-                // Fallback to jsPDF if browser print fails
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF('p', 'mm', 'a4');
                 
-                // Set judul
                 doc.setFontSize(18);
                 doc.setTextColor(0, 0, 0);
                 doc.text(`Hasil Belajar - ${config[state.level].name}`, 105, 15, { align: 'center' });
                 
-                // Set summary
                 doc.setFontSize(12);
                 const summaryLines = [
                     `Jumlah Soal: ${elements.totalQuestions.textContent}`,
@@ -802,7 +782,6 @@
                     `Waktu Selesai: ${elements.endTime.textContent}`
                 ];
                 
-                // Add level-specific average times to summary only
                 state.levelResults.forEach(level => {
                     if (level.totalQuestions > 0) {
                         const avgTime = (level.totalTimeMs / level.totalQuestions / 1000).toFixed(2);
@@ -810,7 +789,6 @@
                     }
                 });
                 
-                // Add current level average time if there are questions (summary only)
                 const currentLevelStartIdx = state.currentLevelQuestions.slice(0, -1).reduce((a, b) => a + b, 0);
                 const currentLevelCount = state.questions.length - currentLevelStartIdx;
                 
@@ -828,7 +806,6 @@
                 
                 y += 10;
                 
-                // Prepare table data without duplicate average time information
                 const headers = ['No', 'Tingkat', 'Soal', 'Jawaban', 'Hasil', 'Waktu (detik)'];
                 const rows = [];
 
@@ -837,7 +814,6 @@
                 
                 state.questions.forEach((q, i) => {
                     if (q !== undefined && state.answers[i] !== undefined && state.results[i] !== undefined) {
-                        // Determine which level this question belongs to
                         while (pdfLevelIndex < state.levelResults.length && 
                                i >= pdfLevelStartIndex + state.levelResults[pdfLevelIndex].totalQuestions) {
                             pdfLevelStartIndex += state.levelResults[pdfLevelIndex].totalQuestions;
@@ -859,7 +835,6 @@
                     }
                 });
                 
-                // Add table with autoTable (fit to width)
                 doc.autoTable({
                     head: [headers],
                     body: rows,
@@ -895,7 +870,6 @@
                         fillColor: [249, 249, 249]
                     },
                     didDrawPage: function(data) {
-                        // Footer with page number
                         const pageCount = doc.internal.getNumberOfPages();
                         doc.setFontSize(10);
                         doc.text(`Halaman ${data.pageNumber} dari ${pageCount}`, 105, 287, { align: 'center' });
@@ -911,18 +885,13 @@
             clearInterval(state.timer);
             state.sessionEndTime = Date.now();
             
-            // Simpan hasil level terakhir
             saveLevelResults();
             
-            // Hide quiz elements
             document.getElementById('quiz').style.display = 'none';
-            
-            // Show results container
             elements.resultContainer.style.display = 'block';
             elements.resultLevel.textContent = config[state.level].name;
             
-            // Show/hide next level button
-            if (state.level === 5) { // If current level is 6 (index 5)
+            if (state.level === 5) {
                 elements.nextLevel.style.display = 'block';
                 elements.newSession.style.display = 'none';
             } else {
@@ -930,19 +899,16 @@
                 elements.newSession.style.display = 'block';
             }
             
-            // Filter out the last question if it's undefined
             const validQuestions = state.questions.filter((q, i) => 
                 q !== undefined && state.answers[i] !== undefined && state.results[i] !== undefined
             );
             
-            // Calculate summary data
             const totalQuestions = validQuestions.length;
             const correctAnswers = state.results.slice(0, totalQuestions).filter(r => r).length;
             const wrongAnswers = totalQuestions - correctAnswers;
             const scorePercentage = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
             const totalTimeMs = state.sessionEndTime - state.sessionStartTime;
             
-            // Update summary
             elements.totalQuestions.textContent = totalQuestions;
             elements.totalCorrect.textContent = correctAnswers;
             elements.totalWrong.textContent = wrongAnswers;
@@ -951,10 +917,8 @@
             elements.startTime.textContent = formatWIB(state.sessionStartTime);
             elements.endTime.textContent = formatWIB(state.sessionEndTime);
             
-            // Clear previous level average times
             elements.levelAverageTimesContainer.innerHTML = '';
             
-            // Calculate and display per-level average times in summary only
             state.levelResults.forEach(level => {
                 if (level.totalQuestions > 0) {
                     const avgTime = (level.totalTimeMs / level.totalQuestions / 1000).toFixed(2);
@@ -969,7 +933,6 @@
                 }
             });
             
-            // Add current level average time if there are questions (summary only)
             const currentLevelStartIdx = state.currentLevelQuestions.slice(0, -1).reduce((a, b) => a + b, 0);
             const currentLevelCount = validQuestions.length - currentLevelStartIdx;
             
@@ -986,21 +949,18 @@
                 elements.levelAverageTimesContainer.appendChild(row);
             }
             
-            // Build results table without duplicate average time information
             elements.resultBody.innerHTML = '';
 
             let levelIndex = 0;
             let levelStartIndex = 0;
             
             validQuestions.forEach((q, i) => {
-                // Determine which level this question belongs to
                 while (levelIndex < state.levelResults.length && 
                        i >= levelStartIndex + state.levelResults[levelIndex].totalQuestions) {
                     levelStartIndex += state.levelResults[levelIndex].totalQuestions;
                     levelIndex++;
                 }
                 
-                // Get the correct level name
                 const questionLevel = levelIndex < state.levelResults.length 
                     ? state.levelResults[levelIndex].levelName 
                     : config[state.level].name;
@@ -1022,7 +982,6 @@
         
         // Start new session
         function startNewSession() {
-            // Reset state
             state = {
                 level: 0,
                 questionNum: 1,
@@ -1035,21 +994,20 @@
                 sessionEndTime: 0,
                 correct: 0,
                 maxStreak: 0,
-                questionTimes: [], // Dalam milidetik
+                questionTimes: [],
                 questions: [],
                 answers: [],
                 results: [],
                 timer: null,
                 onesCount: 0,
                 levelResults: [],
-                currentLevelQuestions: []
+                currentLevelQuestions: [],
+                levelUpTimeout: null
             };
             
-            // Show quiz elements
             document.getElementById('quiz').style.display = 'block';
             elements.resultContainer.style.display = 'none';
             
-            // Start new game
             updateUI();
             newQuestion();
         }
@@ -1071,11 +1029,6 @@
             } else {
                 elements.streak.style.display = 'none';
             }
-        }
-        
-        // Helper function for random numbers
-        function rand(min, max) {
-            return Math.floor(Math.random() * (max - min + 1)) + min;
         }
         
         // Start the game
