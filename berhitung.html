@@ -948,23 +948,7 @@
                 }
             });
             
-            // Add current level average time if there are questions
-            const currentLevelStartIdx = state.currentLevelQuestions.slice(0, -1).reduce((a, b) => a + b, 0);
-            const currentLevelCount = validQuestions.length - currentLevelStartIdx;
-            
-            if (currentLevelCount > 0) {
-                const currentLevelTime = state.questionTimes.slice(currentLevelStartIdx).reduce((a, b) => a + b, 0);
-                const avgTime = (currentLevelTime / currentLevelCount / 1000).toFixed(2);
-                
-                const row = document.createElement('div');
-                row.className = 'summary-row';
-                row.innerHTML = `
-                    <span class="summary-label">Rata-rata Waktu ${config[state.level].name}:</span>
-                    <span>${avgTime} detik</span>
-                `;
-                elements.levelAverageTimesContainer.appendChild(row);
-            }
-            
+                    
             // Build results table
             elements.resultBody.innerHTML = '';
             
