@@ -15,7 +15,7 @@
             color: #2c3e50;
         }
         .game-container {
-            max-width: 600px;
+            max-width: 800px;
             margin: 0 auto;
             background-color: white;
             padding: 20px;
@@ -59,10 +59,10 @@
             margin: 10px 0;
         }
         .correct {
-            background-color: #2ecc71 !important;
+            background-color: #00ff00 !important;
         }
         .wrong {
-            background-color: #e74c3c !important;
+            background-color: #ff0000 !important;
         }
         .next-btn {
             background-color: #27ae60;
@@ -74,11 +74,78 @@
         .next-btn:hover {
             background-color: #219653;
         }
+        .finish-btn {
+            background-color: #e74c3c;
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 10px auto;
+            display: block;
+        }
+        .finish-btn:hover {
+            background-color: #c0392b;
+        }
+        .summary {
+            display: none;
+            margin-top: 30px;
+            text-align: left;
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .summary h2 {
+            color: #2c3e50;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .stat-item {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        tr.correct-row {
+            background-color: #d4edda;
+        }
+        tr.wrong-row {
+            background-color: #f8d7da;
+        }
+        .correct-mark {
+            color: #00aa00;
+            font-weight: bold;
+        }
+        .wrong-mark {
+            color: #ff0000;
+            font-weight: bold;
+        }
+        .timer {
+            font-size: 18px;
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
     <div class="game-container">
         <h1>Tebak Bendera</h1>
+        <div class="timer">Waktu: <span id="timer">0.00</span>s</div>
         <div class="score">Skor: <span id="score">0</span></div>
         <div class="flag-container">
             <img id="flag" class="flag" src="" alt="Bendera">
@@ -86,44 +153,282 @@
         <div class="options" id="options">
             <!-- Opsi jawaban akan diisi oleh JavaScript -->
         </div>
-        <button id="next-btn" class="next-btn">Pertanyaan Berikutnya</button>
+        <button id="finish-btn" class="finish-btn">Selesai</button>
+        
+        <div id="summary" class="summary">
+            <h2>Hasil Permainan</h2>
+            <div class="stats">
+                <div class="stat-item">Jumlah Soal: <span id="total-questions">0</span></div>
+                <div class="stat-item">Jumlah Benar: <span id="correct-answers">0</span></div>
+                <div class="stat-item">Jumlah Salah: <span id="wrong-answers">0</span></div>
+                <div class="stat-item">Skor: <span id="final-score">0</span></div>
+                <div class="stat-item">Total Waktu: <span id="total-time">0.00</span>s</div>
+                <div class="stat-item">Rata-rata Waktu: <span id="average-time">0.00</span>s</div>
+                <div class="stat-item">Waktu Mulai: <span id="start-time">-</span></div>
+                <div class="stat-item">Waktu Selesai: <span id="end-time">-</span></div>
+            </div>
+            
+            <table id="results-table">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Bendera</th>
+                        <th>Jawaban</th>
+                        <th>Hasil</th>
+                        <th>Waktu (s)</th>
+                    </tr>
+                </thead>
+                <tbody id="results-body">
+                    <!-- Hasil akan diisi oleh JavaScript -->
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <script>
-        // Data bendera dan negara
+        // Data bendera dari semua negara di dunia menggunakan FlagCDN
         const flagData = [
+            { country: "Afghanistan", flag: "https://flagcdn.com/w320/af.png" },
+            { country: "Albania", flag: "https://flagcdn.com/w320/al.png" },
+            { country: "Algeria", flag: "https://flagcdn.com/w320/dz.png" },
+            { country: "Andorra", flag: "https://flagcdn.com/w320/ad.png" },
+            { country: "Angola", flag: "https://flagcdn.com/w320/ao.png" },
+            { country: "Antigua and Barbuda", flag: "https://flagcdn.com/w320/ag.png" },
+            { country: "Argentina", flag: "https://flagcdn.com/w320/ar.png" },
+            { country: "Armenia", flag: "https://flagcdn.com/w320/am.png" },
+            { country: "Australia", flag: "https://flagcdn.com/w320/au.png" },
+            { country: "Austria", flag: "https://flagcdn.com/w320/at.png" },
+            { country: "Azerbaijan", flag: "https://flagcdn.com/w320/az.png" },
+            { country: "Bahamas", flag: "https://flagcdn.com/w320/bs.png" },
+            { country: "Bahrain", flag: "https://flagcdn.com/w320/bh.png" },
+            { country: "Bangladesh", flag: "https://flagcdn.com/w320/bd.png" },
+            { country: "Barbados", flag: "https://flagcdn.com/w320/bb.png" },
+            { country: "Belarus", flag: "https://flagcdn.com/w320/by.png" },
+            { country: "Belgium", flag: "https://flagcdn.com/w320/be.png" },
+            { country: "Belize", flag: "https://flagcdn.com/w320/bz.png" },
+            { country: "Benin", flag: "https://flagcdn.com/w320/bj.png" },
+            { country: "Bhutan", flag: "https://flagcdn.com/w320/bt.png" },
+            { country: "Bolivia", flag: "https://flagcdn.com/w320/bo.png" },
+            { country: "Bosnia and Herzegovina", flag: "https://flagcdn.com/w320/ba.png" },
+            { country: "Botswana", flag: "https://flagcdn.com/w320/bw.png" },
+            { country: "Brazil", flag: "https://flagcdn.com/w320/br.png" },
+            { country: "Brunei", flag: "https://flagcdn.com/w320/bn.png" },
+            { country: "Bulgaria", flag: "https://flagcdn.com/w320/bg.png" },
+            { country: "Burkina Faso", flag: "https://flagcdn.com/w320/bf.png" },
+            { country: "Burundi", flag: "https://flagcdn.com/w320/bi.png" },
+            { country: "Cabo Verde", flag: "https://flagcdn.com/w320/cv.png" },
+            { country: "Cambodia", flag: "https://flagcdn.com/w320/kh.png" },
+            { country: "Cameroon", flag: "https://flagcdn.com/w320/cm.png" },
+            { country: "Canada", flag: "https://flagcdn.com/w320/ca.png" },
+            { country: "Central African Republic", flag: "https://flagcdn.com/w320/cf.png" },
+            { country: "Chad", flag: "https://flagcdn.com/w320/td.png" },
+            { country: "Chile", flag: "https://flagcdn.com/w320/cl.png" },
+            { country: "China", flag: "https://flagcdn.com/w320/cn.png" },
+            { country: "Colombia", flag: "https://flagcdn.com/w320/co.png" },
+            { country: "Comoros", flag: "https://flagcdn.com/w320/km.png" },
+            { country: "Congo (Brazzaville)", flag: "https://flagcdn.com/w320/cg.png" },
+            { country: "Congo (Kinshasa)", flag: "https://flagcdn.com/w320/cd.png" },
+            { country: "Costa Rica", flag: "https://flagcdn.com/w320/cr.png" },
+            { country: "Croatia", flag: "https://flagcdn.com/w320/hr.png" },
+            { country: "Cuba", flag: "https://flagcdn.com/w320/cu.png" },
+            { country: "Cyprus", flag: "https://flagcdn.com/w320/cy.png" },
+            { country: "Czech Republic", flag: "https://flagcdn.com/w320/cz.png" },
+            { country: "Denmark", flag: "https://flagcdn.com/w320/dk.png" },
+            { country: "Djibouti", flag: "https://flagcdn.com/w320/dj.png" },
+            { country: "Dominica", flag: "https://flagcdn.com/w320/dm.png" },
+            { country: "Dominican Republic", flag: "https://flagcdn.com/w320/do.png" },
+            { country: "Ecuador", flag: "https://flagcdn.com/w320/ec.png" },
+            { country: "Egypt", flag: "https://flagcdn.com/w320/eg.png" },
+            { country: "El Salvador", flag: "https://flagcdn.com/w320/sv.png" },
+            { country: "Equatorial Guinea", flag: "https://flagcdn.com/w320/gq.png" },
+            { country: "Eritrea", flag: "https://flagcdn.com/w320/er.png" },
+            { country: "Estonia", flag: "https://flagcdn.com/w320/ee.png" },
+            { country: "Eswatini", flag: "https://flagcdn.com/w320/sz.png" },
+            { country: "Ethiopia", flag: "https://flagcdn.com/w320/et.png" },
+            { country: "Fiji", flag: "https://flagcdn.com/w320/fj.png" },
+            { country: "Finland", flag: "https://flagcdn.com/w320/fi.png" },
+            { country: "France", flag: "https://flagcdn.com/w320/fr.png" },
+            { country: "Gabon", flag: "https://flagcdn.com/w320/ga.png" },
+            { country: "Gambia", flag: "https://flagcdn.com/w320/gm.png" },
+            { country: "Georgia", flag: "https://flagcdn.com/w320/ge.png" },
+            { country: "Germany", flag: "https://flagcdn.com/w320/de.png" },
+            { country: "Ghana", flag: "https://flagcdn.com/w320/gh.png" },
+            { country: "Greece", flag: "https://flagcdn.com/w320/gr.png" },
+            { country: "Grenada", flag: "https://flagcdn.com/w320/gd.png" },
+            { country: "Guatemala", flag: "https://flagcdn.com/w320/gt.png" },
+            { country: "Guinea", flag: "https://flagcdn.com/w320/gn.png" },
+            { country: "Guinea-Bissau", flag: "https://flagcdn.com/w320/gw.png" },
+            { country: "Guyana", flag: "https://flagcdn.com/w320/gy.png" },
+            { country: "Haiti", flag: "https://flagcdn.com/w320/ht.png" },
+            { country: "Honduras", flag: "https://flagcdn.com/w320/hn.png" },
+            { country: "Hungary", flag: "https://flagcdn.com/w320/hu.png" },
+            { country: "Iceland", flag: "https://flagcdn.com/w320/is.png" },
+            { country: "India", flag: "https://flagcdn.com/w320/in.png" },
             { country: "Indonesia", flag: "https://flagcdn.com/w320/id.png" },
+            { country: "Iran", flag: "https://flagcdn.com/w320/ir.png" },
+            { country: "Iraq", flag: "https://flagcdn.com/w320/iq.png" },
+            { country: "Ireland", flag: "https://flagcdn.com/w320/ie.png" },
+            { country: "Israel", flag: "https://flagcdn.com/w320/il.png" },
+            { country: "Italy", flag: "https://flagcdn.com/w320/it.png" },
+            { country: "Jamaica", flag: "https://flagcdn.com/w320/jm.png" },
+            { country: "Japan", flag: "https://flagcdn.com/w320/jp.png" },
+            { country: "Jordan", flag: "https://flagcdn.com/w320/jo.png" },
+            { country: "Kazakhstan", flag: "https://flagcdn.com/w320/kz.png" },
+            { country: "Kenya", flag: "https://flagcdn.com/w320/ke.png" },
+            { country: "Kiribati", flag: "https://flagcdn.com/w320/ki.png" },
+            { country: "Korea, North", flag: "https://flagcdn.com/w320/kp.png" },
+            { country: "Korea, South", flag: "https://flagcdn.com/w320/kr.png" },
+            { country: "Kosovo", flag: "https://flagcdn.com/w320/xk.png" },
+            { country: "Kuwait", flag: "https://flagcdn.com/w320/kw.png" },
+            { country: "Kyrgyzstan", flag: "https://flagcdn.com/w320/kg.png" },
+            { country: "Laos", flag: "https://flagcdn.com/w320/la.png" },
+            { country: "Latvia", flag: "https://flagcdn.com/w320/lv.png" },
+            { country: "Lebanon", flag: "https://flagcdn.com/w320/lb.png" },
+            { country: "Lesotho", flag: "https://flagcdn.com/w320/ls.png" },
+            { country: "Liberia", flag: "https://flagcdn.com/w320/lr.png" },
+            { country: "Libya", flag: "https://flagcdn.com/w320/ly.png" },
+            { country: "Liechtenstein", flag: "https://flagcdn.com/w320/li.png" },
+            { country: "Lithuania", flag: "https://flagcdn.com/w320/lt.png" },
+            { country: "Luxembourg", flag: "https://flagcdn.com/w320/lu.png" },
+            { country: "Madagascar", flag: "https://flagcdn.com/w320/mg.png" },
+            { country: "Malawi", flag: "https://flagcdn.com/w320/mw.png" },
             { country: "Malaysia", flag: "https://flagcdn.com/w320/my.png" },
-            { country: "Singapura", flag: "https://flagcdn.com/w320/sg.png" },
+            { country: "Maldives", flag: "https://flagcdn.com/w320/mv.png" },
+            { country: "Mali", flag: "https://flagcdn.com/w320/ml.png" },
+            { country: "Malta", flag: "https://flagcdn.com/w320/mt.png" },
+            { country: "Marshall Islands", flag: "https://flagcdn.com/w320/mh.png" },
+            { country: "Mauritania", flag: "https://flagcdn.com/w320/mr.png" },
+            { country: "Mauritius", flag: "https://flagcdn.com/w320/mu.png" },
+            { country: "Mexico", flag: "https://flagcdn.com/w320/mx.png" },
+            { country: "Micronesia", flag: "https://flagcdn.com/w320/fm.png" },
+            { country: "Moldova", flag: "https://flagcdn.com/w320/md.png" },
+            { country: "Monaco", flag: "https://flagcdn.com/w320/mc.png" },
+            { country: "Mongolia", flag: "https://flagcdn.com/w320/mn.png" },
+            { country: "Montenegro", flag: "https://flagcdn.com/w320/me.png" },
+            { country: "Morocco", flag: "https://flagcdn.com/w320/ma.png" },
+            { country: "Mozambique", flag: "https://flagcdn.com/w320/mz.png" },
+            { country: "Myanmar", flag: "https://flagcdn.com/w320/mm.png" },
+            { country: "Namibia", flag: "https://flagcdn.com/w320/na.png" },
+            { country: "Nauru", flag: "https://flagcdn.com/w320/nr.png" },
+            { country: "Nepal", flag: "https://flagcdn.com/w320/np.png" },
+            { country: "Netherlands", flag: "https://flagcdn.com/w320/nl.png" },
+            { country: "New Zealand", flag: "https://flagcdn.com/w320/nz.png" },
+            { country: "Nicaragua", flag: "https://flagcdn.com/w320/ni.png" },
+            { country: "Niger", flag: "https://flagcdn.com/w320/ne.png" },
+            { country: "Nigeria", flag: "https://flagcdn.com/w320/ng.png" },
+            { country: "North Macedonia", flag: "https://flagcdn.com/w320/mk.png" },
+            { country: "Norway", flag: "https://flagcdn.com/w320/no.png" },
+            { country: "Oman", flag: "https://flagcdn.com/w320/om.png" },
+            { country: "Pakistan", flag: "https://flagcdn.com/w320/pk.png" },
+            { country: "Palau", flag: "https://flagcdn.com/w320/pw.png" },
+            { country: "Panama", flag: "https://flagcdn.com/w320/pa.png" },
+            { country: "Papua New Guinea", flag: "https://flagcdn.com/w320/pg.png" },
+            { country: "Paraguay", flag: "https://flagcdn.com/w320/py.png" },
+            { country: "Peru", flag: "https://flagcdn.com/w320/pe.png" },
+            { country: "Philippines", flag: "https://flagcdn.com/w320/ph.png" },
+            { country: "Poland", flag: "https://flagcdn.com/w320/pl.png" },
+            { country: "Portugal", flag: "https://flagcdn.com/w320/pt.png" },
+            { country: "Qatar", flag: "https://flagcdn.com/w320/qa.png" },
+            { country: "Romania", flag: "https://flagcdn.com/w320/ro.png" },
+            { country: "Russia", flag: "https://flagcdn.com/w320/ru.png" },
+            { country: "Rwanda", flag: "https://flagcdn.com/w320/rw.png" },
+            { country: "Saint Kitts and Nevis", flag: "https://flagcdn.com/w320/kn.png" },
+            { country: "Saint Lucia", flag: "https://flagcdn.com/w320/lc.png" },
+            { country: "Saint Vincent and the Grenadines", flag: "https://flagcdn.com/w320/vc.png" },
+            { country: "Samoa", flag: "https://flagcdn.com/w320/ws.png" },
+            { country: "San Marino", flag: "https://flagcdn.com/w320/sm.png" },
+            { country: "Sao Tome and Principe", flag: "https://flagcdn.com/w320/st.png" },
+            { country: "Saudi Arabia", flag: "https://flagcdn.com/w320/sa.png" },
+            { country: "Senegal", flag: "https://flagcdn.com/w320/sn.png" },
+            { country: "Serbia", flag: "https://flagcdn.com/w320/rs.png" },
+            { country: "Seychelles", flag: "https://flagcdn.com/w320/sc.png" },
+            { country: "Sierra Leone", flag: "https://flagcdn.com/w320/sl.png" },
+            { country: "Singapore", flag: "https://flagcdn.com/w320/sg.png" },
+            { country: "Slovakia", flag: "https://flagcdn.com/w320/sk.png" },
+            { country: "Slovenia", flag: "https://flagcdn.com/w320/si.png" },
+            { country: "Solomon Islands", flag: "https://flagcdn.com/w320/sb.png" },
+            { country: "Somalia", flag: "https://flagcdn.com/w320/so.png" },
+            { country: "South Africa", flag: "https://flagcdn.com/w320/za.png" },
+            { country: "South Sudan", flag: "https://flagcdn.com/w320/ss.png" },
+            { country: "Spain", flag: "https://flagcdn.com/w320/es.png" },
+            { country: "Sri Lanka", flag: "https://flagcdn.com/w320/lk.png" },
+            { country: "Sudan", flag: "https://flagcdn.com/w320/sd.png" },
+            { country: "Suriname", flag: "https://flagcdn.com/w320/sr.png" },
+            { country: "Sweden", flag: "https://flagcdn.com/w320/se.png" },
+            { country: "Switzerland", flag: "https://flagcdn.com/w320/ch.png" },
+            { country: "Syria", flag: "https://flagcdn.com/w320/sy.png" },
+            { country: "Taiwan", flag: "https://flagcdn.com/w320/tw.png" },
+            { country: "Tajikistan", flag: "https://flagcdn.com/w320/tj.png" },
+            { country: "Tanzania", flag: "https://flagcdn.com/w320/tz.png" },
             { country: "Thailand", flag: "https://flagcdn.com/w320/th.png" },
+            { country: "Togo", flag: "https://flagcdn.com/w320/tg.png" },
+            { country: "Tonga", flag: "https://flagcdn.com/w320/to.png" },
+            { country: "Trinidad and Tobago", flag: "https://flagcdn.com/w320/tt.png" },
+            { country: "Tunisia", flag: "https://flagcdn.com/w320/tn.png" },
+            { country: "Turkey", flag: "https://flagcdn.com/w320/tr.png" },
+            { country: "Turkmenistan", flag: "https://flagcdn.com/w320/tm.png" },
+            { country: "Tuvalu", flag: "https://flagcdn.com/w320/tv.png" },
+            { country: "Uganda", flag: "https://flagcdn.com/w320/ug.png" },
+            { country: "Ukraine", flag: "https://flagcdn.com/w320/ua.png" },
+            { country: "United Arab Emirates", flag: "https://flagcdn.com/w320/ae.png" },
+            { country: "United Kingdom", flag: "https://flagcdn.com/w320/gb.png" },
+            { country: "United States", flag: "https://flagcdn.com/w320/us.png" },
+            { country: "Uruguay", flag: "https://flagcdn.com/w320/uy.png" },
+            { country: "Uzbekistan", flag: "https://flagcdn.com/w320/uz.png" },
+            { country: "Vanuatu", flag: "https://flagcdn.com/w320/vu.png" },
+            { country: "Vatican City", flag: "https://flagcdn.com/w320/va.png" },
+            { country: "Venezuela", flag: "https://flagcdn.com/w320/ve.png" },
             { country: "Vietnam", flag: "https://flagcdn.com/w320/vn.png" },
-            { country: "Filipina", flag: "https://flagcdn.com/w320/ph.png" },
-            { country: "Jepang", flag: "https://flagcdn.com/w320/jp.png" },
-            { country: "Korea Selatan", flag: "https://flagcdn.com/w320/kr.png" },
-            { country: "Amerika Serikat", flag: "https://flagcdn.com/w320/us.png" },
-            { country: "Inggris", flag: "https://flagcdn.com/w320/gb.png" },
-            { country: "Prancis", flag: "https://flagcdn.com/w320/fr.png" },
-            { country: "Jerman", flag: "https://flagcdn.com/w320/de.png" },
-            { country: "Italia", flag: "https://flagcdn.com/w320/it.png" },
-            { country: "Spanyol", flag: "https://flagcdn.com/w320/es.png" },
-            { country: "Brazil", flag: "https://flagcdn.com/w320/br.png" }
+            { country: "Yemen", flag: "https://flagcdn.com/w320/ye.png" },
+            { country: "Zambia", flag: "https://flagcdn.com/w320/zm.png" },
+            { country: "Zimbabwe", flag: "https://flagcdn.com/w320/zw.png" }
         ];
 
         // Variabel game
         let currentFlag = null;
         let score = 0;
         let answered = false;
+        let questionCount = 0;
+        let correctCount = 0;
+        let wrongCount = 0;
+        let startTime = null;
+        let endTime = null;
+        let questionStartTime = null;
+        let totalTime = 0;
+        let gameHistory = [];
+        let timeoutId = null;
 
         // Elemen DOM
         const flagElement = document.getElementById('flag');
         const optionsElement = document.getElementById('options');
         const scoreElement = document.getElementById('score');
-        const nextButton = document.getElementById('next-btn');
+        const timerElement = document.getElementById('timer');
+        const finishButton = document.getElementById('finish-btn');
+        const summaryElement = document.getElementById('summary');
+        const resultsBody = document.getElementById('results-body');
+        const totalQuestionsElement = document.getElementById('total-questions');
+        const correctAnswersElement = document.getElementById('correct-answers');
+        const wrongAnswersElement = document.getElementById('wrong-answers');
+        const finalScoreElement = document.getElementById('final-score');
+        const totalTimeElement = document.getElementById('total-time');
+        const averageTimeElement = document.getElementById('average-time');
+        const startTimeElement = document.getElementById('start-time');
+        const endTimeElement = document.getElementById('end-time');
 
         // Fungsi untuk memulai permainan
         function startGame() {
+            if (startTime === null) {
+                startTime = new Date();
+                startTimeElement.textContent = formatDateTime(startTime);
+            }
+            
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+                timeoutId = null;
+            }
+            
             answered = false;
-            nextButton.style.display = 'none';
+            questionStartTime = new Date();
             
             // Pilih bendera secara acak
             const randomIndex = Math.floor(Math.random() * flagData.length);
@@ -135,6 +440,9 @@
             
             // Buat pilihan jawaban
             createOptions(currentFlag.country);
+            
+            // Reset timer
+            updateTimer();
         }
 
         // Fungsi untuk membuat pilihan jawaban
@@ -176,28 +484,102 @@
         function checkAnswer(selectedAnswer, correctAnswer) {
             if (answered) return;
             answered = true;
+            questionCount++;
+            
+            const questionEndTime = new Date();
+            const questionTime = (questionEndTime - questionStartTime) / 1000;
+            totalTime += questionTime;
+            
+            const isCorrect = selectedAnswer === correctAnswer;
+            
+            if (isCorrect) {
+                correctCount++;
+                score++;
+                scoreElement.textContent = score;
+            } else {
+                wrongCount++;
+            }
+            
+            // Catat history
+            gameHistory.push({
+                flag: currentFlag.flag,
+                country: currentFlag.country,
+                answer: selectedAnswer,
+                isCorrect: isCorrect,
+                time: questionTime
+            });
             
             const buttons = optionsElement.querySelectorAll('button');
             
             buttons.forEach(button => {
                 if (button.textContent === correctAnswer) {
                     button.classList.add('correct');
-                } else if (button.textContent === selectedAnswer && selectedAnswer !== correctAnswer) {
+                } else if (button.textContent === selectedAnswer && !isCorrect) {
                     button.classList.add('wrong');
                 }
                 button.disabled = true;
             });
             
-            if (selectedAnswer === correctAnswer) {
-                score++;
-                scoreElement.textContent = score;
-            }
-            
-            nextButton.style.display = 'block';
+            // Otomatis lanjut ke pertanyaan berikutnya setelah 0.5 detik
+            timeoutId = setTimeout(startGame, 500);
         }
 
-        // Event listener untuk tombol berikutnya
-        nextButton.addEventListener('click', startGame);
+        // Fungsi untuk mengupdate timer
+        function updateTimer() {
+            if (!answered && questionStartTime) {
+                const currentTime = new Date();
+                const elapsedTime = (currentTime - questionStartTime) / 1000;
+                timerElement.textContent = elapsedTime.toFixed(2);
+                requestAnimationFrame(updateTimer);
+            }
+        }
+
+        // Fungsi untuk menyelesaikan permainan
+        function finishGame() {
+            endTime = new Date();
+            endTimeElement.textContent = formatDateTime(endTime);
+            
+            // Hitung statistik
+            totalQuestionsElement.textContent = questionCount;
+            correctAnswersElement.textContent = correctCount;
+            wrongAnswersElement.textContent = wrongCount;
+            finalScoreElement.textContent = score;
+            totalTimeElement.textContent = totalTime.toFixed(2);
+            averageTimeElement.textContent = (totalTime / questionCount).toFixed(2);
+            
+            // Tampilkan history
+            resultsBody.innerHTML = '';
+            gameHistory.forEach((item, index) => {
+                const row = document.createElement('tr');
+                row.className = item.isCorrect ? 'correct-row' : 'wrong-row';
+                
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td><img src="${item.flag}" alt="Flag" style="height: 30px;"></td>
+                    <td>${item.country}</td>
+                    <td class="${item.isCorrect ? 'correct-mark' : 'wrong-mark'}">
+                        ${item.isCorrect ? '✓' : '✗'}
+                    </td>
+                    <td>${item.time.toFixed(2)}</td>
+                `;
+                
+                resultsBody.appendChild(row);
+            });
+            
+            // Sembunyikan game, tampilkan summary
+            document.querySelector('.flag-container').style.display = 'none';
+            optionsElement.style.display = 'none';
+            finishButton.style.display = 'none';
+            summaryElement.style.display = 'block';
+        }
+
+        // Fungsi untuk memformat tanggal dan waktu
+        function formatDateTime(date) {
+            return date.toLocaleString();
+        }
+
+        // Event listener untuk tombol selesai
+        finishButton.addEventListener('click', finishGame);
 
         // Mulai permainan
         startGame();
