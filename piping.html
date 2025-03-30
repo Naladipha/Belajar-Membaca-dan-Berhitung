@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Piping and Pipeline Engineering Quiz</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .quiz-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .question {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .question-text {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .options {
+            margin-left: 20px;
+        }
+        .option {
+            margin-bottom: 8px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            display: none;
+        }
+        .correct {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .incorrect {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .score {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Piping and Pipeline Engineering Quiz</h1>
+    <div class="quiz-container">
+        <div id="questions-container"></div>
+        <button id="submit-btn">Submit Quiz</button>
+        <div id="results" class="results"></div>
+    </div>
+
+    <script>
+        // Questions array
+        const questions = [
+            {
+                question: "What is the primary element in ferrous metals?",
+                options: ["Aluminum", "Iron", "Copper", "Nickel"],
+                answer: 1
+            },
+            {
+                question: "Which of these is NOT a type of cast iron?",
+                options: ["Gray cast iron", "Ductile iron", "White iron", "Malleable steel"],
+                answer: 3
+            },
+            {
+                question: "What carbon content typically defines steel (as opposed to cast iron)?",
+                options: ["Less than 0.5%", "Less than 1.7%", "Less than 3%", "Less than 5%"],
+                answer: 1
+            },
+            {
+                question: "Which alloying element is primarily added to improve resistance to high temperature hydrogen attack?",
+                options: ["Chromium", "Molybdenum", "Nickel", "Vanadium"],
+                answer: 1
+            },
+            {
+                question: "What is the most common pipe material in power, chemical, and hydrocarbon industries?",
+                options: ["Stainless steel", "Carbon steel", "Aluminum", "Copper"],
+                answer: 1
+            },
+            {
+                question: "Which specification is commonly used for carbon steel line pipe in oil and gas pipelines?",
+                options: ["ASTM A106", "API 5L", "ASTM A53", "ASTM A312"],
+                answer: 1
+            },
+            {
+                question: "What is the main advantage of seamless pipe over seam welded pipe?",
+                options: ["Lower cost", "No longitudinal weld", "Thinner walls", "Easier to fabricate"],
+                answer: 1
+            },
+            {
+                question: "What does the 'S' stand for in schedule numbers like 10S or 40S?",
+                options: ["Standard", "Steel", "Stainless", "Special"],
+                answer: 2
+            },
+            {
+                question: "Which of these is NOT a common method for fabricating seam welded pipe?",
+                options: ["Electric resistance welding", "Furnace butt welding", "Submerged arc welding", "Centrifugal casting"],
+                answer: 3
+            },
+            {
+                question: "What is the purpose of post-weld heat treatment?",
+                options: ["To increase hardness", "To relieve residual stresses", "To improve corrosion resistance", "To reduce cost"],
+                answer: 1
+            },
+            {
+                question: "Which mechanical property decreases with increasing temperature for carbon steel?",
+                options: ["Yield stress", "Ultimate strength", "Elongation at rupture", "All of the above"],
+                answer: 0
+            },
+            {
+                question: "What is measured in a Charpy V-notch test?",
+                options: ["Yield strength", "Impact toughness", "Hardness", "Fracture toughness"],
+                answer: 1
+            },
+            {
+                question: "What does NDT stand for in material testing?",
+                options: ["Non-Destructive Testing", "Nil Ductility Transition", "Normal Design Temperature", "No Defect Tolerance"],
+                answer: 1
+            },
+            {
+                question: "Which of these is NOT a common hardness test method?",
+                options: ["Brinell", "Rockwell", "Vickers", "Charpy"],
+                answer: 3
+            },
+            {
+                question: "What does KIC represent in fracture mechanics?",
+                options: ["Yield strength", "Fracture toughness", "Hardness", "Thermal conductivity"],
+                answer: 1
+            },
+            {
+                question: "Which organization publishes the ASME B31 Pressure Piping Code?",
+                options: ["American Petroleum Institute", "American Society of Mechanical Engineers", "American Welding Society", "American National Standards Institute"],
+                answer: 1
+            },
+            {
+                question: "Which ASME B31 code section applies to power piping?",
+                options: ["B31.1", "B31.3", "B31.4", "B31.8"],
+                answer: 0
+            },
+            {
+                question: "Which ASME B31 code section applies to gas transmission pipelines?",
+                options: ["B31.1", "B31.3", "B31.4", "B31.8"],
+                answer: 3
+            },
+            {
+                question: "What is the minimum operating pressure that typically defines pressure piping?",
+                options: ["15 psig", "50 psig", "100 psig", "200 psig"],
+                answer: 0
+            },
+            {
+                question: "Which standard covers dimensions for steel butt welding fittings?",
+                options: ["ASME B16.5", "ASME B16.9", "ASME B16.11", "ASME B16.34"],
+                answer: 1
+            },
+            {
+                question: "Which standard covers pipe flanges and flanged fittings?",
+                options: ["ASME B16.5", "ASME B16.9", "ASME B16.11", "ASME B16.34"],
+                answer: 0
+            },
+            {
+                question: "What is the primary purpose of a gasket in a flanged connection?",
+                options: ["To provide structural strength", "To create a leak-tight seal", "To align the flanges", "To prevent corrosion"],
+                answer: 1
+            },
+            {
+                question: "Which of these is NOT a common type of pipe flange?",
+                options: ["Slip-on", "Socket weld", "Lap joint", "Butt weld"],
+                answer: 3
+            },
+            {
+                question: "What is the primary consideration when selecting pipe support spacing?",
+                options: ["Pipe color", "Pipe material and weight", "Fluid temperature", "All of the above"],
+                answer: 1
+            },
+            {
+                question: "Which of these is NOT a common type of pipe support?",
+                options: ["Variable spring", "Constant load hanger", "Pipe roll", "Flexible joint"],
+                answer: 3
+            },
+            {
+                question: "What is the main purpose of a pipe expansion joint?",
+                options: ["To increase pressure rating", "To accommodate thermal movement", "To improve flow", "To reduce weight"],
+                answer: 1
+            },
+            {
+                question: "Which factor is most critical in pipe flexibility analysis?",
+                options: ["Pipe color", "Coefficient of thermal expansion", "Fluid viscosity", "Atmospheric pressure"],
+                answer: 1
+            },
+            {
+                question: "What is the primary cause of waterhammer in piping systems?",
+                options: ["Sudden valve closure", "High fluid temperature", "Low fluid velocity", "Pipe corrosion"],
+                answer: 0
+            },
+            {
+                question: "Which of these is NOT a common method for leak testing piping systems?",
+                options: ["Hydrostatic test", "Pneumatic test", "Ultrasonic test", "Sensitive leak test"],
+                answer: 2
+            },
+            {
+                question: "What is the primary purpose of a pressure relief valve?",
+                options: ["To regulate flow", "To prevent overpressure", "To measure pressure", "To isolate sections"],
+                answer: 1
+            },
+            {
+                question: "Which of these is NOT a common type of corrosion?",
+                options: ["Uniform corrosion", "Galvanic corrosion", "Pitting corrosion", "Thermal corrosion"],
+                answer: 3
+            },
+            {
+                question: "What is the primary purpose of cathodic protection?",
+                options: ["To prevent external corrosion", "To increase pressure rating", "To improve flow", "To reduce weight"],
+                answer: 0
+            },
+            {
+                question: "Which NDE method is best for detecting surface cracks?",
+                options: ["Radiography", "Ultrasonic testing", "Magnetic particle testing", "Hydrostatic testing"],
+                answer: 2
+            },
+            {
+                question: "Which NDE method uses high-energy radiation to examine welds?",
+                options: ["Ultrasonic testing", "Radiographic testing", "Magnetic particle testing", "Liquid penetrant testing"],
+                answer: 1
+            },
+            {
+                question: "What is the primary purpose of a pipeline pig?",
+                options: ["To clean the pipe", "To inspect the pipe", "To measure wall thickness", "All of the above"],
+                answer: 3
+            },
+            {
+                question: "Which repair method is commonly used for localized corrosion damage?",
+                options: ["Weld overlay", "Full encirclement sleeve", "Mechanical clamp", "All of the above"],
+                answer: 3
+            },
+            {
+                question: "Which standard provides fitness-for-service evaluation methods?",
+                options: ["API 510", "API 570", "API 579", "API 653"],
+                answer: 2
+            },
+            {
+                question: "What is the primary advantage of plastic pipe?",
+                options: ["High temperature resistance", "Corrosion resistance", "High pressure capability", "Low cost"],
+                answer: 1
+            },
+            {
+                question: "Which of these is NOT a common type of valve?",
+                options: ["Gate valve", "Globe valve", "Ball valve", "Spiral valve"],
+                answer: 3
+            },
+            {
+                question: "What is the primary function of a check valve?",
+                options: ["To regulate flow", "To prevent backflow", "To relieve pressure", "To isolate sections"],
+                answer: 1
+            },
+            {
+                question: "Which valve type provides the best flow control?",
+                options: ["Gate valve", "Globe valve", "Ball valve", "Butterfly valve"],
+                answer: 1
+            },
+            {
+                question: "What is the primary purpose of valve actuators?",
+                options: ["To automate valve operation", "To increase pressure rating", "To improve sealing", "To reduce weight"],
+                answer: 0
+            },
+            {
+                question: "Which factor is most important in valve selection?",
+                options: ["Service conditions", "Color", "Manufacturer", "Cost"],
+                answer: 0
+            },
+            {
+                question: "What is the primary purpose of a safety valve?",
+                options: ["To regulate flow", "To prevent overpressure", "To measure pressure", "To isolate sections"],
+                answer: 1
+            },
+            {
+                question: "Which standard covers valve inspection and testing?",
+                options: ["API 598", "API 600", "API 602", "API 608"],
+                answer: 0
+            },
+            {
+                question: "What is the primary consideration for underground pipeline design?",
+                options: ["Soil loads", "Wind loads", "Snow loads", "All of the above"],
+                answer: 0
+            },
+            {
+                question: "Which factor is most critical for subsea pipelines?",
+                options: ["External pressure", "Thermal expansion", "Corrosion protection", "All of the above"],
+                answer: 3
+            },
+            {
+                question: "What is the primary purpose of pipeline coatings?",
+                options: ["Corrosion protection", "Thermal insulation", "Mechanical protection", "All of the above"],
+                answer: 3
+            },
+            {
+                question: "Which organization publishes standards for cathodic protection?",
+                options: ["ASME", "API", "NACE", "ASTM"],
+                answer: 2
+            },
+            {
+                question: "What is the primary purpose of a pipeline integrity management program?",
+                options: ["To ensure safe operation", "To reduce costs", "To increase flow", "To simplify maintenance"],
+                answer: 0
+            }
+        ];
+
+        // Function to shuffle array
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Function to generate quiz
+        function generateQuiz() {
+            const questionsContainer = document.getElementById('questions-container');
+            const shuffledQuestions = shuffleArray([...questions]).slice(0, 10);
+            
+            shuffledQuestions.forEach((q, index) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'question';
+                questionDiv.dataset.index = index;
+                
+                const questionText = document.createElement('div');
+                questionText.className = 'question-text';
+                questionText.textContent = `${index + 1}. ${q.question}`;
+                questionDiv.appendChild(questionText);
+                
+                const optionsDiv = document.createElement('div');
+                optionsDiv.className = 'options';
+                
+                const shuffledOptions = shuffleArray([...q.options]);
+                shuffledOptions.forEach((option, i) => {
+                    const optionDiv = document.createElement('div');
+                    optionDiv.className = 'option';
+                    
+                    const input = document.createElement('input');
+                    input.type = 'radio';
+                    input.name = `question-${index}`;
+                    input.value = q.options.indexOf(option);
+                    input.id = `q${index}-o${i}`;
+                    
+                    const label = document.createElement('label');
+                    label.htmlFor = `q${index}-o${i}`;
+                    label.textContent = option;
+                    
+                    optionDiv.appendChild(input);
+                    optionDiv.appendChild(label);
+                    optionsDiv.appendChild(optionDiv);
+                });
+                
+                questionDiv.appendChild(optionsDiv);
+                questionsContainer.appendChild(questionDiv);
+            });
+            
+            return shuffledQuestions;
+        }
+
+        // Function to check answers
+        function checkAnswers(quizQuestions) {
+            let score = 0;
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+            resultsDiv.style.display = 'block';
+            
+            const scoreDiv = document.createElement('div');
+            scoreDiv.className = 'score';
+            
+            quizQuestions.forEach((q, index) => {
+                const selectedOption = document.querySelector(`input[name="question-${index}"]:checked`);
+                const questionDiv = document.querySelector(`.question[data-index="${index}"]`);
+                
+                if (selectedOption) {
+                    if (parseInt(selectedOption.value) === q.answer) {
+                        score++;
+                        questionDiv.classList.add('correct');
+                    } else {
+                        questionDiv.classList.add('incorrect');
+                    }
+                } else {
+                    questionDiv.classList.add('incorrect');
+                }
+            });
+            
+            scoreDiv.textContent = `You scored ${score} out of ${quizQuestions.length}`;
+            resultsDiv.appendChild(scoreDiv);
+            
+            // Add answer explanations
+            quizQuestions.forEach((q, index) => {
+                const answerDiv = document.createElement('div');
+                answerDiv.className = 'answer';
+                
+                const selectedOption = document.querySelector(`input[name="question-${index}"]:checked`);
+                if (selectedOption) {
+                    if (parseInt(selectedOption.value) === q.answer) {
+                        answerDiv.textContent = `Question ${index + 1}: Correct! The answer is ${q.options[q.answer]}.`;
+                        answerDiv.style.color = 'green';
+                    } else {
+                        answerDiv.textContent = `Question ${index + 1}: Incorrect. The correct answer is ${q.options[q.answer]}.`;
+                        answerDiv.style.color = 'red';
+                    }
+                } else {
+                    answerDiv.textContent = `Question ${index + 1}: Not answered. The correct answer is ${q.options[q.answer]}.`;
+                    answerDiv.style.color = 'orange';
+                }
+                
+                resultsDiv.appendChild(answerDiv);
+            });
+        }
+
+        // Initialize quiz
+        document.addEventListener('DOMContentLoaded', () => {
+            const quizQuestions = generateQuiz();
+            
+            document.getElementById('submit-btn').addEventListener('click', () => {
+                checkAnswers(quizQuestions);
+            });
+        });
+    </script>
+</body>
+</html>
