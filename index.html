@@ -4,26 +4,19 @@
     <title>Belajar Anak</title>
     <style>
         body {
-    font-family: Arial, sans-serif;
-    text-align: center;
-    margin: 0;
-    padding: 20px;
-    background: linear-gradient(to right, #e0f7fa, #b3e5fc, #81d4fa, #4fc3f7, #0288d1); /* Gradasi warna biru */
-    background-size: 400% 400%; /* Untuk animasi gerakan */
-    animation: gradientBG 30s ease infinite; /* Pergerakan lambat (30 detik) */
-}
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(to right, #e0f7fa, #b3e5fc, #81d4fa, #4fc3f7, #0288d1);
+            background-size: 400% 400%;
+            animation: gradientBG 30s ease infinite;
+        }
 
-@keyframes gradientBG {
-    0% {
-        background-position: 0% 50%;
-    }
-    50% {
-        background-position: 100% 50%;
-    }
-    100% {
-        background-position: 0% 50%;
-    }
-}
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
         h1 {
@@ -41,6 +34,7 @@
             border-radius: 5px;
             text-transform: uppercase;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
         }
 
         button:hover {
@@ -49,18 +43,43 @@
         }
 
         audio {
-            display: none; /* Sembunyikan elemen audio dari layar */
+            display: none;
+        }
+
+        .history-container {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .history-item {
+            padding: 15px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            text-align: left;
+        }
+
+        .history-item h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+
+        .history-item p {
+            margin: 5px 0;
         }
     </style>
 </head>
 <body>
     <audio id="background-audio" autoplay loop>
-        <source src="background-music.mp3" type="audio/mpeg"> <!-- Ganti file ini dengan suara musik anak-anak -->
+        <source src="background-music.mp3" type="audio/mpeg">
         Browser Anda tidak mendukung audio.
     </audio>
 
     <audio id="button-audio">
-        <source src="button-click.mp3" type="audio/mpeg"> <!-- Ganti file ini dengan suara klik -->
+        <source src="button-click.mp3" type="audio/mpeg">
         Browser Anda tidak mendukung audio.
     </audio>
 
@@ -69,94 +88,70 @@
     <button onclick="playSoundAndNavigate('berhitung.html')">Belajar Berhitung</button>
     <button onclick="playSoundAndNavigate('membaca.html')">Belajar Membaca</button>
 
+    <div id="history-container" class="history-container">
+        <h2>Riwayat Belajar</h2>
+        <!-- Data akan dimuat di sini oleh JavaScript -->
+    </div>
+
     <script>
         // Memutar efek suara tombol saat diklik
         function playSoundAndNavigate(targetUrl) {
             const buttonSound = document.getElementById('button-audio');
-            buttonSound.play(); // Putar suara tombol
+            buttonSound.play();
             setTimeout(() => {
-                window.location.href = targetUrl; // Navigasi setelah suara diputar
-            }, 300); // Memberikan jeda agar suara selesai sebelum pindah halaman
+                window.location.href = targetUrl;
+            }, 300);
         }
-    </script>
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Halaman Utama</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            text-align: center;
-            background: linear-gradient(to right, #e0f7fa, #b3e5fc);
-        }
-        h1 {
-            color: #2c3e50;
-        }
-        table {
-            margin: 20px auto;
-            border-collapse: collapse;
-            width: 80%;
-        }
-        th, td {
-            border: 1px solid #ccc;
-            padding: 10px;
-            text-align: center;
-        }
-        th {
-            background-color: #f4f4f4;
-        }
-    </style>
-</head>
-<body>
-    <h1>Rekap Hasil Belajar</h1>
-    <table id="result-table">
-        <thead>
-            <tr>
-                <th>No.</th>
-                <th>Waktu Mulai (WIB)</th>
-                <th>Waktu Selesai (WIB)</th>
-                <th>Total Waktu (detik)</th>
-                <th>Jawaban Benar</th>
-                <th>Jawaban Salah</th>
-            </tr>
-        </thead>
-        <tbody>
-            <!-- Data hasil pekerjaan akan ditambahkan di sini -->
-        </tbody>
-    </table>
 
-    
-
-    <script>
-        // Fungsi untuk menampilkan hasil yang direkam di LocalStorage
-        function loadResults() {
-            const results = JSON.parse(localStorage.getItem("sessionResults")) || [];
-            const tableBody = document.querySelector("#result-table tbody");
-            tableBody.innerHTML = ""; // Hapus data sebelumnya
-
-            results.forEach((result, index) => {
-                const row = document.createElement("tr");
-                row.innerHTML = `
-                    <td>${index + 1}</td>
-                    <td>${result.startTime}</td>
-                    <td>${result.endTime}</td>
-                    <td>${result.totalTime}</td>
-                    <td>${result.correctAnswers}</td>
-                    <td>${result.wrongAnswers}</td>
-                `;
-                tableBody.appendChild(row);
+        // Fungsi untuk memformat waktu
+        function formatTime(timestamp) {
+            return new Date(timestamp).toLocaleString('id-ID', {
+                timeZone: 'Asia/Jakarta',
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
             });
         }
 
-        // Fungsi untuk memulai sesi baru
-        function startNewSession() {
-            window.location.href = "berhitung.html"; // Arahkan ke halaman soal
+        // Fungsi untuk memformat durasi
+        function formatDuration(ms) {
+            const totalSeconds = Math.round(ms / 1000);
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            return `${minutes}m ${seconds}s`;
         }
 
-        // Muat data saat halaman dibuka
-        loadResults();
+        // Fungsi untuk menampilkan riwayat
+        function displayHistory() {
+            const history = JSON.parse(localStorage.getItem('math_history')) || [];
+            const container = document.getElementById('history-container');
+            
+            if (!container) return;
+            
+            if (history.length === 0) {
+                container.innerHTML += '<p>Belum ada riwayat belajar</p>';
+                return;
+            }
+            
+            history.forEach((session, index) => {
+                const item = document.createElement('div');
+                item.className = 'history-item';
+                item.innerHTML = `
+                    <h3>Sesi ${index + 1} - ${session.level}</h3>
+                    <p>📅 ${formatTime(session.startTime)} - ${formatTime(session.endTime)}</p>
+                    <p>⏱️ Durasi: ${formatDuration(session.totalTime)}</p>
+                    <p>✅ Benar: ${session.correctAnswers} | ❌ Salah: ${session.wrongAnswers}</p>
+                    <p>📊 Score: ${session.score}% | ⏳ Rata-rata: ${session.averageTime.toFixed(2)} detik/soal</p>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // Jalankan saat halaman dimuat
+        window.addEventListener('DOMContentLoaded', displayHistory);
     </script>
 </body>
 </html>
