@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Tebak Bendera</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f8ff;
+            padding: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+        }
+        .game-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .flag-container {
+            margin: 20px 0;
+            height: 150px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .flag {
+            max-height: 120px;
+            max-width: 200px;
+            border: 1px solid #ddd;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+        }
+        .options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px;
+            font-size: 16px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .score {
+            font-size: 18px;
+            margin: 10px 0;
+        }
+        .correct {
+            background-color: #2ecc71 !important;
+        }
+        .wrong {
+            background-color: #e74c3c !important;
+        }
+        .next-btn {
+            background-color: #27ae60;
+            padding: 10px 20px;
+            font-size: 16px;
+            display: none;
+            margin: 0 auto;
+        }
+        .next-btn:hover {
+            background-color: #219653;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Tebak Bendera</h1>
+        <div class="score">Skor: <span id="score">0</span></div>
+        <div class="flag-container">
+            <img id="flag" class="flag" src="" alt="Bendera">
+        </div>
+        <div class="options" id="options">
+            <!-- Opsi jawaban akan diisi oleh JavaScript -->
+        </div>
+        <button id="next-btn" class="next-btn">Pertanyaan Berikutnya</button>
+    </div>
+
+    <script>
+        // Data bendera dan negara
+        const flagData = [
+            { country: "Indonesia", flag: "https://flagcdn.com/w320/id.png" },
+            { country: "Malaysia", flag: "https://flagcdn.com/w320/my.png" },
+            { country: "Singapura", flag: "https://flagcdn.com/w320/sg.png" },
+            { country: "Thailand", flag: "https://flagcdn.com/w320/th.png" },
+            { country: "Vietnam", flag: "https://flagcdn.com/w320/vn.png" },
+            { country: "Filipina", flag: "https://flagcdn.com/w320/ph.png" },
+            { country: "Jepang", flag: "https://flagcdn.com/w320/jp.png" },
+            { country: "Korea Selatan", flag: "https://flagcdn.com/w320/kr.png" },
+            { country: "Amerika Serikat", flag: "https://flagcdn.com/w320/us.png" },
+            { country: "Inggris", flag: "https://flagcdn.com/w320/gb.png" },
+            { country: "Prancis", flag: "https://flagcdn.com/w320/fr.png" },
+            { country: "Jerman", flag: "https://flagcdn.com/w320/de.png" },
+            { country: "Italia", flag: "https://flagcdn.com/w320/it.png" },
+            { country: "Spanyol", flag: "https://flagcdn.com/w320/es.png" },
+            { country: "Brazil", flag: "https://flagcdn.com/w320/br.png" }
+        ];
+
+        // Variabel game
+        let currentFlag = null;
+        let score = 0;
+        let answered = false;
+
+        // Elemen DOM
+        const flagElement = document.getElementById('flag');
+        const optionsElement = document.getElementById('options');
+        const scoreElement = document.getElementById('score');
+        const nextButton = document.getElementById('next-btn');
+
+        // Fungsi untuk memulai permainan
+        function startGame() {
+            answered = false;
+            nextButton.style.display = 'none';
+            
+            // Pilih bendera secara acak
+            const randomIndex = Math.floor(Math.random() * flagData.length);
+            currentFlag = flagData[randomIndex];
+            
+            // Tampilkan bendera
+            flagElement.src = currentFlag.flag;
+            flagElement.alt = `Bendera ${currentFlag.country}`;
+            
+            // Buat pilihan jawaban
+            createOptions(currentFlag.country);
+        }
+
+        // Fungsi untuk membuat pilihan jawaban
+        function createOptions(correctAnswer) {
+            optionsElement.innerHTML = '';
+            
+            // Buat array dengan jawaban yang benar dan 3 jawaban salah
+            let options = [correctAnswer];
+            while (options.length < 4) {
+                const randomIndex = Math.floor(Math.random() * flagData.length);
+                const randomCountry = flagData[randomIndex].country;
+                if (!options.includes(randomCountry)) {
+                    options.push(randomCountry);
+                }
+            }
+            
+            // Acak urutan pilihan
+            options = shuffleArray(options);
+            
+            // Buat tombol untuk setiap pilihan
+            options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.addEventListener('click', () => checkAnswer(option, correctAnswer));
+                optionsElement.appendChild(button);
+            });
+        }
+
+        // Fungsi untuk mengacak array
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Fungsi untuk memeriksa jawaban
+        function checkAnswer(selectedAnswer, correctAnswer) {
+            if (answered) return;
+            answered = true;
+            
+            const buttons = optionsElement.querySelectorAll('button');
+            
+            buttons.forEach(button => {
+                if (button.textContent === correctAnswer) {
+                    button.classList.add('correct');
+                } else if (button.textContent === selectedAnswer && selectedAnswer !== correctAnswer) {
+                    button.classList.add('wrong');
+                }
+                button.disabled = true;
+            });
+            
+            if (selectedAnswer === correctAnswer) {
+                score++;
+                scoreElement.textContent = score;
+            }
+            
+            nextButton.style.display = 'block';
+        }
+
+        // Event listener untuk tombol berikutnya
+        nextButton.addEventListener('click', startGame);
+
+        // Mulai permainan
+        startGame();
+    </script>
+</body>
+</html>
