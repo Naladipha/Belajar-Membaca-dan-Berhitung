@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASTM A572 (2021) Quiz</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1, h2 {
+            color: #2c3e50;
+        }
+        .quiz-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .question {
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        .options {
+            margin-left: 20px;
+        }
+        .feedback {
+            margin-top: 10px;
+            padding: 8px;
+            border-radius: 5px;
+            display: none;
+        }
+        .correct {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .incorrect {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        textarea {
+            width: 100%;
+            min-height: 80px;
+            margin-top: 10px;
+        }
+        .essay-answer {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #e7f5fe;
+            border-radius: 5px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>ASTM A572 (2021) Quiz</h1>
+    <p>Test your knowledge of the ASTM A572 standard for High-Strength Low-Alloy Columbium-Vanadium Structural Steel.</p>
+
+    <div class="quiz-section">
+        <h2>Multiple Choice Questions (10 questions)</h2>
+        
+        <div class="question" id="q1">
+            <p>1. Which of the following grades is NOT included in ASTM A572/A572M-21?</p>
+            <div class="options">
+                <label><input type="radio" name="q1" value="a"> Grade 42 [290]</label><br>
+                <label><input type="radio" name="q1" value="b"> Grade 50 [345]</label><br>
+                <label><input type="radio" name="q1" value="c"> Grade 55 [380]</label><br>
+                <label><input type="radio" name="q1" value="d"> Grade 70 [485]</label>
+            </div>
+            <button onclick="checkAnswer('q1', 'd', 'Correct! Grade 70 is not included in ASTM A572. The grades are 42, 50, 55, 60, and 65.')">Check Answer</button>
+            <div class="feedback" id="feedback-q1"></div>
+        </div>
+
+        <div class="question" id="q2">
+            <p>2. What is the maximum thickness allowed for Grade 60 [415] plates and bars according to the 2021 revision?</p>
+            <div class="options">
+                <label><input type="radio" name="q2" value="a"> 1¼ in. [32 mm]</label><br>
+                <label><input type="radio" name="q2" value="b"> 2 in. [50 mm]</label><br>
+                <label><input type="radio" name="q2" value="c"> 2½ in. [64 mm]</label><br>
+                <label><input type="radio" name="q2" value="d"> 4 in. [100 mm]</label>
+            </div>
+            <button onclick="checkAnswer('q2', 'c', 'Correct! The 2021 revision increased the maximum thickness for Grade 60 plates and bars to 2½ in. [64 mm].')">Check Answer</button>
+            <div class="feedback" id="feedback-q2"></div>
+        </div>
+
+        <div class="question" id="q3">
+            <p>3. Which elements are required to be used in ASTM A572 steel within specified limitations?</p>
+            <div class="options">
+                <label><input type="radio" name="q3" value="a"> Columbium (niobium) or vanadium only</label><br>
+                <label><input type="radio" name="q3" value="b"> Columbium (niobium), vanadium, titanium, nitrogen, or combinations</label><br>
+                <label><input type="radio" name="q3" value="c"> Nickel and chromium only</label><br>
+                <label><input type="radio" name="q3" value="d"> Copper and molybdenum only</label>
+            </div>
+            <button onclick="checkAnswer('q3', 'b', 'Correct! The standard requires the use of columbium (niobium), vanadium, titanium, nitrogen, or combinations thereof within specified limitations.')">Check Answer</button>
+            <div class="feedback" id="feedback-q3"></div>
+        </div>
+
+        <div class="question" id="q4">
+            <p>4. What is the minimum yield point requirement for Grade 65 [450] steel?</p>
+            <div class="options">
+                <label><input type="radio" name="q4" value="a"> 42 ksi [290 MPa]</label><br>
+                <label><input type="radio" name="q4" value="b"> 55 ksi [380 MPa]</label><br>
+                <label><input type="radio" name="q4" value="c"> 65 ksi [450 MPa]</label><br>
+                <label><input type="radio" name="q4" value="d"> 80 ksi [550 MPa]</label>
+            </div>
+            <button onclick="checkAnswer('q4', 'c', 'Correct! Grade 65 has a minimum yield point requirement of 65 ksi [450 MPa].')">Check Answer</button>
+            <div class="feedback" id="feedback-q4"></div>
+        </div>
+
+        <div class="question" id="q5">
+            <p>5. What is the maximum carbon content allowed for Grade 50 [345] steel by heat analysis?</p>
+            <div class="options">
+                <label><input type="radio" name="q5" value="a"> 0.21%</label><br>
+                <label><input type="radio" name="q5" value="b"> 0.23%</label><br>
+                <label><input type="radio" name="q5" value="c"> 0.25%</label><br>
+                <label><input type="radio" name="q5" value="d"> 0.26%</label>
+            </div>
+            <button onclick="checkAnswer('q5', 'b', 'Correct! The maximum carbon content for Grade 50 is 0.23% by heat analysis.')">Check Answer</button>
+            <div class="feedback" id="feedback-q5"></div>
+        </div>
+
+        <div class="question" id="q6">
+            <p>6. For Grade 55 [380] steel, what is the minimum elongation requirement in 2 in. (50 mm)?</p>
+            <div class="options">
+                <label><input type="radio" name="q6" value="a"> 15%</label><br>
+                <label><input type="radio" name="q6" value="b"> 17%</label><br>
+                <label><input type="radio" name="q6" value="c"> 20%</label><br>
+                <label><input type="radio" name="q6" value="d"> 24%</label>
+            </div>
+            <button onclick="checkAnswer('q6', 'c', 'Correct! Grade 55 requires a minimum elongation of 20% in 2 in. (50 mm).')">Check Answer</button>
+            <div class="feedback" id="feedback-q6"></div>
+        </div>
+
+        <div class="question" id="q7">
+            <p>7. Which of the following statements about ASTM A572 steel is TRUE?</p>
+            <div class="options">
+                <label><input type="radio" name="q7" value="a"> It must be semi-killed steel</label><br>
+                <label><input type="radio" name="q7" value="b"> It must be rimmed steel</label><br>
+                <label><input type="radio" name="q7" value="c"> It must be killed steel</label><br>
+                <label><input type="radio" name="q7" value="d"> The steelmaking process is not specified</label>
+            </div>
+            <button onclick="checkAnswer('q7', 'c', 'Correct! ASTM A572 steel must be killed steel according to section 4.1.')">Check Answer</button>
+            <div class="feedback" id="feedback-q7"></div>
+        </div>
+
+        <div class="question" id="q8">
+            <p>8. What is the permitted range for vanadium content in Type 2 steel by heat analysis?</p>
+            <div class="options">
+                <label><input type="radio" name="q8" value="a"> 0.005-0.05%</label><br>
+                <label><input type="radio" name="q8" value="b"> 0.01-0.15%</label><br>
+                <label><input type="radio" name="q8" value="c"> 0.006-0.04%</label><br>
+                <label><input type="radio" name="q8" value="d"> 0.02-0.15%</label>
+            </div>
+            <button onclick="checkAnswer('q8', 'b', 'Correct! Type 2 steel has a vanadium content range of 0.01-0.15% by heat analysis.')">Check Answer</button>
+            <div class="feedback" id="feedback-q8"></div>
+        </div>
+
+        <div class="question" id="q9">
+            <p>9. Which supplementary requirement would be used to specify Charpy V-Notch impact testing?</p>
+            <div class="options">
+                <label><input type="radio" name="q9" value="a"> S5</label><br>
+                <label><input type="radio" name="q9" value="b"> S18</label><br>
+                <label><input type="radio" name="q9" value="c"> S81</label><br>
+                <label><input type="radio" name="q9" value="d"> S90</label>
+            </div>
+            <button onclick="checkAnswer('q9', 'a', 'Correct! S5 is the supplementary requirement for Charpy V-Notch Impact Test.')">Check Answer</button>
+            <div class="feedback" id="feedback-q9"></div>
+        </div>
+
+        <div class="question" id="q10">
+            <p>10. What was one of the key changes in the 2021 revision of ASTM A572?</p>
+            <div class="options">
+                <label><input type="radio" name="q10" value="a"> Added Grade 70 [485]</label><br>
+                <label><input type="radio" name="q10" value="b"> Removed the requirement for killed steel</label><br>
+                <label><input type="radio" name="q10" value="c"> Added niobium as an interchangeable name for columbium</label><br>
+                <label><input type="radio" name="q10" value="d"> Reduced the maximum thickness for Grade 65 plates</label>
+            </div>
+            <button onclick="checkAnswer('q10', 'c', 'Correct! One of the key changes was adding niobium as an interchangeable name for columbium throughout the standard.')">Check Answer</button>
+            <div class="feedback" id="feedback-q10"></div>
+        </div>
+    </div>
+
+    <div class="quiz-section">
+        <h2>Essay Questions (5 questions)</h2>
+        
+        <div class="question" id="eq1">
+            <p>1. Explain the difference between the intended applications of Grades 42, 50, and 55 versus Grades 60 and 65 according to ASTM A572/A572M-21.</p>
+            <textarea id="answer-eq1" placeholder="Type your answer here..."></textarea>
+            <button onclick="showEssayAnswer('eq1', 'Grades 42, 50, and 55 are intended for riveted, bolted, or welded structures, while Grades 60 and 65 are intended primarily for riveted or bolted construction of bridges, though they can also be used for riveted, bolted, or welded construction in other applications. The standard notes that for welded bridge construction where notch toughness is important, requirements should be negotiated between purchaser and producer.')">Show Answer</button>
+            <div class="essay-answer" id="essay-answer-eq1"></div>
+        </div>
+
+        <div class="question" id="eq2">
+            <p>2. Describe the chemical composition requirements for ASTM A572 Grade 50 steel, including any permitted variations based on product thickness.</p>
+            <textarea id="answer-eq2" placeholder="Type your answer here..."></textarea>
+            <button onclick="showEssayAnswer('eq2', 'For Grade 50 [345], the maximum carbon content is 0.23% by heat analysis. The maximum manganese content is 1.35%, with a minimum of 0.80% required for plates over 3/8 in. [10 mm] thick, and 0.50% minimum for thinner plates and other products. The manganese to carbon ratio must not be less than 2:1. Maximum phosphorus and sulfur are 0.030% each. Silicon content must be between 0.15-0.40%. For each 0.01% reduction below the carbon maximum, manganese can be increased by 0.06% up to 1.60% maximum.')">Show Answer</button>
+            <div class="essay-answer" id="essay-answer-eq2"></div>
+        </div>
+
+        <div class="question" id="eq3">
+            <p>3. What are the four types of alloy content specified in ASTM A572, and what elements are included in each type?</p>
+            <textarea id="answer-eq3" placeholder="Type your answer here..."></textarea>
+            <button onclick="showEssayAnswer('eq3', 'The four types are: 1) Type 1: Columbium/niobium (0.005-0.05%), 2) Type 2: Vanadium (0.01-0.15%), 3) Type 3: Columbium/niobium (0.005-0.05%) plus vanadium (0.01-0.15%), with combined content of 0.02-0.15%, and 4) Type 5: Titanium (0.006-0.04%), nitrogen (0.003-0.015%), and vanadium (0.06% max). The producer can select the type unless otherwise specified by the purchaser.')">Show Answer</button>
+            <div class="essay-answer" id="essay-answer-eq3"></div>
+        </div>
+
+        <div class="question" id="eq4">
+            <p>4. Discuss the mechanical property requirements for ASTM A572 Grade 60 steel, including yield point, tensile strength, and elongation.</p>
+            <textarea id="answer-eq4" placeholder="Type your answer here..."></textarea>
+            <button onclick="showEssayAnswer('eq4', 'For Grade 60 [415], the minimum yield point is 60 ksi [415 MPa]. The minimum tensile strength is 75 ksi [520 MPa]. Elongation requirements are 16% minimum in 8 in. (200 mm) and 18% minimum in 2 in. (50 mm). For plates wider than 24 in. (600 mm), the elongation requirement is reduced by three percentage points. For wide flange shapes over 426 lb/ft [634 kg/m], elongation in 2 in. (50 mm) of 19% minimum applies.')">Show Answer</button>
+            <div class="essay-answer" id="essay-answer-eq4"></div>
+        </div>
+
+        <div class="question" id="eq5">
+            <p>5. Explain the key changes made in the 2021 revision of ASTM A572 compared to the 2018 version.</p>
+            <textarea id="answer-eq5" placeholder="Type your answer here..."></textarea>
+            <button onclick="showEssayAnswer('eq5', 'Key changes in the 2021 revision include: 1) Adding niobium as an interchangeable name for columbium throughout the standard, 2) Increasing maximum thickness for Grade 55 plates/bars from 2 in. to 2½ in., 3) Increasing maximum thickness for Grade 60 plates/bars from 1¼ in. to 2½ in., 4) Increasing maximum thickness for Grade 65 plates/bars from 1¼ in. to 2 in., and 5) Corresponding updates to Table 2 to reflect these thickness changes.')">Show Answer</button>
+            <div class="essay-answer" id="essay-answer-eq5"></div>
+        </div>
+    </div>
+
+    <script>
+        function checkAnswer(questionId, correctAnswer, feedbackText) {
+            const selectedOption = document.querySelector(`input[name="${questionId}"]:checked`);
+            const feedbackElement = document.getElementById(`feedback-${questionId}`);
+            
+            if (!selectedOption) {
+                alert("Please select an answer!");
+                return;
+            }
+            
+            if (selectedOption.value === correctAnswer) {
+                feedbackElement.textContent = feedbackText;
+                feedbackElement.className = "feedback correct";
+            } else {
+                feedbackElement.textContent = "Incorrect. " + feedbackText;
+                feedbackElement.className = "feedback incorrect";
+            }
+            
+            feedbackElement.style.display = "block";
+        }
+
+        function showEssayAnswer(questionId, correctAnswer) {
+            const answerElement = document.getElementById(`essay-answer-${questionId}`);
+            answerElement.textContent = correctAnswer;
+            answerElement.style.display = "block";
+        }
+    </script>
+</body>
+</html>
