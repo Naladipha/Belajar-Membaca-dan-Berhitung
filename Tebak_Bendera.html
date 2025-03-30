@@ -144,13 +144,25 @@
             font-style: italic;
             color: #7f8c8d;
         }
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .new-session {
+            background-color: #3498db;
+        }
+        .back-to-index {
+            background-color: #9b59b6;
+        }
     </style>
 </head>
 <body>
     <div class="game-container">
         <h1>Tebak Bendera</h1>
         <div class="timer">Waktu: <span id="timer">0.00</span>s</div>
-        <div class="score">Skor: <span id="score">0</span></div>
+        <div class="score">Skor: <span id="score">0</span> (<span id="score-percent">0%</span>)</div>
         <div class="flag-container">
             <img id="flag" class="flag" src="" alt="Bendera">
             <div id="loading" class="loading" style="display: none;">Memuat bendera...</div>
@@ -166,9 +178,8 @@
                 <div class="stat-item">Jumlah Soal: <span id="total-questions">0</span></div>
                 <div class="stat-item">Jumlah Benar: <span id="correct-answers">0</span></div>
                 <div class="stat-item">Jumlah Salah: <span id="wrong-answers">0</span></div>
-                <div class="stat-item">Skor: <span id="final-score">0</span></div>
+                <div class="stat-item">Skor: <span id="final-score">0</span> (<span id="final-score-percent">0%</span>)</div>
                 <div class="stat-item">Total Waktu: <span id="total-time">0.00</span>s</div>
-                <div class="stat-item">Rata-rata Waktu: <span id="average-time">0.00</span>s</div>
                 <div class="stat-item">Waktu Mulai: <span id="start-time">-</span></div>
                 <div class="stat-item">Waktu Selesai: <span id="end-time">-</span></div>
             </div>
@@ -178,7 +189,8 @@
                     <tr>
                         <th>No</th>
                         <th>Bendera</th>
-                        <th>Jawaban</th>
+                        <th>Jawaban Benar</th>
+                        <th>Jawaban Anda</th>
                         <th>Hasil</th>
                         <th>Waktu (s)</th>
                     </tr>
@@ -187,6 +199,11 @@
                     <!-- Hasil akan diisi oleh JavaScript -->
                 </tbody>
             </table>
+
+            <div class="action-buttons">
+                <button id="new-session-btn" class="new-session">Sesi Baru</button>
+                <button id="back-to-index-btn" class="back-to-index">Kembali ke Halaman Utama</button>
+            </div>
         </div>
     </div>
 
@@ -389,7 +406,7 @@
             { country: "Zimbabwe", flag: "https://flagcdn.com/w320/zw.png" }
         ];
 
-        // Variabel game
+                // Variabel game
         let currentFlag = null;
         let score = 0;
         let answered = false;
@@ -408,6 +425,7 @@
         const flagElement = document.getElementById('flag');
         const optionsElement = document.getElementById('options');
         const scoreElement = document.getElementById('score');
+        const scorePercentElement = document.getElementById('score-percent');
         const timerElement = document.getElementById('timer');
         const finishButton = document.getElementById('finish-btn');
         const summaryElement = document.getElementById('summary');
@@ -416,15 +434,32 @@
         const correctAnswersElement = document.getElementById('correct-answers');
         const wrongAnswersElement = document.getElementById('wrong-answers');
         const finalScoreElement = document.getElementById('final-score');
+        const finalScorePercentElement = document.getElementById('final-score-percent');
         const totalTimeElement = document.getElementById('total-time');
-        const averageTimeElement = document.getElementById('average-time');
         const startTimeElement = document.getElementById('start-time');
         const endTimeElement = document.getElementById('end-time');
         const loadingElement = document.getElementById('loading');
+        const newSessionBtn = document.getElementById('new-session-btn');
+        const backToIndexBtn = document.getElementById('back-to-index-btn');
+
+        // Fungsi untuk menghitung skor dalam persentase
+        function calculateScorePercent() {
+            return questionCount > 0 ? Math.round((correctCount / questionCount) * 100) : 0;
+        }
 
         // Fungsi untuk memulai permainan
         function startGame() {
+            // Reset game state jika ini permainan baru
             if (startTime === null) {
+                score = 0;
+                scoreElement.textContent = score;
+                scorePercentElement.textContent = "0%";
+                questionCount = 0;
+                correctCount = 0;
+                wrongCount = 0;
+                totalTime = 0;
+                gameHistory = [];
+                
                 startTime = new Date();
                 startTimeElement.textContent = formatDateTime(startTime);
             }
@@ -454,6 +489,7 @@
             flagElement.onload = function() {
                 loadingElement.style.display = 'none';
                 flagElement.style.display = 'block';
+                updateTimer(); // Mulai timer setelah gambar selesai dimuat
             };
             
             flagElement.onerror = function() {
@@ -469,9 +505,6 @@
             
             // Buat pilihan jawaban
             createOptions(currentFlag.country);
-            
-            // Mulai timer
-            updateTimer();
         }
 
         // Fungsi untuk membuat pilihan jawaban
@@ -483,7 +516,7 @@
             while (options.length < 4) {
                 const randomIndex = Math.floor(Math.random() * flagData.length);
                 const randomCountry = flagData[randomIndex].country;
-                if (!options.includes(randomCountry) {
+                if (!options.includes(randomCountry)) {
                     options.push(randomCountry);
                 }
             }
@@ -534,6 +567,9 @@
             } else {
                 wrongCount++;
             }
+            
+            // Update skor persentase
+            scorePercentElement.textContent = `${calculateScorePercent()}%`;
             
             // Catat history
             gameHistory.push({
@@ -591,8 +627,8 @@
             correctAnswersElement.textContent = correctCount;
             wrongAnswersElement.textContent = wrongCount;
             finalScoreElement.textContent = score;
+            finalScorePercentElement.textContent = `${calculateScorePercent()}%`;
             totalTimeElement.textContent = totalTime.toFixed(2);
-            averageTimeElement.textContent = questionCount > 0 ? (totalTime / questionCount).toFixed(2) : '0.00';
             
             // Tampilkan history
             resultsBody.innerHTML = '';
@@ -604,8 +640,9 @@
                     <td>${index + 1}</td>
                     <td><img src="${item.flag}" alt="Flag" style="height: 30px;"></td>
                     <td>${item.country}</td>
+                    <td>${item.answer}</td>
                     <td class="${item.isCorrect ? 'correct-mark' : 'wrong-mark'}">
-                        ${item.isCorrect ? '✓' : '✗'} ${item.answer}
+                        ${item.isCorrect ? '✓ Benar' : '✗ Salah'}
                     </td>
                     <td>${item.time.toFixed(2)}</td>
                 `;
@@ -625,8 +662,44 @@
             return date.toLocaleString();
         }
 
+        // Fungsi untuk mereset game dan memulai sesi baru
+        function newSession() {
+            // Reset semua variabel game
+            currentFlag = null;
+            score = 0;
+            answered = false;
+            questionCount = 0;
+            correctCount = 0;
+            wrongCount = 0;
+            startTime = null;
+            endTime = null;
+            questionStartTime = null;
+            totalTime = 0;
+            gameHistory = [];
+            
+            // Reset tampilan
+            scoreElement.textContent = score;
+            scorePercentElement.textContent = "0%";
+            timerElement.textContent = "0.00";
+            document.querySelector('.flag-container').style.display = 'flex';
+            optionsElement.style.display = 'grid';
+            finishButton.style.display = 'block';
+            summaryElement.style.display = 'none';
+            
+            // Mulai game baru
+            startGame();
+        }
+
         // Event listener untuk tombol selesai
         finishButton.addEventListener('click', finishGame);
+
+        // Event listener untuk tombol sesi baru
+        newSessionBtn.addEventListener('click', newSession);
+
+        // Event listener untuk tombol kembali ke halaman utama
+        backToIndexBtn.addEventListener('click', () => {
+            window.location.href = 'index.html'; // Ganti dengan URL halaman utama Anda
+        });
 
         // Mulai permainan saat halaman dimuat
         window.addEventListener('load', startGame);
