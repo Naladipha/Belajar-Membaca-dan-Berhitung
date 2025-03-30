@@ -484,8 +484,8 @@
             newQuestion();
             
             elements.finish.addEventListener('click', function() {
-            showResults();
-            saveSessionData();
+                showResults();
+                saveSessionData();
             });
             elements.printPdf.addEventListener('click', printToPdf);
             elements.newSession.addEventListener('click', startNewSession);
@@ -548,7 +548,12 @@
             
             if (state.level === 0) {
                 // Logika khusus untuk level 1
-                do {
+                let validQuestion = false;
+                let attempts = 0;
+                const maxAttempts = 100;
+                
+                while (!validQuestion && attempts < maxAttempts) {
+                    attempts++;
                     a = rand(levelConfig.min, levelConfig.max);
                     b = rand(levelConfig.min, levelConfig.max);
                     
@@ -559,18 +564,24 @@
                     
                     // Batasi jumlah soal dengan angka 1 (maksimal 10%)
                     if ((a === 1 || b === 1) && state.onesCount >= levelConfig.maxOnes) {
-                        a = rand(2, levelConfig.max);
-                        b = rand(2, levelConfig.max);
                         continue;
                     }
                     
                     answer = a + b;
                     question = `${a} + ${b}`;
+                    validQuestion = true;
                     
                     // Hitung soal dengan angka 1
                     if (a === 1 || b === 1) state.onesCount++;
-                    break;
-                } while (true);
+                }
+                
+                if (!validQuestion) {
+                    // Fallback jika tidak menemukan pertanyaan yang valid setelah beberapa percobaan
+                    a = 2;
+                    b = 2;
+                    answer = a + b;
+                    question = `${a} + ${b}`;
+                }
             } else {
                 // Logika untuk level lainnya
                 switch(op) {
@@ -598,6 +609,12 @@
                         a = answer * b;
                         question = `${a} ÷ ${b}`;
                         break;
+                    default:
+                        // Fallback untuk operasi yang tidak dikenali
+                        a = rand(levelConfig.min, levelConfig.max);
+                        b = rand(levelConfig.min, levelConfig.max);
+                        answer = a + b;
+                        question = `${a} + ${b}`;
                 }
             }
             
@@ -697,17 +714,16 @@
         // Simpan hasil level
         function saveLevelResults() {
             // Hanya simpan jika ada pertanyaan baru di level ini
-               const startIdx = state.currentLevelQuestions.reduce((a, b) => a + b, 0);
-               const endIdx = state.questions.length;
+            const startIdx = state.currentLevelQuestions.reduce((a, b) => a + b, 0);
+            const endIdx = state.questions.length;
     
-               if (startIdx >= endIdx) return; // Tidak ada pertanyaan baru
+            if (startIdx >= endIdx) return; // Tidak ada pertanyaan baru
             
             const levelQuestions = [];
             const levelAnswers = [];
             const levelResults = [];
             const levelTimes = [];
             
-           
             for (let i = startIdx; i < endIdx; i++) {
                 if (state.questions[i] !== undefined && 
                     state.answers[i] !== undefined && 
@@ -747,30 +763,28 @@
         
         // Rekam Session Data
         function saveSessionData() {
-    const sessionData = {
-        startTime: state.sessionStartTime,
-        endTime: state.sessionEndTime,
-        totalQuestions: state.questions.filter(q => q !== undefined).length,
-        correctAnswers: state.results.filter(r => r).length,
-        wrongAnswers: state.results.filter(r => !r).length,
-        score: Math.round((state.results.filter(r => r).length / state.questions.filter(q => q !== undefined).length) * 100) || 0,
-        totalTime: state.sessionEndTime - state.sessionStartTime,
-        averageTime: (state.questionTimes.reduce((a, b) => a + b, 0) / state.questionTimes.length / 1000 || 0,
-        level: config[state.level].name,
-        timestamp: Date.now()
-    };
+            const sessionData = {
+                startTime: state.sessionStartTime,
+                endTime: state.sessionEndTime,
+                totalQuestions: state.questions.filter(q => q !== undefined).length,
+                correctAnswers: state.results.filter(r => r).length,
+                wrongAnswers: state.results.filter(r => !r).length,
+                score: Math.round((state.results.filter(r => r).length / state.questions.filter(q => q !== undefined).length) * 100) || 0,
+                totalTime: state.sessionEndTime - state.sessionStartTime,
+                averageTime: (state.questionTimes.reduce((a, b) => a + b, 0) / state.questionTimes.length / 1000) || 0,
+                level: config[state.level].name,
+                timestamp: Date.now()
+            };
 
-    // Ambil data yang sudah ada dari localStorage
-    const history = JSON.parse(localStorage.getItem('math_history') || [];
-    
-    // Tambahkan data baru
-    history.unshift(sessionData); // unshift untuk menambahkan di awal array
-    
-    // Simpan kembali ke localStorage (maksimal 50 riwayat)
-    localStorage.setItem('math_history', JSON.stringify(history.slice(0, 50)));
-}
-        
-        
+            // Ambil data yang sudah ada dari localStorage
+            const history = JSON.parse(localStorage.getItem('math_history') || '[]');
+            
+            // Tambahkan data baru
+            history.unshift(sessionData); // unshift untuk menambahkan di awal array
+            
+            // Simpan kembali ke localStorage (maksimal 50 riwayat)
+            localStorage.setItem('math_history', JSON.stringify(history.slice(0, 50)));
+        }
         
         // Show level up notification
         function showLevelUp() {
@@ -923,7 +937,7 @@
             
             // Simpan hasil level terakhir
             saveLevelResults();
-            saveSessionData(); // <-- Tambahkan ini
+            saveSessionData();
             
             // Hide quiz elements
             document.getElementById('quiz').style.display = 'none';
@@ -980,7 +994,6 @@
                 }
             });
             
-                    
             // Build results table
             elements.resultBody.innerHTML = '';
             
