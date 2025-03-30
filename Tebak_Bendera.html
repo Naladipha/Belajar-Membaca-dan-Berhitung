@@ -59,10 +59,10 @@
             margin: 10px 0;
         }
         .correct {
-            background-color: #00ff00 !important;
+            background-color: #2ecc71 !important;
         }
         .wrong {
-            background-color: #ff0000 !important;
+            background-color: #e74c3c !important;
         }
         .next-btn {
             background-color: #27ae60;
@@ -140,6 +140,10 @@
             font-size: 18px;
             margin: 10px 0;
         }
+        .loading {
+            font-style: italic;
+            color: #7f8c8d;
+        }
     </style>
 </head>
 <body>
@@ -149,6 +153,7 @@
         <div class="score">Skor: <span id="score">0</span></div>
         <div class="flag-container">
             <img id="flag" class="flag" src="" alt="Bendera">
+            <div id="loading" class="loading" style="display: none;">Memuat bendera...</div>
         </div>
         <div class="options" id="options">
             <!-- Opsi jawaban akan diisi oleh JavaScript -->
@@ -397,6 +402,7 @@
         let totalTime = 0;
         let gameHistory = [];
         let timeoutId = null;
+        let animationFrameId = null;
 
         // Elemen DOM
         const flagElement = document.getElementById('flag');
@@ -414,6 +420,7 @@
         const averageTimeElement = document.getElementById('average-time');
         const startTimeElement = document.getElementById('start-time');
         const endTimeElement = document.getElementById('end-time');
+        const loadingElement = document.getElementById('loading');
 
         // Fungsi untuk memulai permainan
         function startGame() {
@@ -422,6 +429,11 @@
                 startTimeElement.textContent = formatDateTime(startTime);
             }
             
+            // Hentikan timer dan timeout sebelumnya jika ada
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
             if (timeoutId) {
                 clearTimeout(timeoutId);
                 timeoutId = null;
@@ -434,14 +446,31 @@
             const randomIndex = Math.floor(Math.random() * flagData.length);
             currentFlag = flagData[randomIndex];
             
-            // Tampilkan bendera
+            // Tampilkan loading
+            flagElement.style.display = 'none';
+            loadingElement.style.display = 'block';
+            
+            // Tampilkan bendera dengan error handling
+            flagElement.onload = function() {
+                loadingElement.style.display = 'none';
+                flagElement.style.display = 'block';
+            };
+            
+            flagElement.onerror = function() {
+                // Jika gambar gagal dimuat, coba bendera lain
+                loadingElement.style.display = 'none';
+                flagElement.style.display = 'block';
+                startGame();
+                return;
+            };
+            
             flagElement.src = currentFlag.flag;
             flagElement.alt = `Bendera ${currentFlag.country}`;
             
             // Buat pilihan jawaban
             createOptions(currentFlag.country);
             
-            // Reset timer
+            // Mulai timer
             updateTimer();
         }
 
@@ -454,7 +483,7 @@
             while (options.length < 4) {
                 const randomIndex = Math.floor(Math.random() * flagData.length);
                 const randomCountry = flagData[randomIndex].country;
-                if (!options.includes(randomCountry)) {
+                if (!options.includes(randomCountry) {
                     options.push(randomCountry);
                 }
             }
@@ -485,6 +514,12 @@
             if (answered) return;
             answered = true;
             questionCount++;
+            
+            // Hentikan timer
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
             
             const questionEndTime = new Date();
             const questionTime = (questionEndTime - questionStartTime) / 1000;
@@ -520,8 +555,10 @@
                 button.disabled = true;
             });
             
-            // Otomatis lanjut ke pertanyaan berikutnya setelah 0.5 detik
-            timeoutId = setTimeout(startGame, 500);
+            // Otomatis lanjut ke pertanyaan berikutnya setelah 1.5 detik
+            timeoutId = setTimeout(() => {
+                startGame();
+            }, 1500);
         }
 
         // Fungsi untuk mengupdate timer
@@ -530,7 +567,7 @@
                 const currentTime = new Date();
                 const elapsedTime = (currentTime - questionStartTime) / 1000;
                 timerElement.textContent = elapsedTime.toFixed(2);
-                requestAnimationFrame(updateTimer);
+                animationFrameId = requestAnimationFrame(updateTimer);
             }
         }
 
@@ -539,13 +576,23 @@
             endTime = new Date();
             endTimeElement.textContent = formatDateTime(endTime);
             
+            // Hentikan semua timer
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+                timeoutId = null;
+            }
+            
             // Hitung statistik
             totalQuestionsElement.textContent = questionCount;
             correctAnswersElement.textContent = correctCount;
             wrongAnswersElement.textContent = wrongCount;
             finalScoreElement.textContent = score;
             totalTimeElement.textContent = totalTime.toFixed(2);
-            averageTimeElement.textContent = (totalTime / questionCount).toFixed(2);
+            averageTimeElement.textContent = questionCount > 0 ? (totalTime / questionCount).toFixed(2) : '0.00';
             
             // Tampilkan history
             resultsBody.innerHTML = '';
@@ -558,7 +605,7 @@
                     <td><img src="${item.flag}" alt="Flag" style="height: 30px;"></td>
                     <td>${item.country}</td>
                     <td class="${item.isCorrect ? 'correct-mark' : 'wrong-mark'}">
-                        ${item.isCorrect ? '✓' : '✗'}
+                        ${item.isCorrect ? '✓' : '✗'} ${item.answer}
                     </td>
                     <td>${item.time.toFixed(2)}</td>
                 `;
@@ -581,8 +628,8 @@
         // Event listener untuk tombol selesai
         finishButton.addEventListener('click', finishGame);
 
-        // Mulai permainan
-        startGame();
+        // Mulai permainan saat halaman dimuat
+        window.addEventListener('load', startGame);
     </script>
 </body>
 </html>
