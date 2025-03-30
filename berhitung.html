@@ -811,32 +811,36 @@
                 // Prepare table data
                 const headers = ['No', 'Tingkat', 'Soal', 'Jawaban', 'Hasil', 'Waktu (detik)'];
                 const rows = [];
-                
+
+                let pdfLevelIndex = 0;
+                let pdfLevelStartIndex = 0;
                 let currentLevel = 0;
                 let questionsInLevel = 0;
                 let levelStartIdx = 0;
                 
                 state.questions.forEach((q, i) => {
-                    if (q !== undefined && state.answers[i] !== undefined && state.results[i] !== undefined) {
-                        // Determine which level this question belongs to
-                        while (currentLevel < state.currentLevelQuestions.length && 
-                               i >= levelStartIdx + state.currentLevelQuestions[currentLevel]) {
-                            levelStartIdx += state.currentLevelQuestions[currentLevel];
-                            currentLevel++;
-                        }
-                        
-                        const questionLevel = currentLevel < config.length ? config[currentLevel].name : config[state.level].name;
-                        
-                        rows.push([
-                            (i+1).toString(),
-                            questionLevel,
-                            q,
-                            state.answers[i].toString(),
-                            state.results[i] ? '✓' : '✗',
-                            formatSeconds(state.questionTimes[i] / 1000)
-                        ]);
-                    }
-                });
+    if (q !== undefined && state.answers[i] !== undefined && state.results[i] !== undefined) {
+        // Determine which level this question belongs to
+        while (pdfLevelIndex < state.levelResults.length && 
+               i >= pdfLevelStartIndex + state.levelResults[pdfLevelIndex].totalQuestions) {
+            pdfLevelStartIndex += state.levelResults[pdfLevelIndex].totalQuestions;
+            pdfLevelIndex++;
+        }
+        
+        const questionLevel = pdfLevelIndex < state.levelResults.length 
+            ? state.levelResults[pdfLevelIndex].levelName 
+            : config[state.level].name;
+        
+        rows.push([
+            (i+1).toString(),
+            questionLevel,
+            q,
+            state.answers[i].toString(),
+            state.results[i] ? '✓' : '✗',
+            formatSeconds(state.questionTimes[i] / 1000)
+        ]);
+    }
+});
                 
                 // Add table with autoTable (fit to width)
                 doc.autoTable({
@@ -966,21 +970,24 @@
             }
             
             // Build results table
-            elements.resultBody.innerHTML = '';
-            
-            let currentLevel = 0;
-            let questionsInLevel = 0;
-            let levelStartIdx = 0;
+                elements.resultBody.innerHTML = '';
+
+                let levelIndex = 0;
+                let questionsInCurrentLevel = 0;
+                let levelStartIndex = 0;
             
             validQuestions.forEach((q, i) => {
                 // Determine which level this question belongs to
-                while (currentLevel < state.currentLevelQuestions.length && 
-                       i >= levelStartIdx + state.currentLevelQuestions[currentLevel]) {
-                    levelStartIdx += state.currentLevelQuestions[currentLevel];
-                    currentLevel++;
+               while (levelIndex < state.levelResults.length && 
+                       i >= levelStartIndex + state.levelResults[levelIndex].totalQuestions) {
+                       levelStartIndex += state.levelResults[levelIndex].totalQuestions;
+                       levelIndex++;
                 }
                 
-                const questionLevel = currentLevel < config.length ? config[currentLevel].name : config[state.level].name;
+    // Get the correct level name
+    const questionLevel = levelIndex < state.levelResults.length 
+        ? state.levelResults[levelIndex].levelName 
+        : config[state.level].name;
                 
                 const row = document.createElement('tr');
                 row.className = state.results[i] ? 'correct-row' : 'wrong-row';
