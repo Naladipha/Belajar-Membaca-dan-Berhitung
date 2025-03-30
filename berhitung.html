@@ -782,7 +782,7 @@
                     `Waktu Selesai: ${elements.endTime.textContent}`
                 ];
                 
-                // Add level-specific average times
+                // Add level-specific average times to summary only
                 state.levelResults.forEach(level => {
                     if (level.totalQuestions > 0) {
                         const avgTime = (level.totalTimeMs / level.totalQuestions / 1000).toFixed(2);
@@ -790,7 +790,7 @@
                     }
                 });
                 
-                // Add current level average time if there are questions
+                // Add current level average time if there are questions (summary only)
                 const currentLevelStartIdx = state.currentLevelQuestions.slice(0, -1).reduce((a, b) => a + b, 0);
                 const currentLevelCount = state.questions.length - currentLevelStartIdx;
                 
@@ -808,39 +808,36 @@
                 
                 y += 10;
                 
-                // Prepare table data
+                // Prepare table data without duplicate average time information
                 const headers = ['No', 'Tingkat', 'Soal', 'Jawaban', 'Hasil', 'Waktu (detik)'];
                 const rows = [];
 
                 let pdfLevelIndex = 0;
                 let pdfLevelStartIndex = 0;
-                let currentLevel = 0;
-                let questionsInLevel = 0;
-                let levelStartIdx = 0;
                 
                 state.questions.forEach((q, i) => {
-    if (q !== undefined && state.answers[i] !== undefined && state.results[i] !== undefined) {
-        // Determine which level this question belongs to
-        while (pdfLevelIndex < state.levelResults.length && 
-               i >= pdfLevelStartIndex + state.levelResults[pdfLevelIndex].totalQuestions) {
-            pdfLevelStartIndex += state.levelResults[pdfLevelIndex].totalQuestions;
-            pdfLevelIndex++;
-        }
-        
-        const questionLevel = pdfLevelIndex < state.levelResults.length 
-            ? state.levelResults[pdfLevelIndex].levelName 
-            : config[state.level].name;
-        
-        rows.push([
-            (i+1).toString(),
-            questionLevel,
-            q,
-            state.answers[i].toString(),
-            state.results[i] ? '✓' : '✗',
-            formatSeconds(state.questionTimes[i] / 1000)
-        ]);
-    }
-});
+                    if (q !== undefined && state.answers[i] !== undefined && state.results[i] !== undefined) {
+                        // Determine which level this question belongs to
+                        while (pdfLevelIndex < state.levelResults.length && 
+                               i >= pdfLevelStartIndex + state.levelResults[pdfLevelIndex].totalQuestions) {
+                            pdfLevelStartIndex += state.levelResults[pdfLevelIndex].totalQuestions;
+                            pdfLevelIndex++;
+                        }
+                        
+                        const questionLevel = pdfLevelIndex < state.levelResults.length 
+                            ? state.levelResults[pdfLevelIndex].levelName 
+                            : config[state.level].name;
+                        
+                        rows.push([
+                            (i+1).toString(),
+                            questionLevel,
+                            q,
+                            state.answers[i].toString(),
+                            state.results[i] ? '✓' : '✗',
+                            formatSeconds(state.questionTimes[i] / 1000)
+                        ]);
+                    }
+                });
                 
                 // Add table with autoTable (fit to width)
                 doc.autoTable({
@@ -937,7 +934,7 @@
             // Clear previous level average times
             elements.levelAverageTimesContainer.innerHTML = '';
             
-            // Calculate and display per-level average times
+            // Calculate and display per-level average times in summary only
             state.levelResults.forEach(level => {
                 if (level.totalQuestions > 0) {
                     const avgTime = (level.totalTimeMs / level.totalQuestions / 1000).toFixed(2);
@@ -952,7 +949,7 @@
                 }
             });
             
-            // Add current level average time if there are questions
+            // Add current level average time if there are questions (summary only)
             const currentLevelStartIdx = state.currentLevelQuestions.slice(0, -1).reduce((a, b) => a + b, 0);
             const currentLevelCount = validQuestions.length - currentLevelStartIdx;
             
@@ -969,25 +966,24 @@
                 elements.levelAverageTimesContainer.appendChild(row);
             }
             
-            // Build results table
-                elements.resultBody.innerHTML = '';
+            // Build results table without duplicate average time information
+            elements.resultBody.innerHTML = '';
 
-                let levelIndex = 0;
-                let questionsInCurrentLevel = 0;
-                let levelStartIndex = 0;
+            let levelIndex = 0;
+            let levelStartIndex = 0;
             
             validQuestions.forEach((q, i) => {
                 // Determine which level this question belongs to
-               while (levelIndex < state.levelResults.length && 
+                while (levelIndex < state.levelResults.length && 
                        i >= levelStartIndex + state.levelResults[levelIndex].totalQuestions) {
-                       levelStartIndex += state.levelResults[levelIndex].totalQuestions;
-                       levelIndex++;
+                    levelStartIndex += state.levelResults[levelIndex].totalQuestions;
+                    levelIndex++;
                 }
                 
-    // Get the correct level name
-    const questionLevel = levelIndex < state.levelResults.length 
-        ? state.levelResults[levelIndex].levelName 
-        : config[state.level].name;
+                // Get the correct level name
+                const questionLevel = levelIndex < state.levelResults.length 
+                    ? state.levelResults[levelIndex].levelName 
+                    : config[state.level].name;
                 
                 const row = document.createElement('tr');
                 row.className = state.results[i] ? 'correct-row' : 'wrong-row';
