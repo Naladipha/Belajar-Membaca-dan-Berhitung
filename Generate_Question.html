@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NACEMR Question Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2980b9;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+        
+        h1 {
+            color: var(--dark-color);
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+        }
+        
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .control-panel {
+            margin-bottom: 30px;
+            padding: 25px;
+            background-color: var(--light-color);
+            border-radius: 8px;
+            border-left: 5px solid var(--primary-color);
+        }
+        
+        .result-panel {
+            margin-top: 30px;
+            padding: 25px;
+            background-color: rgba(46, 204, 113, 0.1);
+            border-radius: 8px;
+            border-left: 5px solid var(--success-color);
+            transition: all 0.3s ease;
+        }
+        
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        
+        button:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+        
+        input[type="number"], select {
+            width: 100%;
+            max-width: 200px;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border 0.3s ease;
+        }
+        
+        input[type="number"]:focus, select:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+        
+        .question {
+            margin-bottom: 20px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary-color);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+        
+        .question:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .status {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+        
+        .status.info {
+            background-color: #e8f4f8;
+            color: var(--dark-color);
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .status.success {
+            background-color: #e8f8f0;
+            color: #27ae60;
+            border-left: 4px solid var(--success-color);
+        }
+        
+        .status.error {
+            background-color: #fde8e8;
+            color: var(--danger-color);
+            border-left: 4px solid var(--danger-color);
+        }
+        
+        .question-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .export-options {
+            margin-top: 25px;
+            padding-top: 25px;
+            border-top: 1px solid #eee;
+        }
+        
+        .question-type {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-top: 8px;
+            font-style: italic;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .control-panel, .result-panel {
+                padding: 15px;
+            }
+            
+            button {
+                width: 100%;
+                margin-top: 10px;
+            }
+            
+            .actions {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>NACEMR Question Generator</h1>
+        
+        <div class="control-panel">
+            <h2>Configuration</h2>
+            
+            <div class="form-group">
+                <label for="count">Number of questions:</label>
+                <input type="number" id="count" min="1" max="50" value="10">
+            </div>
+            
+            <div class="form-group">
+                <label for="difficulty">Difficulty level:</label>
+                <select id="difficulty">
+                    <option value="mixed">Mixed</option>
+                    <option value="easy">Easy</option>
+                    <option value="medium">Medium</option>
+                    <option value="hard">Hard</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="questionTypes">Question types:</label>
+                <select id="questionTypes" multiple>
+                    <option value="fillblank" selected>Fill in the blank</option>
+                    <option value="explain" selected>Explanation</option>
+                    <option value="truefalse">True/False</option>
+                    <option value="shortanswer">Short answer</option>
+                </select>
+            </div>
+            
+            <button id="generateBtn">Generate Questions</button>
+            
+            <div class="status info" id="status">
+                Ready to process NACEMR~1.PDF from current directory...
+            </div>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Processing PDF and generating questions...</p>
+            <div id="progressStatus">Initializing...</div>
+        </div>
+        
+        <div class="result-panel" id="resultPanel" style="display:none">
+            <h2>Generated Questions</h2>
+            <div id="questionsContainer"></div>
+            
+            <div class="export-options">
+                <h3>Export Options</h3>
+                <div class="actions">
+                    <button id="copyBtn">Copy to Clipboard</button>
+                    <button id="printBtn">Print Questions</button>
+                    <button id="exportTxtBtn">Export as Text</button>
+                    <button id="exportPdfBtn">Export as PDF</button>
+                </div>
+            </div>
+            
+            <div class="actions">
+                <button id="regenerateBtn">Generate Different Questions</button>
+                <button id="saveSettingsBtn">Save Settings</button>
+            </div>
+            
+            <div class="status success" id="resultStatus"></div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize PDF.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
+        
+        // Global variables
+        let pdfText = '';
+        let sentences = [];
+        const pdfFileName = 'NACEMR~1.PDF';
+        
+        // UI Elements
+        const generateBtn = document.getElementById('generateBtn');
+        const regenerateBtn = document.getElementById('regenerateBtn');
+        const loadingElement = document.getElementById('loading');
+        const resultPanel = document.getElementById('resultPanel');
+        const questionsContainer = document.getElementById('questionsContainer');
+        const statusElement = document.getElementById('status');
+        const resultStatusElement = document.getElementById('resultStatus');
+        const progressStatusElement = document.getElementById('progressStatus');
+        const countInput = document.getElementById('count');
+        const difficultySelect = document.getElementById('difficulty');
+        const questionTypesSelect = document.getElementById('questionTypes');
+        const copyBtn = document.getElementById('copyBtn');
+        const printBtn = document.getElementById('printBtn');
+        const exportTxtBtn = document.getElementById('exportTxtBtn');
+        const exportPdfBtn = document.getElementById('exportPdfBtn');
+        const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+        
+        // Event listeners
+        generateBtn.addEventListener('click', loadAndProcessPDF);
+        regenerateBtn.addEventListener('click', generateNewQuestions);
+        copyBtn.addEventListener('click', copyToClipboard);
+        printBtn.addEventListener('click', printQuestions);
+        exportTxtBtn.addEventListener('click', exportAsText);
+        saveSettingsBtn.addEventListener('click', saveSettings);
+        
+        // Load saved settings
+        function loadSettings() {
+            const savedSettings = localStorage.getItem('nacemrQuestionGeneratorSettings');
+            if (savedSettings) {
+                const settings = JSON.parse(savedSettings);
+                countInput.value = settings.count || 10;
+                difficultySelect.value = settings.difficulty || 'mixed';
+                
+                if (settings.questionTypes) {
+                    Array.from(questionTypesSelect.options).forEach(option => {
+                        option.selected = settings.questionTypes.includes(option.value);
+                    });
+                }
+            }
+        }
+        
+        // Save settings to localStorage
+        function saveSettings() {
+            const selectedTypes = Array.from(questionTypesSelect.selectedOptions)
+                .map(option => option.value);
+                
+            const settings = {
+                count: countInput.value,
+                difficulty: difficultySelect.value,
+                questionTypes: selectedTypes
+            };
+            
+            localStorage.setItem('nacemrQuestionGeneratorSettings', JSON.stringify(settings));
+            showResultStatus('Settings saved successfully!', 'success');
+        }
+        
+        // Main function to load and process PDF
+        async function loadAndProcessPDF() {
+            // Show loading indicator
+            loadingElement.style.display = 'block';
+            resultPanel.style.display = 'none';
+            generateBtn.disabled = true;
+            updateStatus(`Loading ${pdfFileName}...`, 'info');
+            
+            try {
+                // Try to load PDF from the same directory
+                progressStatusElement.textContent = 'Initializing PDF processor...';
+                const pdf = await pdfjsLib.getDocument(pdfFileName).promise;
+                
+                updateStatus(`Processing ${pdf.numPages} pages...`, 'info');
+                
+                // Extract text from all pages
+                pdfText = '';
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    progressStatusElement.textContent = `Processing page ${i} of ${pdf.numPages}...`;
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    const pageText = textContent.items.map(item => item.str).join(' ');
+                    pdfText += pageText + ' ';
+                    
+                    // Update status
+                    updateStatus(`Processed page ${i} of ${pdf.numPages}`, 'info');
+                }
+                
+                // Preprocess text
+                progressStatusElement.textContent = 'Preparing text content...';
+                sentences = preprocessText(pdfText);
+                
+                if (sentences.length === 0) {
+                    throw new Error('No suitable sentences found for question generation');
+                }
+                
+                // Generate questions
+                generateNewQuestions();
+                
+                updateStatus(`Successfully processed ${sentences.length} sentences from ${pdfFileName}`, 'success');
+                
+            } catch (error) {
+                console.error('Error:', error);
+                updateStatus(`Failed to process ${pdfFileName}: ${error.message}`, 'error');
+                
+                // If direct access fails, prompt user to select file
+                if (error.message.includes('file origin') || error.message.includes('Invalid PDF')) {
+                    updateStatus('Cannot access file directly. Please try opening this page through a web server.', 'error');
+                }
+                
+            } finally {
+                loadingElement.style.display = 'none';
+                generateBtn.disabled = false;
+                progressStatusElement.textContent = '';
+            }
+        }
+        
+        // Update status message
+        function updateStatus(message, type) {
+            statusElement.textContent = message;
+            statusElement.className = `status ${type}`;
+        }
+        
+        // Show result status
+        function showResultStatus(message, type) {
+            resultStatusElement.textContent = message;
+            resultStatusElement.className = `status ${type}`;
+            setTimeout(() => {
+                resultStatusElement.textContent = '';
+                resultStatusElement.className = 'status';
+            }, 3000);
+        }
+        
+        // Text preprocessing
+        function preprocessText(text) {
+            // Clean the text
+            text = text.replace(/\s+/g, ' ').trim();
+            
+            // Improved sentence splitting
+            let rawSentences = text.split(/(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?|\!)\s/);
+            
+            // Filter sentences
+            return rawSentences
+                .map(s => s.trim())
+                .filter(s => s.length > 25 && 
+                           s.split(' ').length > 5 && 
+                           !s.startsWith('http') && 
+                           !/\d{5,}/.test(s) && // Exclude long numbers
+                           !/^[^a-zA-Z0-9]/.test(s)); // Exclude special characters at start
+        }
+        
+        // Generate new questions
+        function generateNewQuestions() {
+            const questionCount = parseInt(countInput.value);
+            const difficulty = difficultySelect.value;
+            const selectedTypes = Array.from(questionTypesSelect.selectedOptions)
+                .map(option => option.value);
+            
+            questionsContainer.innerHTML = '';
+            
+            if (sentences.length === 0) {
+                showResultStatus('No sentences available for question generation', 'error');
+                return;
+            }
+            
+            // Select random sentences based on difficulty
+            const selectedSentences = getRandomSentences(questionCount, difficulty);
+            
+            // Generate questions
+            selectedSentences.forEach((sentence, index) => {
+                const questionType = selectQuestionType(selectedTypes, index);
+                const question = createQuestion(sentence, questionType, difficulty);
+                
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'question';
+                
+                let questionHTML = `
+                    <div class="question-number">${index + 1}</div>
+                    <div class="question-content">${question.text}</div>
+                    <div class="question-type">Type: ${question.type}</div>
+                `;
+                
+                if (question.answer) {
+                    questionHTML += `
+                        <div class="question-answer" style="margin-top: 10px; display: none;">
+                            <strong>Answer:</strong> ${question.answer}
+                        </div>
+                    `;
+                }
+                
+                questionDiv.innerHTML = questionHTML;
+                questionsContainer.appendChild(questionDiv);
+            });
+            
+            resultPanel.style.display = 'block';
+            showResultStatus(`Generated ${selectedSentences.length} random questions from ${sentences.length} available sentences`, 'success');
+        }
+        
+        // Select random sentences with difficulty consideration
+        function getRandomSentences(count, difficulty) {
+            count = Math.min(count, sentences.length);
+            
+            // Sort by length as a simple difficulty measure
+            let sortedSentences = [...sentences].sort((a, b) => a.length - b.length);
+            
+            // Adjust based on difficulty
+            switch(difficulty) {
+                case 'easy':
+                    sortedSentences = sortedSentences.slice(0, Math.floor(sortedSentences.length * 0.4));
+                    break;
+                case 'medium':
+                    sortedSentences = sortedSentences.slice(
+                        Math.floor(sortedSentences.length * 0.3),
+                        Math.floor(sortedSentences.length * 0.7)
+                    );
+                    break;
+                case 'hard':
+                    sortedSentences = sortedSentences.slice(Math.floor(sortedSentences.length * 0.6));
+                    break;
+            }
+            
+            // Shuffle and select
+            const shuffled = [...sortedSentences].sort(() => 0.5 - Math.random());
+            return shuffled.slice(0, count);
+        }
+        
+        // Select question type with rotation
+        function selectQuestionType(availableTypes, index) {
+            if (availableTypes.length === 0) return 'explain';
+            return availableTypes[index % availableTypes.length];
+        }
+        
+        // Create different types of questions
+        function createQuestion(sentence, type, difficulty) {
+            const words = sentence.split(' ');
+            
+            switch(type) {
+                case 'fillblank':
+                    if (words.length > 7) {
+                        const blankPos = Math.floor(Math.random() * (words.length - 3)) + 1;
+                        const answer = words[blankPos];
+                        words[blankPos] = '__________';
+                        return {
+                            text: words.join(' '),
+                            type: 'Fill in the blank',
+                            answer: answer
+                        };
+                    }
+                    // Fall through if sentence is too short
+                    
+                case 'truefalse':
+                    return {
+                        text: `True or False: ${sentence}`,
+                        type: 'True/False',
+                        answer: 'True' // Simple implementation
+                    };
+                    
+                case 'shortanswer':
+                    return {
+                        text: `Answer briefly: ${sentence.replace(/\.$/, '?')}`,
+                        type: 'Short answer'
+                    };
+                    
+                case 'explain':
+                default:
+                    return {
+                        text: `Explain: "${sentence}"`,
+                        type: 'Explanation'
+                    };
+            }
+        }
+        
+        // Copy questions to clipboard
+        function copyToClipboard() {
+            const questions = Array.from(document.querySelectorAll('.question-content'))
+                .map((q, i) => `${i + 1}. ${q.textContent}`)
+                .join('\n\n');
+            
+            navigator.clipboard.writeText(questions)
+                .then(() => showResultStatus('Questions copied to clipboard!', 'success'))
+                .catch(err => showResultStatus('Failed to copy: ' + err, 'error'));
+        }
+        
+        // Print questions
+        function printQuestions() {
+            const printContent = document.getElementById('resultPanel').innerHTML;
+            const originalContent = document.body.innerHTML;
+            
+            document.body.innerHTML = `
+                <h1>NACEMR Generated Questions</h1>
+                <div>${printContent}</div>
+                <style>
+                    body { font-family: Arial; padding: 20px; }
+                    .question { page-break-inside: avoid; }
+                    button { display: none; }
+                </style>
+            `;
+            
+            window.print();
+            document.body.innerHTML = originalContent;
+        }
+        
+        // Export as text file
+        function exportAsText() {
+            const questions = Array.from(document.querySelectorAll('.question'))
+                .map(q => q.textContent.replace(/\s+/g, ' ').trim())
+                .join('\n\n');
+            
+            const blob = new Blob([questions], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `nacemr_questions_${new Date().toISOString().slice(0,10)}.txt`;
+            a.click();
+            
+            URL.revokeObjectURL(url);
+            showResultStatus('Questions exported as text file!', 'success');
+        }
+        
+        // Initialize
+        window.addEventListener('DOMContentLoaded', () => {
+            loadSettings();
+            updateStatus(`Ready to process ${pdfFileName} from current directory...`, 'info');
+            
+            // Try to load PDF automatically if possible
+            setTimeout(() => {
+                if (window.location.protocol === 'file:') {
+                    updateStatus('Note: For direct file access, you may need to run this through a local web server.', 'info');
+                }
+            }, 2000);
+        });
+    </script>
+</body>
+</html>
