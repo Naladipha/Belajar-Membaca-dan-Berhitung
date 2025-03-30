@@ -154,12 +154,13 @@
             border-radius: 20px;
             font-size: clamp(24px, 7vw, 30px);
             z-index: 200;
-            animation: fade 2s;
             display: none;
             text-align: center;
             max-width: 90%;
             box-shadow: 0 6px 15px rgba(0,0,0,0.3);
             margin-top: 20px;
+            opacity: 1;
+            transition: opacity 2s ease-out;
         }
         
         .result-container {
@@ -202,13 +203,23 @@
             border-collapse: collapse;
             margin: 30px 0;
             font-size: clamp(20px, 6vw, 24px);
+            table-layout: fixed; /* Add this */
         }
         
         th, td {
             border: 3px solid #ddd;
             padding: 20px;
             text-align: center;
+            word-break: keep-all; /* Add this */
         }
+
+        /* Add these specific column width adjustments */
+            th:nth-child(1), td:nth-child(1) { width: 10%; } /* No */
+            th:nth-child(2), td:nth-child(2) { width: 20%; } /* Tingkat */
+            th:nth-child(3), td:nth-child(3) { width: 25%; } /* Soal - increased width */
+            th:nth-child(4), td:nth-child(4) { width: 15%; } /* Jawaban */
+            th:nth-child(5), td:nth-child(5) { width: 10%; } /* Hasil */
+            th:nth-child(6), td:nth-child(6) { width: 20%; } /* Waktu */
         
         th {
             background-color: #f2f2f2;
@@ -235,11 +246,7 @@
             font-size: clamp(24px, 7vw, 30px);
         }
         
-        @keyframes fade {
-            0%, 100% { opacity: 0; transform: translateX(-50%) translateY(20px); }
-            50% { opacity: 1; transform: translateX(-50%) translateY(0); }
-        }
-        
+               
         @media print {
             body * {
                 visibility: hidden;
@@ -369,10 +376,10 @@
             <tbody id="result-body">
             </tbody>
         </table>
-        <div class="controls">
-            <button class="btn btn-print no-print" id="print-pdf">Cetak PDF</button>
-            <button class="btn no-print" id="new-session">Sesi Baru</button>
-            <button class="btn btn-next-level no-print" id="next-level" style="display: none;">Lanjut ke Tingkat 2</button>
+        <div class="controls" style="display: flex; justify-content: center; gap: 20px;">
+            <button class="btn btn-print no-print" id="print-pdf" style="flex: 1; max-width: 200px;">Cetak PDF</button>
+            <button class="btn no-print" id="new-session" style="flex: 1; max-width: 200px;">Sesi Baru</button>
+            <button class="btn btn-next-level no-print" id="next-level" style="display: none; flex: 1; max-width: 200px;">Lanjut ke Tingkat 2</button>
         </div>
     </div>
     
@@ -445,6 +452,7 @@
             onesCount: 0,
             levelResults: [], // Menyimpan hasil per level
             currentLevelQuestions: [] // Menyimpan jumlah soal per level
+            levelUpTimeout: null // ADD THIS NEW PROPERTY
         };
         
         // DOM elements
@@ -743,14 +751,26 @@
         
         // Show level up notification
         function showLevelUp() {
-            elements.levelUp.textContent = `Berhasil 20 benar berurutan! Naik ke ${config[state.level].name}!`;
-            elements.levelUp.style.display = 'block';
-            
-            // Auto-hide after 3 seconds
-            setTimeout(() => {
-                elements.levelUp.style.display = 'none';
-            }, 3000);
-        }
+    // Clear any existing timeout
+    if (state.levelUpTimeout) {
+        clearTimeout(state.levelUpTimeout);
+    }
+
+    elements.levelUp.textContent = `Berhasil 20 benar berurutan! Naik ke ${config[state.level].name}!`;
+    elements.levelUp.style.display = 'block';
+    elements.levelUp.style.opacity = '1';
+    elements.levelUp.style.transition = 'opacity 2s ease-out';
+
+    // Start fade after 1 second, fade over 2 seconds
+    state.levelUpTimeout = setTimeout(() => {
+        elements.levelUp.style.opacity = '0';
+        
+        // Hide completely after fade completes
+        setTimeout(() => {
+            elements.levelUp.style.display = 'none';
+        }, 2000);
+    }, 1000);
+    }
         
         // Print to PDF with improved formatting
         async function printToPdf() {
