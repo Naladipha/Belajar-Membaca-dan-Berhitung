@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Puzzle Game - Varied Shapes</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            background-color: #f0f8ff;
+            padding: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        .game-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .shape-container {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+            min-height: 300px;
+        }
+        .grid {
+            display: grid;
+            gap: 8px;
+            margin: 0 auto;
+        }
+        .cell {
+            width: 70px;
+            height: 70px;
+            border: 2px solid #3498db;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: bold;
+            background-color: #eaf2f8;
+            border-radius: 8px;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s;
+            box-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+        }
+        .target-cell {
+            background-color: #f9e79f;
+            border-color: #f1c40f;
+        }
+        .operator-cell {
+            background-color: #d5f5e3;
+            border-color: #2ecc71;
+        }
+        .selected {
+            background-color: #aed6f1;
+            transform: scale(1.08);
+            box-shadow: 0 0 10px rgba(52, 152, 219, 0.7);
+        }
+        .controls {
+            margin: 25px 0;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 25px 0;
+            font-size: 18px;
+            background-color: #e8f4fc;
+            padding: 15px;
+            border-radius: 10px;
+        }
+        .stat-box {
+            padding: 0 15px;
+        }
+        .level-up {
+            animation: pulse 1s;
+            color: #27ae60;
+            font-weight: bold;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+        .shape-name {
+            font-size: 20px;
+            color: #e74c3c;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>TEKA-TEKI MATH - BENTUK UNIK</h1>
+        <p>Temukan pasangan angka dan operator yang sesuai dengan target!</p>
+        
+        <div class="stats">
+            <div class="stat-box">Level: <span id="level">1</span></div>
+            <div class="stat-box">Skor: <span id="score">0</span></div>
+            <div class="stat-box">Target: <span id="target-value">?</span></div>
+            <div class="stat-box">Bentuk: <span id="shape-name">-</span></div>
+        </div>
+        
+        <div class="shape-container">
+            <div id="grid" class="grid"></div>
+        </div>
+        
+        <div class="controls">
+            <button id="new-game">Game Baru</button>
+            <button id="hint">Petunjuk (-3)</button>
+            <button id="solve">Selesaikan</button>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let level = 1;
+        let score = 0;
+        let baseGridSize = 3;
+        let grid = [];
+        let targetValue = 0;
+        let selectedCells = [];
+        let correctPairs = [];
+        let currentShape = '';
+        
+        // DOM elements
+        const gridElement = document.getElementById('grid');
+        const levelElement = document.getElementById('level');
+        const scoreElement = document.getElementById('score');
+        const targetValueElement = document.getElementById('target-value');
+        const shapeNameElement = document.getElementById('shape-name');
+        const newGameButton = document.getElementById('new-game');
+        const hintButton = document.getElementById('hint');
+        const solveButton = document.getElementById('solve');
+        
+        // Shape templates
+        const SHAPES = {
+            square: {
+                name: "Persegi",
+                create: (size) => {
+                    const cols = size;
+                    const rows = size;
+                    gridElement.style.gridTemplateColumns = `repeat(${cols}, 70px)`;
+                    gridElement.style.gridTemplateRows = `repeat(${rows}, 70px)`;
+                    return cols * rows;
+                }
+            },
+            rectangle: {
+                name: "Persegi Panjang",
+                create: (size) => {
+                    const cols = size;
+                    const rows = Math.floor(size * 0.75);
+                    gridElement.style.gridTemplateColumns = `repeat(${cols}, 70px)`;
+                    gridElement.style.gridTemplateRows = `repeat(${rows}, 70px)`;
+                    return cols * rows;
+                }
+            },
+            star: {
+                name: "Bintang",
+                create: (size) => {
+                    const center = Math.ceil(size/2);
+                    let template = [];
+                    // Create star pattern
+                    for (let i = 1; i <= size; i++) {
+                        if (i === center) {
+                            template.push(`70px `.repeat(size).trim());
+                        } else {
+                            template.push(`0px `.repeat(center-1) + `70px ` + `0px `.repeat(center-1));
+                        }
+                    }
+                    gridElement.style.gridTemplateColumns = `70px `.repeat(size);
+                    gridElement.style.gridTemplateRows = template.join(' ');
+                    return size * 2 - 1;
+                }
+            },
+            snake: {
+                name: "Ular",
+                create: (size) => {
+                    const cols = size;
+                    const rows = size;
+                    gridElement.style.gridTemplateColumns = `repeat(${cols}, 70px)`;
+                    gridElement.style.gridTemplateRows = `repeat(${rows}, 70px)`;
+                    // We'll handle the snake pattern in cell placement
+                    return cols * rows;
+                }
+            },
+            pyramid: {
+                name: "Piramida",
+                create: (size) => {
+                    let template = [];
+                    for (let i = 1; i <= size; i++) {
+                        const spaces = size - i;
+                        template.push(`35px `.repeat(spaces) + `70px `.repeat(i) + `35px `.repeat(spaces));
+                    }
+                    gridElement.style.gridTemplateColumns = `repeat(${size*2-1}, 35px)`;
+                    gridElement.style.gridTemplateRows = template.join(' ');
+                    return size * size;
+                }
+            }
+        };
+        
+        // Initialize game
+        initGame();
+        
+        // Event listeners
+        newGameButton.addEventListener('click', initGame);
+        hintButton.addEventListener('click', showHint);
+        solveButton.addEventListener('click', showSolution);
+        
+        function initGame() {
+            level = 1;
+            score = 0;
+            baseGridSize = 3;
+            updateStats();
+            generateGrid();
+        }
+        
+        function nextLevel() {
+            level++;
+            baseGridSize += 1;
+            score += level * 10;
+            updateStats();
+            
+            levelElement.classList.add('level-up');
+            setTimeout(() => {
+                levelElement.classList.remove('level-up');
+            }, 1000);
+            
+            generateGrid();
+        }
+        
+        function updateStats() {
+            levelElement.textContent = level;
+            scoreElement.textContent = score;
+            shapeNameElement.textContent = currentShape;
+        }
+        
+        function generateGrid() {
+            grid = [];
+            selectedCells = [];
+            correctPairs = [];
+            gridElement.innerHTML = '';
+            
+            // Select random shape
+            const shapeKeys = Object.keys(SHAPES);
+            const randomShapeKey = shapeKeys[Math.floor(Math.random() * shapeKeys.length)];
+            const shape = SHAPES[randomShapeKey];
+            currentShape = shape.name;
+            
+            // Create shape and get cell count
+            const cellCount = shape.create(baseGridSize);
+            
+            // Generate numbers and operators
+            const numbers = [];
+            const operators = [];
+            const operatorTypes = ['+', '-', '×', '÷'];
+            
+            // 60% numbers, 40% operators
+            const numCount = Math.ceil(cellCount * 0.6);
+            const opCount = cellCount - numCount - 1; // -1 for target cell
+            
+            // Generate random numbers (range increases with level)
+            const maxNumber = 10 + level * 5;
+            for (let i = 0; i < numCount; i++) {
+                numbers.push(Math.floor(Math.random() * maxNumber) + 1);
+            }
+            
+            // Generate random operators (more types in higher levels)
+            let availableOperators = ['+', '-'];
+            if (level > 3) availableOperators.push('×');
+            if (level > 6) availableOperators.push('÷');
+            
+            for (let i = 0; i < opCount; i++) {
+                operators.push(availableOperators[Math.floor(Math.random() * availableOperators.length)]);
+            }
+            
+            // Shuffle all items
+            const allItems = [...numbers, ...operators];
+            shuffleArray(allItems);
+            
+            // Create cells based on shape
+            if (randomShapeKey === 'snake') {
+                createSnakeGrid(allItems, baseGridSize);
+            } else {
+                createStandardGrid(allItems, cellCount);
+            }
+            
+            updateStats();
+        }
+        
+        function createStandardGrid(allItems, cellCount) {
+            // Place target cell at random position
+            targetValue = generateTargetValue();
+            const targetPos = Math.floor(Math.random() * cellCount);
+            
+            for (let i = 0; i < cellCount; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                
+                if (i === targetPos) {
+                    cell.textContent = targetValue;
+                    cell.className += ' target-cell';
+                    grid.push({ type: 'target', value: targetValue, element: cell });
+                } else {
+                    const item = allItems.pop();
+                    cell.textContent = item;
+                    
+                    if (typeof item === 'number') {
+                        grid.push({ type: 'number', value: item, element: cell });
+                    } else {
+                        cell.className += ' operator-cell';
+                        grid.push({ type: 'operator', value: item, element: cell });
+                    }
+                }
+                
+                cell.addEventListener('click', () => selectCell(i));
+                gridElement.appendChild(cell);
+            }
+            
+            targetValueElement.textContent = targetValue;
+        }
+        
+        function createSnakeGrid(allItems, size) {
+            // Snake pattern alternates direction each row
+            targetValue = generateTargetValue();
+            const targetPos = Math.floor(Math.random() * size * size);
+            
+            let index = 0;
+            for (let row = 0; row < size; row++) {
+                const reverse = row % 2 === 1;
+                const cols = reverse ? [...Array(size).keys()].reverse() : [...Array(size).keys()];
+                
+                for (const col of cols) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    
+                    if (index === targetPos) {
+                        cell.textContent = targetValue;
+                        cell.className += ' target-cell';
+                        grid.push({ type: 'target', value: targetValue, element: cell });
+                    } else {
+                        const item = allItems.pop();
+                        cell.textContent = item;
+                        
+                        if (typeof item === 'number') {
+                            grid.push({ type: 'number', value: item, element: cell });
+                        } else {
+                            cell.className += ' operator-cell';
+                            grid.push({ type: 'operator', value: item, element: cell });
+                        }
+                    }
+                    
+                    cell.addEventListener('click', () => selectCell(index));
+                    gridElement.appendChild(cell);
+                    index++;
+                }
+            }
+            
+            targetValueElement.textContent = targetValue;
+        }
+        
+        function generateTargetValue() {
+            // Generate target based on level to keep it challenging but achievable
+            const base = 10 + level * 5;
+            return Math.floor(Math.random() * base) + 10;
+        }
+        
+        function selectCell(index) {
+            const cell = grid[index];
+            
+            if (cell.type === 'target' || correctPairs.some(pair => pair.includes(index))) {
+                return;
+            }
+            
+            if (selectedCells.includes(index)) {
+                selectedCells = selectedCells.filter(i => i !== index);
+                cell.element.classList.remove('selected');
+            } else {
+                if (selectedCells.length < 2) {
+                    selectedCells.push(index);
+                    cell.element.classList.add('selected');
+                    
+                    if (selectedCells.length === 2) {
+                        checkMatch();
+                    }
+                }
+            }
+        }
+        
+        function checkMatch() {
+            const [index1, index2] = selectedCells;
+            const cell1 = grid[index1];
+            const cell2 = grid[index2];
+            
+            if ((cell1.type === 'number' && cell2.type === 'operator') || 
+                (cell1.type === 'operator' && cell2.type === 'number')) {
+                
+                const numCell = cell1.type === 'number' ? cell1 : cell2;
+                const opCell = cell1.type === 'operator' ? cell1 : cell2;
+                
+                for (let i = 0; i < grid.length; i++) {
+                    if (i !== index1 && i !== index2 && grid[i].type === 'number' && 
+                        !correctPairs.some(pair => pair.includes(i))) {
+                        
+                        const result = calculate(numCell.value, opCell.value, grid[i].value);
+                        if (result === targetValue) {
+                            correctPairs.push([index1, index2, i]);
+                            score += 5;
+                            updateStats();
+                            
+                            cell1.element.style.backgroundColor = '#a3e4d7';
+                            cell2.element.style.backgroundColor = '#a3e4d7';
+                            grid[i].element.style.backgroundColor = '#a3e4d7';
+                            
+                            if (checkLevelComplete()) {
+                                setTimeout(nextLevel, 1500);
+                            }
+                            
+                            selectedCells = [];
+                            return;
+                        }
+                    }
+                }
+            }
+            
+            setTimeout(() => {
+                cell1.element.classList.remove('selected');
+                cell2.element.classList.remove('selected');
+                selectedCells = [];
+            }, 500);
+        }
+        
+        function calculate(num1, op, num2) {
+            switch (op) {
+                case '+': return num1 + num2;
+                case '-': return num1 - num2;
+                case '×': return num1 * num2;
+                case '÷': return Math.round((num1 / num2) * 10) / 10;
+                default: return 0;
+            }
+        }
+        
+        function checkLevelComplete() {
+            const unusedNumbers = grid.filter(cell => 
+                cell.type === 'number' && 
+                !correctPairs.some(pair => pair.includes(grid.indexOf(cell)))
+            .length;
+            
+            return unusedNumbers <= 1;
+        }
+        
+        function showHint() {
+            if (score < 3) {
+                alert('Skor Anda terlalu rendah untuk petunjuk!');
+                return;
+            }
+            
+            for (let i = 0; i < grid.length; i++) {
+                if (grid[i].type === 'operator') {
+                    for (let j = 0; j < grid.length; j++) {
+                        if (j !== i && grid[j].type === 'number' && 
+                            !correctPairs.some(pair => pair.includes(j))) {
+                            for (let k = 0; k < grid.length; k++) {
+                                if (k !== i && k !== j && grid[k].type === 'number' && 
+                                    !correctPairs.some(pair => pair.includes(k))) {
+                                    
+                                    const result = calculate(grid[j].value, grid[i].value, grid[k].value);
+                                    if (result === targetValue) {
+                                        grid[i].element.style.boxShadow = '0 0 15px gold';
+                                        grid[j].element.style.boxShadow = '0 0 15px gold';
+                                        grid[k].element.style.boxShadow = '0 0 15px gold';
+                                        
+                                        setTimeout(() => {
+                                            grid[i].element.style.boxShadow = '';
+                                            grid[j].element.style.boxShadow = '';
+                                            grid[k].element.style.boxShadow = '';
+                                        }, 2000);
+                                        
+                                        score = Math.max(0, score - 3);
+                                        updateStats();
+                                        return;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            alert('Tidak ada petunjuk yang tersedia! Coba kombinasi lain.');
+        }
+        
+        function showSolution() {
+            if (score < 10) {
+                alert('Anda membutuhkan minimal 10 poin untuk menggunakan fitur ini!');
+                return;
+            }
+            
+            let solutionFound = false;
+            
+            for (let i = 0; i < grid.length && !solutionFound; i++) {
+                if (grid[i].type === 'operator') {
+                    for (let j = 0; j < grid.length && !solutionFound; j++) {
+                        if (j !== i && grid[j].type === 'number') {
+                            for (let k = 0; k < grid.length && !solutionFound; k++) {
+                                if (k !== i && k !== j && grid[k].type === 'number') {
+                                    const result = calculate(grid[j].value, grid[i].value, grid[k].value);
+                                    if (result === targetValue) {
+                                        alert(`Solusi: ${grid[j].value} ${grid[i].value} ${grid[k].value} = ${targetValue}`);
+                                        solutionFound = true;
+                                        score = Math.max(0, score - 10);
+                                        updateStats();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if (!solutionFound) {
+                alert('Tidak ditemukan solusi! Mungkin ada bug dalam game.');
+            }
+        }
+        
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+    </script>
+</body>
+</html>
