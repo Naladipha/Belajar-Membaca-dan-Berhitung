@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Berhitung Multiple Choice</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+            background-color: #f5f5f5;
+        }
+        .game-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .question {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .option {
+            padding: 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: background-color 0.3s;
+        }
+        .option:hover {
+            background-color: #45a049;
+        }
+        .score {
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+        .feedback {
+            font-size: 18px;
+            height: 24px;
+            margin-bottom: 10px;
+        }
+        .correct {
+            color: green;
+        }
+        .incorrect {
+            color: red;
+        }
+        .next-btn {
+            padding: 10px 20px;
+            background-color: #008CBA;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            display: none;
+        }
+        .next-btn:hover {
+            background-color: #007B9E;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Game Berhitung</h1>
+        <div class="score">Skor: <span id="score">0</span></div>
+        <div class="feedback" id="feedback"></div>
+        <div class="question" id="question"></div>
+        <div class="options" id="options"></div>
+        <button class="next-btn" id="next-btn">Soal Berikutnya</button>
+    </div>
+
+    <script>
+        // Variabel game
+        let score = 0;
+        let currentQuestion = 0;
+        let correctAnswer;
+        
+        // Elemen DOM
+        const questionElement = document.getElementById('question');
+        const optionsElement = document.getElementById('options');
+        const scoreElement = document.getElementById('score');
+        const feedbackElement = document.getElementById('feedback');
+        const nextButton = document.getElementById('next-btn');
+        
+        // Fungsi untuk menghasilkan soal baru
+        function generateQuestion() {
+            // Reset feedback dan tombol next
+            feedbackElement.textContent = '';
+            feedbackElement.className = 'feedback';
+            nextButton.style.display = 'none';
+            
+            // Generate dua angka random (1-20)
+            const num1 = Math.floor(Math.random() * 20) + 1;
+            const num2 = Math.floor(Math.random() * 20) + 1;
+            
+            // Pilih operasi secara acak (+, -, *)
+            const operations = ['+', '-', '*'];
+            const operation = operations[Math.floor(Math.random() * operations.length)];
+            
+            // Hitung jawaban yang benar
+            let correct;
+            switch(operation) {
+                case '+': correct = num1 + num2; break;
+                case '-': correct = num1 - num2; break;
+                case '*': correct = num1 * num2; break;
+            }
+            
+            // Generate jawaban yang salah (3 jawaban salah)
+            const wrongAnswers = [];
+            while(wrongAnswers.length < 3) {
+                const wrong = correct + (Math.floor(Math.random() * 10) - 5); // -5 sampai +5 dari jawaban benar
+                if(wrong !== correct && !wrongAnswers.includes(wrong) && wrong > 0) {
+                    wrongAnswers.push(wrong);
+                }
+            }
+            
+            // Gabungkan semua jawaban dan acak urutannya
+            const allAnswers = [correct, ...wrongAnswers];
+            const shuffledAnswers = allAnswers.sort(() => Math.random() - 0.5);
+            
+            // Tampilkan soal
+            questionElement.textContent = `Berapa hasil dari ${num1} ${operation} ${num2}?`;
+            
+            // Tampilkan pilihan jawaban
+            optionsElement.innerHTML = '';
+            shuffledAnswers.forEach((answer, index) => {
+                const button = document.createElement('button');
+                button.className = 'option';
+                button.textContent = answer;
+                button.onclick = () => checkAnswer(answer, correct);
+                optionsElement.appendChild(button);
+            });
+            
+            // Simpan jawaban yang benar
+            correctAnswer = correct;
+        }
+        
+        // Fungsi untuk memeriksa jawaban
+        function checkAnswer(selectedAnswer, correctAnswer) {
+            // Nonaktifkan semua tombol option
+            const options = document.querySelectorAll('.option');
+            options.forEach(option => {
+                option.disabled = true;
+            });
+            
+            // Tampilkan feedback
+            if(selectedAnswer == correctAnswer) {
+                feedbackElement.textContent = 'Jawaban Benar!';
+                feedbackElement.className = 'feedback correct';
+                score++;
+                scoreElement.textContent = score;
+            } else {
+                feedbackElement.textContent = `Jawaban Salah! Yang benar adalah ${correctAnswer}`;
+                feedbackElement.className = 'feedback incorrect';
+            }
+            
+            // Tampilkan tombol next
+            nextButton.style.display = 'inline-block';
+        }
+        
+        // Event listener untuk tombol next
+        nextButton.addEventListener('click', () => {
+            currentQuestion++;
+            generateQuestion();
+        });
+        
+        // Mulai game
+        generateQuestion();
+    </script>
+</body>
+</html>
